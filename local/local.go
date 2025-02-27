@@ -34,6 +34,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 	"sync"
 
 	"gopkg.in/ini.v1"
@@ -266,19 +267,19 @@ const (
 // 1. Check for the identifier file
 // 2. Analyze informative files
 // 3. Fill in the Package struct
-func analyzeModJar(file *os.File) (p []lucytypes.Package) {
+func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 	stat, err := file.Stat()
 	if err != nil {
 		return nil
 	}
-	r, err := zip.NewReader(file, stat.Size())
+	zipReader, err := zip.NewReader(file, stat.Size())
 	if err != nil {
 		return nil
 	}
 
-	p = make([]lucytypes.Package, 0)
+	packages = make([]lucytypes.Package, 0)
 
-	for _, f := range r.File {
+	for _, f := range zipReader.File {
 		// fabric check
 		if f.Name == fabricModIdentifierFile {
 			rr, err := f.Open()
@@ -291,8 +292,8 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 			if err != nil {
 				return nil
 			}
-			p = append(
-				p,
+			packages = append(
+				packages,
 				lucytypes.Package{
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Fabric,
@@ -305,7 +306,7 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
 				},
 			)
-			return p
+			return packages
 		}
 
 		// check for old forge identifier
@@ -322,23 +323,24 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 			}
 
 			for _, modInfo := range *modInfos {
-				p = append(
-					p,
-					lucytypes.Package{
-						Id: lucytypes.PackageId{
-							Platform: lucytypes.Forge,
-							Name:     lucytypes.PackageName(modInfo.ModId),
-							Version:  lucytypes.PackageVersion(modInfo.Version),
-						},
-						Local: &lucytypes.PackageInstallation{
-							Path: file.Name(),
-						},
-						Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+				p := lucytypes.Package{
+					Id: lucytypes.PackageId{
+						Platform: lucytypes.Forge,
+						Name:     lucytypes.PackageName(modInfo.ModId),
+						Version:  lucytypes.PackageVersion(modInfo.Version),
 					},
-				)
+					Local: &lucytypes.PackageInstallation{
+						Path: file.Name(),
+					},
+					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+				}
+				if p.Id.Version == "${file.jarVersion}" {
+					p.Id.Version = getForgeVariableVersion(zipReader)
+				}
+				packages = append(packages, p)
 			}
 
-			return p
+			return packages
 		}
 
 		// check for new forge identifier
@@ -356,26 +358,53 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 			}
 
 			for _, mod := range modInfo.Mods {
-				p = append(
-					p,
-					lucytypes.Package{
-						Id: lucytypes.PackageId{
-							Platform: lucytypes.Forge,
-							Name:     mod.ModID,
-							Version:  mod.Version,
-						},
-						Local: &lucytypes.PackageInstallation{
-							Path: file.Name(),
-						},
-						Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+				p := lucytypes.Package{
+					Id: lucytypes.PackageId{
+						Platform: lucytypes.Forge,
+						Name:     mod.ModID,
+						Version:  mod.Version,
 					},
-				)
+					Local: &lucytypes.PackageInstallation{
+						Path: file.Name(),
+					},
+					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+				}
+				if p.Id.Version == "${file.jarVersion}" {
+					p.Id.Version = getForgeVariableVersion(zipReader)
+				}
+				packages = append(packages, p)
 			}
 
-			return p
+			return packages
 		}
 
 	}
 
 	return nil
+}
+
+func getForgeVariableVersion(zip *zip.Reader) lucytypes.PackageVersion {
+	var r io.ReadCloser
+	var err error
+	for _, f := range zip.File {
+		if f.Name == javaManifest {
+			r, err = f.Open()
+			if err != nil {
+				return lucytypes.UnknownVersion
+			}
+		}
+	}
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return lucytypes.UnknownVersion
+	}
+	manifest := string(data)
+	const versionField = "Implementation-Version: "
+	i := strings.Index(manifest, versionField) + len(versionField)
+	if i == -1 {
+		return lucytypes.UnknownVersion
+	}
+	v := manifest[i:]
+	v = strings.Split(v, "\n")[0]
+	return lucytypes.PackageVersion(v)
 }

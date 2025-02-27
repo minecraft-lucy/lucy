@@ -138,7 +138,7 @@ const (
 	fabricSingleIdentifierFile   = "install.properties"
 	vanillaIdentifierFile        = "version.json"
 	fabricLauncherIdentifierFile = "fabric-server-launch.properties"
-	fabricLauncherManifest       = "META-INF/MANIFEST.MF"
+	javaManifest                 = "META-INF/MANIFEST.MF"
 	forgeModIdentifierFile       = "META-INF/mods.toml"
 )
 
@@ -168,7 +168,7 @@ func analyzeExecutable(file *os.File) (exec *lucytypes.ExecutableInfo) {
 				return nil
 			}
 			for _, ff := range reader.File {
-				if ff.Name == fabricLauncherManifest {
+				if ff.Name == javaManifest {
 					exec = analyzeFabricLauncher(ff)
 				}
 			}
@@ -285,7 +285,7 @@ func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
 			return &lucytypes.ExecutableInfo{
 				GameVersion:   lucytypes.UnknownVersion,
 				Platform:      lucytypes.Forge,
-				LoaderVersion: lucytypes.PackageVersion(p.LoaderVersion),
+				LoaderVersion: mod.Version,
 				BootCommand:   nil,
 			}
 		}

@@ -24,7 +24,7 @@ import (
 	"lucy/tools"
 )
 
-const debugOutput = false
+const tabWriterDebug = false
 
 var keyValueWriter = tabwriter.NewWriter(
 	os.Stdout,
@@ -32,7 +32,7 @@ var keyValueWriter = tabwriter.NewWriter(
 	0,
 	2,
 	' ',
-	tools.Ternary(debugOutput, tabwriter.Debug, 0),
+	tools.Ternary(tabWriterDebug, tabwriter.Debug, 0),
 )
 
 func key(title string) {
