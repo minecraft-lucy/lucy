@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"lucy/logger"
 	"lucy/lucytypes"
@@ -44,6 +45,28 @@ var getExecutableInfo = tools.Memoize(
 				continue
 			}
 			valid = append(valid, exec)
+		}
+
+		if len(valid) == 0 {
+			logger.Info("no server found, using recursive search")
+			jars = findJarRecursive(workPath)
+			mu := sync.Mutex{}
+			wg := sync.WaitGroup{}
+			for _, jar := range jars {
+				wg.Add(1)
+				go func(jar *os.File) {
+					exec := analyzeExecutable(jar)
+					if exec == nil {
+						wg.Done()
+						return
+					}
+					mu.Lock()
+					valid = append(valid, exec)
+					mu.Unlock()
+					wg.Done()
+				}(jar)
+			}
+			wg.Wait()
 		}
 
 		if len(valid) == 0 {
@@ -78,6 +101,27 @@ func findJar(dir string) (jarFiles []*os.File) {
 			jarFiles = append(jarFiles, file)
 		}
 	}
+
+	return
+}
+
+func findJarRecursive(dir string) (jarFiles []*os.File) {
+	jarFiles = []*os.File{}
+	entries, _ := os.ReadDir(dir)
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			jarFiles = append(
+				jarFiles,
+				findJarRecursive(path.Join(dir, entry.Name()))...,
+			)
+		}
+		if path.Ext(entry.Name()) == ".jar" {
+			file, _ := os.Open(path.Join(dir, entry.Name()))
+			jarFiles = append(jarFiles, file)
+		}
+	}
+
 	return
 }
 
@@ -188,7 +232,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-	manifest *zip.File,
+manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
