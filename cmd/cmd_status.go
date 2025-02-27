@@ -38,8 +38,8 @@ var subcmdStatus = &cli.Command{
 }
 
 var actionStatus cli.ActionFunc = func(
-_ context.Context,
-cmd *cli.Command,
+	_ context.Context,
+	cmd *cli.Command,
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
@@ -52,8 +52,8 @@ cmd *cli.Command,
 }
 
 func serverInfoToStatus(
-data *lucytypes.ServerInfo,
-longOutput bool,
+	data *lucytypes.ServerInfo,
+	longOutput bool,
 ) *lucytypes.OutputData {
 	status := &lucytypes.OutputData{
 		Fields: []lucytypes.Field{},
@@ -62,7 +62,7 @@ longOutput bool,
 	status.Fields = append(
 		status.Fields, &output.FieldAnnotatedShortText{
 			Title:      "Game",
-			Text:       data.Executable.GameVersion,
+			Text:       data.Executable.GameVersion.String(),
 			Annotation: data.Executable.Path,
 			NoTab:      true,
 		},
@@ -73,7 +73,7 @@ longOutput bool,
 			status.Fields, &output.FieldAnnotatedShortText{
 				Title:      "Modding",
 				Text:       data.Executable.Platform.Title(),
-				Annotation: data.Executable.LoaderVersion,
+				Annotation: data.Executable.LoaderVersion.String(),
 				NoTab:      true,
 			},
 		)

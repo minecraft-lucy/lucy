@@ -151,6 +151,7 @@ func (p PackageVersion) String() string {
 var (
 	AllVersion              PackageVersion = "all"
 	NoVersion               PackageVersion = "none"
+	UnknownVersion          PackageVersion = "unknown"
 	LatestVersion           PackageVersion = "latest"
 	LatestCompatibleVersion PackageVersion = "compatible"
 )

@@ -19,7 +19,9 @@ package local
 import (
 	"archive/zip"
 	"encoding/json"
+	"github.com/pelletier/go-toml"
 	"io"
+	"lucy/datatypes"
 	"os"
 	"path"
 	"strings"
@@ -137,6 +139,7 @@ const (
 	vanillaIdentifierFile        = "version.json"
 	fabricLauncherIdentifierFile = "fabric-server-launch.properties"
 	fabricLauncherManifest       = "META-INF/MANIFEST.MF"
+	forgeModIdentifierFile       = "META-INF/mods.toml"
 )
 
 // analyzeExecutable gives nil if the jar file is invalid. The constant UnknownExecutable
@@ -174,6 +177,11 @@ func analyzeExecutable(file *os.File) (exec *lucytypes.ExecutableInfo) {
 				return nil
 			}
 			exec = analyzeVanilla(f)
+		case forgeModIdentifierFile:
+			if exec != nil {
+				return nil
+			}
+			exec = analyzeForge(f)
 		}
 	}
 
@@ -193,7 +201,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = obj.Id
+	exec.GameVersion = lucytypes.PackageVersion(obj.Id)
 	return
 }
 
@@ -210,10 +218,14 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = strings.Split(strings.Split(s, "\n")[1], "=")[1]
+	exec.GameVersion = lucytypes.PackageVersion(
+		strings.Split(strings.Split(s, "\n")[1], "=")[1],
+	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = strings.Split(strings.Split(s, "\n")[0], "=")[1]
+	exec.LoaderVersion = lucytypes.PackageVersion(
+		strings.Split(strings.Split(s, "\n")[0], "=")[1],
+	)
 
 	return
 }
@@ -232,7 +244,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-manifest *zip.File,
+	manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
@@ -246,11 +258,38 @@ manifest *zip.File,
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = strings.Split(classPath, "/")[4]
+			exec.GameVersion = lucytypes.PackageVersion(
+				strings.Split(classPath, "/")[4],
+			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = strings.Split(classPath, "/")[4]
+			exec.LoaderVersion = lucytypes.PackageVersion(
+				strings.Split(classPath, "/")[4],
+			)
 		}
 	}
 	return
+}
+
+func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
+	r, _ := file.Open()
+	defer tools.CloseReader(r, logger.Warning)
+	data, _ := io.ReadAll(r)
+	p := &datatypes.ForgeModIdentifierNew{}
+	err := toml.Unmarshal(data, p)
+	if err != nil {
+		return nil
+	}
+	for _, mod := range p.Mods {
+		if mod.ModID == "forge" {
+			return &lucytypes.ExecutableInfo{
+				GameVersion:   lucytypes.UnknownVersion,
+				Platform:      lucytypes.Forge,
+				LoaderVersion: lucytypes.PackageVersion(p.LoaderVersion),
+				BootCommand:   nil,
+			}
+		}
+	}
+
+	return nil
 }

@@ -35,9 +35,9 @@ type ServerInfo struct {
 
 type ExecutableInfo struct {
 	Path          string
-	GameVersion   string
+	GameVersion   PackageVersion
 	Platform      Platform
-	LoaderVersion string
+	LoaderVersion PackageVersion
 	BootCommand   *exec.Cmd
 }
 

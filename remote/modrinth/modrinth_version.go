@@ -107,7 +107,7 @@ func LatestCompatibleVersion(slug lucytypes.PackageName) (v *datatypes.ModrinthV
 	}
 	for _, version := range versions {
 		for _, gameVersion := range version.GameVersions {
-			if gameVersion == serverInfo.Executable.GameVersion &&
+			if gameVersion == serverInfo.Executable.GameVersion.String() &&
 				version.VersionType == "release" &&
 				(v == nil || version.DatePublished.After(v.DatePublished)) {
 				v = version

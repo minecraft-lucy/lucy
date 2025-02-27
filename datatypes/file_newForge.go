@@ -23,6 +23,7 @@ type ForgeModIdentifierNew struct {
 	ModLoader       string `toml:"modLoader"`
 	LoaderVersion   string `toml:"loaderVersion"`
 	IssueTrackerURL string `toml:"issueTrackerURL"`
+	LogoFile        string `toml:"logoFile"`
 	License         string `toml:"license"`
 	Mods            []struct {
 		ModID         lucytypes.PackageName    `toml:"modId"`
@@ -36,12 +37,14 @@ type ForgeModIdentifierNew struct {
 		Authors       string                   `toml:"authors"`
 		Description   string                   `toml:"description"`
 	} `toml:"mods"`
-	Dependencies map[lucytypes.PackageName]struct {
-		ModID        lucytypes.PackageName `toml:"modId"`
-		Mandatory    bool                  `toml:"mandatory"`
-		VersionRange string                `toml:"versionRange"`
-		Ordering     string                `toml:"ordering"`
-		Side         string                `toml:"side"`
-	} `toml:"dependencies"`
-	ModProperties map[string]string `toml:"-"` // ignored
+	Dependencies  map[string][]ForgeDependencies `toml:"dependencies"`
+	ModProperties map[string]string              `toml:"-"` // ignored
+}
+
+type ForgeDependencies struct {
+	ModID        lucytypes.PackageName `toml:"modId"`
+	Mandatory    bool                  `toml:"mandatory"`
+	VersionRange string                `toml:"versionRange"`
+	Ordering     string                `toml:"ordering"`
+	Side         string                `toml:"side"`
 }

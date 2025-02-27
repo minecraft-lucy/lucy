@@ -29,6 +29,7 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"errors"
+	"github.com/pelletier/go-toml"
 	"io"
 	"os"
 	"path"
@@ -252,8 +253,8 @@ var getMods = tools.Memoize(
 
 const (
 	fabricModIdentifierFile   = "fabric.mod.json"
-	oldForgeModIdentifierFile = "mcmod.info"
-	newForgeModIdentifierFile = "mods.toml"
+	oldForgeModIdentifierFile = "META-INF/mcmod.info"
+	newForgeModIdentifierFile = "META-INF/mods.toml"
 )
 
 // analyzeModJar is now a single large function, but it will be later split into
@@ -349,7 +350,7 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 			}
 			modInfo := &datatypes.ForgeModIdentifierNew{}
 
-			err = json.Unmarshal(data, modInfo)
+			err = toml.Unmarshal(data, modInfo)
 			if err != nil {
 				return nil
 			}
@@ -378,5 +379,3 @@ func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 
 	return nil
 }
-
-// func TJLanalyzeModJar(file *os.File) *lucytypes
