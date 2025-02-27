@@ -405,6 +405,7 @@ func getForgeVariableVersion(zip *zip.Reader) lucytypes.PackageVersion {
 		return lucytypes.UnknownVersion
 	}
 	v := manifest[i:]
+	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
 	return lucytypes.PackageVersion(v)
 }
