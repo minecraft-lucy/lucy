@@ -149,9 +149,10 @@ func (f *FieldLabels) Output() {
 }
 
 type FieldDynamicColumnLabels struct {
-	Title    string
-	Labels   []string
-	MaxLines int
+	Title     string
+	Labels    []string
+	MaxLines  int
+	ShowTotal bool
 }
 
 func (f *FieldDynamicColumnLabels) Output() {
@@ -173,18 +174,29 @@ func (f *FieldDynamicColumnLabels) Output() {
 	}
 
 	columns := (tools.TermWidth() - 4) / (maxLabelLen + 2)
-	if columns == 0 {
+	if columns <= 0 {
 		columns = 1
 	}
 
 	for i, label := range f.Labels {
 		value(label)
-		if (i+1)%columns == 0 || i == len(f.Labels)-1 {
+		if i == len(f.Labels)-1 {
+			if (i+1)%columns == 0 && f.ShowTotal {
+				newLine()
+			}
+			tab()
+			annot("(" + strconv.Itoa(len(f.Labels)) + " total)")
+		}
+		if (i+1)%columns == 0 {
 			newLine()
 			lines++
 			if f.MaxLines != 0 && lines > f.MaxLines {
 				tab()
-				annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+				if f.ShowTotal {
+					annot("(" + strconv.Itoa(len(f.Labels)) + "in total, " + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+				} else {
+					annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+				}
 				newLine()
 				break
 			}
@@ -192,6 +204,7 @@ func (f *FieldDynamicColumnLabels) Output() {
 		tab()
 	}
 
+	newLine()
 	// After output, we call flush() to reset the indent size.
 	flush()
 }

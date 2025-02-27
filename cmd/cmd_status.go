@@ -38,8 +38,8 @@ var subcmdStatus = &cli.Command{
 }
 
 var actionStatus cli.ActionFunc = func(
-	_ context.Context,
-	cmd *cli.Command,
+_ context.Context,
+cmd *cli.Command,
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
@@ -52,8 +52,8 @@ var actionStatus cli.ActionFunc = func(
 }
 
 func serverInfoToStatus(
-	data *lucytypes.ServerInfo,
-	longOutput bool,
+data *lucytypes.ServerInfo,
+longOutput bool,
 ) *lucytypes.OutputData {
 	status := &lucytypes.OutputData{
 		Fields: []lucytypes.Field{},
@@ -119,17 +119,25 @@ func serverInfoToStatus(
 						mod.Id.StringVersion(),
 					),
 				)
-				if longOutput {
-					modPaths = append(modPaths, mod.Local.Path)
-				}
+				modPaths = append(modPaths, mod.Local.Path)
 			}
 			status.Fields = append(
-				status.Fields, &output.FieldMultiShortTextWithAnnot{
-					Title:     "Mods",
-					Texts:     modNames,
-					Annots:    modPaths,
-					ShowTotal: true,
-				},
+				status.Fields,
+				tools.Ternary[lucytypes.Field](
+					longOutput,
+					&output.FieldMultiShortTextWithAnnot{
+						Title:     "Mods",
+						Texts:     modNames,
+						Annots:    modPaths,
+						ShowTotal: true,
+					},
+					&output.FieldDynamicColumnLabels{
+						Title:     "Mods",
+						Labels:    modNames,
+						MaxLines:  0,
+						ShowTotal: true,
+					},
+				),
 			)
 		} else {
 			status.Fields = append(
