@@ -14,38 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// 1.13+ forge&neoforge
 package datatypes
 
-type newForgeModIdentifier struct {
+import "lucy/lucytypes"
+
+// ForgeModIdentifierNew is for 1.13+ forge & neoforge. This is a toml file.
+type ForgeModIdentifierNew struct {
 	ModLoader       string `toml:"modLoader"`
 	LoaderVersion   string `toml:"loaderVersion"`
 	IssueTrackerURL string `toml:"issueTrackerURL"`
 	License         string `toml:"license"`
 	Mods            []struct {
-		ModID         string `toml:"modId"`
-		Version       string `toml:"version"`
-		DisplayName   string `toml:"displayName"`
-		ItemIcon      string `toml:"itemIcon"`
-		DisplayURL    string `toml:"displayURL"`
-		UpdateJSONURL string `toml:"updateJSONURL"`
-		LogoFile      string `toml:"logoFile"`
-		Credits       string `toml:"credits"`
-		Authors       string `toml:"authors"`
-		Description   string `toml:"description"`
+		ModID         lucytypes.PackageName    `toml:"modId"`
+		Version       lucytypes.PackageVersion `toml:"version"`
+		DisplayName   string                   `toml:"displayName"`
+		ItemIcon      string                   `toml:"itemIcon"`
+		DisplayURL    string                   `toml:"displayURL"`
+		UpdateJSONURL string                   `toml:"updateJSONURL"`
+		LogoFile      string                   `toml:"logoFile"`
+		Credits       string                   `toml:"credits"`
+		Authors       string                   `toml:"authors"`
+		Description   string                   `toml:"description"`
 	} `toml:"mods"`
-	Dependencies struct {
-		Twilightforest []struct {
-			ModID        string `toml:"modId"`
-			Mandatory    bool   `toml:"mandatory"`
-			VersionRange string `toml:"versionRange"`
-			Ordering     string `toml:"ordering"`
-			Side         string `toml:"side"`
-		} `toml:"twilightforest"`
+	Dependencies map[lucytypes.PackageName]struct {
+		ModID        lucytypes.PackageName `toml:"modId"`
+		Mandatory    bool                  `toml:"mandatory"`
+		VersionRange string                `toml:"versionRange"`
+		Ordering     string                `toml:"ordering"`
+		Side         string                `toml:"side"`
 	} `toml:"dependencies"`
-	Modproperties struct {
-		Twilightforest struct {
-			ConfiguredBackground string `toml:"configuredBackground"`
-		} `toml:"twilightforest"`
-	} `toml:"modproperties"`
+	ModProperties map[string]string `toml:"-"` // ignored
 }

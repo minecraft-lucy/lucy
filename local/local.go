@@ -237,9 +237,9 @@ var getMods = tools.Memoize(
 		path := getServerModPath()
 		jars := findJar(path)
 		for _, jar := range jars {
-			mod := analyzeModJar(jar)
-			if mod != nil {
-				mods = append(mods, *mod)
+			analyzed := analyzeModJar(jar)
+			if analyzed != nil {
+				mods = append(mods, analyzed...)
 			}
 		}
 		sort.Slice(
@@ -256,9 +256,6 @@ const (
 	newForgeModIdentifierFile = "mods.toml"
 )
 
-// const forgeModIdentifierFile =
-// TODO: forgeModIdentifierFile
-
 // analyzeModJar is now a single large function, but it will be later split into
 // smaller functions according to different mod loaders. This function will keep
 // serve as an entry point to the mod analysis process.
@@ -268,7 +265,7 @@ const (
 // 1. Check for the identifier file
 // 2. Analyze informative files
 // 3. Fill in the Package struct
-func analyzeModJar(file *os.File) *lucytypes.Package {
+func analyzeModJar(file *os.File) (p []lucytypes.Package) {
 	stat, err := file.Stat()
 	if err != nil {
 		return nil
@@ -277,6 +274,8 @@ func analyzeModJar(file *os.File) *lucytypes.Package {
 	if err != nil {
 		return nil
 	}
+
+	p = make([]lucytypes.Package, 0)
 
 	for _, f := range r.File {
 		// fabric check
@@ -291,72 +290,89 @@ func analyzeModJar(file *os.File) *lucytypes.Package {
 			if err != nil {
 				return nil
 			}
-			p := &lucytypes.Package{
-				Id: lucytypes.PackageId{
-					Platform: lucytypes.Fabric,
-					Name:     lucytypes.PackageName(modInfo.Id),
-					Version:  lucytypes.PackageVersion(modInfo.Version),
+			p = append(
+				p,
+				lucytypes.Package{
+					Id: lucytypes.PackageId{
+						Platform: lucytypes.Fabric,
+						Name:     lucytypes.PackageName(modInfo.Id),
+						Version:  lucytypes.PackageVersion(modInfo.Version),
+					},
+					Local: &lucytypes.PackageInstallation{
+						Path: file.Name(),
+					},
+					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
 				},
-				Local: &lucytypes.PackageInstallation{
-					Path: file.Name(),
-				},
-				Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-			}
+			)
 			return p
 		}
 
-		// forge check
-		// if f.Name == oldForgeModIdentifierFile {
-		// 	rr, err := f.Open()
-		// 	data, err := io.ReadAll(rr)
-		// 	if err != nil {
-		// 		return nil
-		// 	}
-		// 	modInfo := &datatypes.oldForgeModIdentifier{}
-		// 	err = json.Unmarshal(data, modInfo)
-		// 	if err != nil {
-		// 		return nil
-		// 	}
-		// 	p := &lucytypes.Package{
-		// 		Id: lucytypes.PackageId{
-		// 			Platform: lucytypes.oldForge, // notice pkg name
-		// 			Name:     lucytypes.PackageName(modInfo.Id),
-		// 			Version:  lucytypes.PackageVersion(modInfo.Version),
-		// 		},
-		// 		Local: &lucytypes.PackageInstallation{
-		// 			Path: file.Name(),
-		// 		},
-		// 		Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-		// 	}
-		// 	return p
-		// }
+		// check for old forge identifier
+		if f.Name == oldForgeModIdentifierFile {
+			rr, err := f.Open()
+			data, err := io.ReadAll(rr)
+			if err != nil {
+				return nil
+			}
+			modInfos := &datatypes.ForgeModIdentifierOld{}
+			err = json.Unmarshal(data, modInfos)
+			if err != nil {
+				return nil
+			}
 
-		// newForge check
-		// if f.Name == newForgeModIdentifierFile {
-		// 	rr, err := f.Open()
-		// 	data, err := io.ReadAll(rr)
-		// 	if err != nil {
-		// 		return nil
-		// 	}
-		// 	modInfo := &datatypes.newForgeModIdentifier{} // notice name
-		//
-		// 	err = json.Unmarshal(data, modInfo)
-		// 	if err != nil {
-		// 		return nil
-		// 	}
-		// 	p := &lucytypes.Package{
-		// 		Id: lucytypes.PackageId{
-		// 			Platform: lucytypes.newForge, // notice pkg name
-		// 			Name:     lucytypes.PackageName(modInfo.Id),
-		// 			Version:  lucytypes.PackageVersion(modInfo.Version),
-		// 		},
-		// 		Local: &lucytypes.PackageInstallation{
-		// 			Path: file.Name(),
-		// 		}
-		// 		Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-		// 	}
-		// 	return p
-		// }
+			for _, modInfo := range *modInfos {
+				p = append(
+					p,
+					lucytypes.Package{
+						Id: lucytypes.PackageId{
+							Platform: lucytypes.Forge,
+							Name:     lucytypes.PackageName(modInfo.ModId),
+							Version:  lucytypes.PackageVersion(modInfo.Version),
+						},
+						Local: &lucytypes.PackageInstallation{
+							Path: file.Name(),
+						},
+						Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+					},
+				)
+			}
+
+			return p
+		}
+
+		// check for new forge identifier
+		if f.Name == newForgeModIdentifierFile {
+			rr, err := f.Open()
+			data, err := io.ReadAll(rr)
+			if err != nil {
+				return nil
+			}
+			modInfo := &datatypes.ForgeModIdentifierNew{}
+
+			err = json.Unmarshal(data, modInfo)
+			if err != nil {
+				return nil
+			}
+
+			for _, mod := range modInfo.Mods {
+				p = append(
+					p,
+					lucytypes.Package{
+						Id: lucytypes.PackageId{
+							Platform: lucytypes.Forge,
+							Name:     mod.ModID,
+							Version:  mod.Version,
+						},
+						Local: &lucytypes.PackageInstallation{
+							Path: file.Name(),
+						},
+						Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
+					},
+				)
+			}
+
+			return p
+		}
 
 	}
 

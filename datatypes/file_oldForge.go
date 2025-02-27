@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// 1.12 and older forge mod, metadata in json
 package datatypes
 
-type oldForgeModIdentifier []struct {
-	Modid        string        `json:"modid"`
+// ForgeModIdentifierOld is for 1.12 and older forge mods. This is a json file.
+type ForgeModIdentifierOld []struct {
+	ModId        string        `json:"modid"`
 	Name         string        `json:"name"`
 	Description  string        `json:"description"`
 	Version      string        `json:"version"`
-	Mcversion    string        `json:"mcversion"`
+	McVersion    string        `json:"mcversion"`
 	URL          string        `json:"url"`
 	UpdateURL    string        `json:"updateUrl"`
 	AuthorList   []string      `json:"authorList"`
