@@ -38,8 +38,8 @@ var subcmdStatus = &cli.Command{
 }
 
 var actionStatus cli.ActionFunc = func(
-	_ context.Context,
-	cmd *cli.Command,
+_ context.Context,
+cmd *cli.Command,
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
@@ -52,11 +52,11 @@ var actionStatus cli.ActionFunc = func(
 }
 
 func serverInfoToStatus(
-	data *lucytypes.ServerInfo,
-	longOutput bool,
-) *lucytypes.OutputData {
-	status := &lucytypes.OutputData{
-		Fields: []lucytypes.Field{},
+data *lucytypes.ServerInfo,
+longOutput bool,
+) *output.Data {
+	status := &output.Data{
+		Fields: []output.Field{},
 	}
 
 	status.Fields = append(
@@ -123,7 +123,7 @@ func serverInfoToStatus(
 			}
 			status.Fields = append(
 				status.Fields,
-				tools.Ternary[lucytypes.Field](
+				tools.Ternary[output.Field](
 					longOutput,
 					&output.FieldMultiShortTextWithAnnot{
 						Title:     "Mods",

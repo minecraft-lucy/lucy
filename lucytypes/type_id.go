@@ -15,8 +15,6 @@ limitations under the License.
 */
 
 // Package lucytypes is a general package for all types used in Lucy.
-//
-// TODO: Move some types that belongs to lower-level packages to their respective packages.
 package lucytypes
 
 import (
@@ -116,8 +114,8 @@ func (p *PackageId) String() string {
 		p.Platform == AllPlatform,
 		"", string(p.Platform)+"/",
 	) +
-		string(p.Name) +
-		tools.Ternary(p.Version == AllVersion, "", "@"+string(p.Version))
+	string(p.Name) +
+	tools.Ternary(p.Version == AllVersion, "", "@"+string(p.Version))
 }
 
 func (p *PackageId) FullString() string {

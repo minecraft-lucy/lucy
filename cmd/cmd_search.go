@@ -91,9 +91,9 @@ var actionSearch cli.ActionFunc = func(
 func generateSearchOutput(
 	res *lucytypes.SearchResults,
 	showAll bool,
-) *lucytypes.OutputData {
-	return &lucytypes.OutputData{
-		Fields: []lucytypes.Field{
+) *output.Data {
+	return &output.Data{
+		Fields: []output.Field{
 			&output.FieldShortText{
 				Title: "#  ",
 				Text:  strconv.Itoa(len(res.Results)),

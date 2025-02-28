@@ -28,9 +28,16 @@ import (
 	"strconv"
 	"strings"
 
-	"lucy/lucytypes"
 	"lucy/tools"
 )
+
+type Data struct {
+	Fields []Field
+}
+
+type Field interface {
+	Output()
+}
 
 func SourceInfo(source string) {
 	annot("(Source: " + tools.Underline(source) + ")")
@@ -298,7 +305,7 @@ func (f *FieldCheckBox) Output() {
 	}
 }
 
-func Flush(data *lucytypes.OutputData) {
+func Flush(data *Data) {
 	for _, field := range data.Fields {
 		if field != nil {
 			field.Output()

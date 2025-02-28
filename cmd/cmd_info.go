@@ -60,7 +60,7 @@ var actionInfo cli.ActionFunc = func(
 ) error {
 	p := syntax.Parse(cmd.Args().First())
 
-	var multiSourceData []*lucytypes.OutputData
+	var multiSourceData []*output.Data
 
 	switch p.Platform {
 	case lucytypes.AllPlatform:
@@ -109,9 +109,9 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func modrinthProjectToInfo(source *datatypes.ModrinthProject) *lucytypes.OutputData {
-	return &lucytypes.OutputData{
-		Fields: []lucytypes.Field{
+func modrinthProjectToInfo(source *datatypes.ModrinthProject) *output.Data {
+	return &output.Data{
+		Fields: []output.Field{
 			&output.FieldShortText{
 				Title: "Name",
 				Text:  source.Title,
@@ -133,9 +133,9 @@ func modrinthProjectToInfo(source *datatypes.ModrinthProject) *lucytypes.OutputD
 	}
 }
 
-func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *lucytypes.OutputData {
-	info := &lucytypes.OutputData{
-		Fields: []lucytypes.Field{
+func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
+	info := &output.Data{
+		Fields: []output.Field{
 			&output.FieldShortText{
 				Title: "Name",
 				Text:  source.Id,
@@ -168,9 +168,9 @@ func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *lucytypes.OutputDat
 	return info
 }
 
-func cInfoOutput(p lucytypes.Package) *lucytypes.OutputData {
-	o := &lucytypes.OutputData{
-		Fields: []lucytypes.Field{
+func cInfoOutput(p lucytypes.Package) *output.Data {
+	o := &output.Data{
+		Fields: []output.Field{
 			&output.FieldAnnotation{
 				Annotation: "(from " + p.Remote.Source.Title() + ")",
 			},
