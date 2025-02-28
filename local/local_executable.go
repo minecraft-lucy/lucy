@@ -19,18 +19,20 @@ package local
 import (
 	"archive/zip"
 	"encoding/json"
-	"github.com/pelletier/go-toml"
 	"io"
-	"lucy/datatypes"
-	"lucy/logger"
-	"lucy/lucytypes"
-	"lucy/output"
-	"lucy/tools"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/pelletier/go-toml"
+
+	"lucy/datatypes"
+	"lucy/logger"
+	"lucy/lucytypes"
+	"lucy/output"
+	"lucy/tools"
 )
 
 // TODO: Improve probe logic, plain executable unpacking do not work well

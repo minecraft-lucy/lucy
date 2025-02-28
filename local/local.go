@@ -29,13 +29,14 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"errors"
-	"github.com/pelletier/go-toml"
 	"io"
 	"os"
 	"path"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/pelletier/go-toml"
 
 	"gopkg.in/ini.v1"
 

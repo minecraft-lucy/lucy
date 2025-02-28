@@ -19,9 +19,10 @@ limitations under the License.
 package local
 
 import (
-	"lucy/logger"
 	"os"
 	"path"
+
+	"lucy/logger"
 
 	"golang.org/x/sys/windows"
 	"lucy/lucytypes"

@@ -38,22 +38,21 @@ var subcmdStatus = &cli.Command{
 }
 
 var actionStatus cli.ActionFunc = func(
-_ context.Context,
-cmd *cli.Command,
+	_ context.Context,
+	cmd *cli.Command,
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
 		tools.PrintAsJson(serverInfo)
 	} else {
-
 		output.Flush(serverInfoToStatus(&serverInfo, cmd.Bool("long")))
 	}
 	return nil
 }
 
 func serverInfoToStatus(
-data *lucytypes.ServerInfo,
-longOutput bool,
+	data *lucytypes.ServerInfo,
+	longOutput bool,
 ) *output.Data {
 	status := &output.Data{
 		Fields: []output.Field{},
