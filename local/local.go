@@ -237,18 +237,24 @@ var checkHasLucy = tools.Memoize(
 var getMods = tools.Memoize(
 	func() (mods []lucytypes.Package) {
 		path := getServerModPath()
-		jars, err := findJar(path)
+		jarPaths, err := findJar(path)
 		if err != nil {
 			logger.Warning(err)
 			logger.Info("this server might not have a mod folder")
 			return nil
 		}
-		for _, jar := range jars {
+
+		for _, jarPath := range jarPaths {
+			jar, err := os.Open(jarPath)
+			if err != nil {
+				continue
+			}
 			analyzed := analyzeModJar(jar)
 			if analyzed != nil {
 				mods = append(mods, analyzed...)
 			}
 		}
+
 		sort.Slice(
 			mods,
 			func(i, j int) bool { return mods[i].Id.Name < mods[j].Id.Name },

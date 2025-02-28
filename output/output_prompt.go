@@ -34,6 +34,7 @@ func PromptSelectExecutable(executables []*lucytypes.ExecutableInfo) int {
 		Label:     "Multiple possible executables detected, select one",
 		Items:     executables,
 		Templates: selectExecutableTemplate,
+		Size:      8,
 	}
 	index, _, _ := selectExecutable.Run()
 	return index

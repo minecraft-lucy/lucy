@@ -55,18 +55,19 @@ var getExecutableInfo = tools.Memoize(
 
 		if len(valid) == 0 {
 			logger.Info("no server jar found, trying to find under libraries")
-			jars = findJarRecursive(path.Join(workPath, "libraries"))
-			if len(jars) == 0 {
+			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
+			if len(jarPaths) == 0 {
 				// if still no jars found in libraries, search the whole directory
-				logger.Info("still no server jar found, attempting more aggressive search")
-				jars = findJarRecursive(workPath)
+				logger.Info("still no server jar found, attempting even more aggressive search")
+				logger.Info("note that this may take a long time, and the accuracy is not guaranteed")
+				jarPaths = findJarRecursive(workPath)
 			}
 			mu := sync.Mutex{}
 			wg := sync.WaitGroup{}
-			for _, jar := range jars {
+			for _, jarPath := range jarPaths {
 				wg.Add(1)
-				go func(jar *os.File) {
-					exec := analyzeExecutable(jar)
+				go func(jarPath string) {
+					exec := analyzeExecutable(jarPath)
 					if exec == nil {
 						wg.Done()
 						return
@@ -75,7 +76,7 @@ var getExecutableInfo = tools.Memoize(
 					valid = append(valid, exec)
 					mu.Unlock()
 					wg.Done()
-				}(jar)
+				}(jarPath)
 			}
 			wg.Wait()
 		}
@@ -91,8 +92,8 @@ var getExecutableInfo = tools.Memoize(
 	},
 )
 
-func findJar(dir string) (jarFiles []*os.File, err error) {
-	jarFiles = []*os.File{}
+func findJar(dir string) (jarFiles []string, err error) {
+	jarFiles = []string{}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -103,12 +104,7 @@ func findJar(dir string) (jarFiles []*os.File, err error) {
 			continue
 		}
 		if path.Ext(entry.Name()) == ".jar" {
-			file, err := os.Open(path.Join(dir, entry.Name()))
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-			jarFiles = append(jarFiles, file)
+			jarFiles = append(jarFiles, path.Join(dir, entry.Name()))
 		}
 	}
 
@@ -117,12 +113,14 @@ func findJar(dir string) (jarFiles []*os.File, err error) {
 
 const fileCountThreshold = 50000
 
-func findJarRecursive(dir string) (jarFiles []*os.File) {
-	jarFiles = []*os.File{}
+func findJarRecursive(dir string) (jarFiles []string) {
+	jarFiles = []string{}
 	entries, _ := os.ReadDir(dir)
 	var wg sync.WaitGroup
 	var fileCount int32
+	var mu sync.Mutex
 
+	// TODO: Use semaphore to limit the number of goroutines
 	for _, entry := range entries {
 		if atomic.LoadInt32(&fileCount) >= fileCountThreshold {
 			logger.Info("file count threshold reached, stopping search")
@@ -133,17 +131,16 @@ func findJarRecursive(dir string) (jarFiles []*os.File) {
 			go func(subDir string) {
 				defer wg.Done()
 				subJarFiles := findJarRecursive(subDir)
+				mu.Lock()
 				jarFiles = append(jarFiles, subJarFiles...)
+				mu.Unlock()
 			}(path.Join(dir, entry.Name()))
 		} else {
 			atomic.AddInt32(&fileCount, 1)
 			if path.Ext(entry.Name()) == ".jar" {
-				wg.Add(1)
-				go func(fileName string) {
-					defer wg.Done()
-					file, _ := os.Open(fileName)
-					jarFiles = append(jarFiles, file)
-				}(path.Join(dir, entry.Name()))
+				mu.Lock()
+				jarFiles = append(jarFiles, path.Join(dir, entry.Name()))
+				mu.Unlock()
 			}
 		}
 	}
@@ -169,9 +166,13 @@ const (
 
 // analyzeExecutable gives nil if the jar file is invalid. The constant UnknownExecutable
 // is not yet used in the codebase, however still reserved for future use.
-func analyzeExecutable(file *os.File) (exec *lucytypes.ExecutableInfo) {
+func analyzeExecutable(filePath string) (exec *lucytypes.ExecutableInfo) {
 	// exec is a nil before an analysis function is called
 	// Anything other than exec.Path is set in the analysis function
+	file, _ := os.Open(filePath)
+	if file == nil {
+		return nil
+	}
 	stat, err := file.Stat()
 	if err != nil {
 		return nil
@@ -269,7 +270,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-	manifest *zip.File,
+manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
