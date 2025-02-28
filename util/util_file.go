@@ -22,19 +22,12 @@ import (
 	"path"
 )
 
-func InstallLucy() {
-	os.Mkdir(ProgramPath, 0o755)
-	os.Mkdir(DownloadPath, 0o755)
-	os.Mkdir(CachePath, 0o755)
-	// 	TODO: create empty config
-}
-
 func MoveFile(src *os.File, dest string) (err error) {
 	err = os.Rename(src.Name(), dest)
 	return
 }
 
-func CopyToCache(f *os.File) {
+func Cache(f *os.File) {
 	filename := path.Base(f.Name())
 	cacheFile, _ := os.Create(path.Join(CachePath, filename))
 	_, _ = io.Copy(cacheFile, f)

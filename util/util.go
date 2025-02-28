@@ -14,11 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package util is a general package for network and file system operations.
 package util
+
+import "os"
 
 const (
 	ProgramPath  = ".lucy"
 	ConfigFile   = ProgramPath + "/config.json"
 	DownloadPath = ProgramPath + "/downloads"
-	CachePath    = ProgramPath + "/cache"
 )
+
+var CachePath = os.TempDir() + "/lucy"
+
+type DownloadTask struct {
+	From string // url
+	To   string // path
+}
