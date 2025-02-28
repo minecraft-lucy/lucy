@@ -237,7 +237,12 @@ var checkHasLucy = tools.Memoize(
 var getMods = tools.Memoize(
 	func() (mods []lucytypes.Package) {
 		path := getServerModPath()
-		jars := findJar(path)
+		jars, err := findJar(path)
+		if err != nil {
+			logger.Warning(err)
+			logger.Info("this server might not have a mod folder")
+			return nil
+		}
 		for _, jar := range jars {
 			analyzed := analyzeModJar(jar)
 			if analyzed != nil {
@@ -277,21 +282,19 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 		return nil
 	}
 
-	packages = make([]lucytypes.Package, 0)
+	packages = []lucytypes.Package{}
 
 	for _, f := range zipReader.File {
 		// fabric check
 		if f.Name == fabricModIdentifierFile {
 			rr, err := f.Open()
 			data, err := io.ReadAll(rr)
-			if err != nil {
-				return nil
-			}
 			modInfo := &datatypes.FabricModIdentifier{}
 			err = json.Unmarshal(data, modInfo)
 			if err != nil {
 				return nil
 			}
+
 			packages = append(
 				packages,
 				lucytypes.Package{
@@ -306,6 +309,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
 				},
 			)
+
 			return packages
 		}
 

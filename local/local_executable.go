@@ -22,15 +22,15 @@ import (
 	"github.com/pelletier/go-toml"
 	"io"
 	"lucy/datatypes"
-	"os"
-	"path"
-	"strings"
-	"sync"
-
 	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/output"
 	"lucy/tools"
+	"os"
+	"path"
+	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 // TODO: Improve probe logic, plain executable unpacking do not work well
@@ -40,7 +40,11 @@ var getExecutableInfo = tools.Memoize(
 	func() *lucytypes.ExecutableInfo {
 		var valid []*lucytypes.ExecutableInfo
 		workPath := getServerWorkPath()
-		jars := findJar(workPath)
+		jars, err := findJar(workPath)
+		if err != nil {
+			logger.Warning(err)
+			logger.Info("cannot read the current directory, most features will be disabled")
+		}
 		for _, jar := range jars {
 			exec := analyzeExecutable(jar)
 			if exec == nil {
@@ -50,8 +54,13 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			logger.Info("no server found, using recursive search")
-			jars = findJarRecursive(workPath)
+			logger.Info("no server jar found, trying to find under libraries")
+			jars = findJarRecursive(path.Join(workPath, "libraries"))
+			if len(jars) == 0 {
+				// if still no jars found in libraries, search the whole directory
+				logger.Info("still no server jar found, attempting more aggressive search")
+				jars = findJarRecursive(workPath)
+			}
 			mu := sync.Mutex{}
 			wg := sync.WaitGroup{}
 			for _, jar := range jars {
@@ -82,12 +91,11 @@ var getExecutableInfo = tools.Memoize(
 	},
 )
 
-func findJar(dir string) (jarFiles []*os.File) {
+func findJar(dir string) (jarFiles []*os.File, err error) {
 	jarFiles = []*os.File{}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		logger.Info("cannot read current directory, most local-related features will be disabled")
-		return
+		return nil, err
 	}
 
 	for _, entry := range entries {
@@ -104,26 +112,43 @@ func findJar(dir string) (jarFiles []*os.File) {
 		}
 	}
 
-	return
+	return jarFiles, nil
 }
+
+const fileCountThreshold = 50000
 
 func findJarRecursive(dir string) (jarFiles []*os.File) {
 	jarFiles = []*os.File{}
 	entries, _ := os.ReadDir(dir)
+	var wg sync.WaitGroup
+	var fileCount int32
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			jarFiles = append(
-				jarFiles,
-				findJarRecursive(path.Join(dir, entry.Name()))...,
-			)
+		if atomic.LoadInt32(&fileCount) >= fileCountThreshold {
+			logger.Info("file count threshold reached, stopping search")
+			break
 		}
-		if path.Ext(entry.Name()) == ".jar" {
-			file, _ := os.Open(path.Join(dir, entry.Name()))
-			jarFiles = append(jarFiles, file)
+		if entry.IsDir() {
+			wg.Add(1)
+			go func(subDir string) {
+				defer wg.Done()
+				subJarFiles := findJarRecursive(subDir)
+				jarFiles = append(jarFiles, subJarFiles...)
+			}(path.Join(dir, entry.Name()))
+		} else {
+			atomic.AddInt32(&fileCount, 1)
+			if path.Ext(entry.Name()) == ".jar" {
+				wg.Add(1)
+				go func(fileName string) {
+					defer wg.Done()
+					file, _ := os.Open(fileName)
+					jarFiles = append(jarFiles, file)
+				}(path.Join(dir, entry.Name()))
+			}
 		}
 	}
 
+	wg.Wait()
 	return
 }
 
@@ -252,6 +277,9 @@ func analyzeFabricLauncher(
 	defer tools.CloseReader(r, logger.Warning)
 	data, _ := io.ReadAll(r)
 	s := string(data)
+	if !strings.Contains(s, "Class-Path: ") {
+		return nil
+	}
 	s = strings.Split(s, "Class-Path: ")[1] // Start reading from Class-Path
 	s = strings.ReplaceAll(s, "\r\n ", "")  // Remove line breaks
 	s = strings.ReplaceAll(s, "\r\n", "")   // Remove last line breaks
