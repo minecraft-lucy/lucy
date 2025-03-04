@@ -61,11 +61,11 @@ func getProjectMembers(id string) (members []*datatypes.ModrinthMember) {
 var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
-	depedent lucytypes.PackageId,
-	dependency *datatypes.ModrinthVersionDependencies,
+depedent lucytypes.PackageId,
+dependency *datatypes.ModrinthVersionDependencies,
 ) (
-	p lucytypes.PackageId,
-	err error,
+p lucytypes.PackageId,
+err error,
 ) {
 	var version *datatypes.ModrinthVersion
 	var project *datatypes.ModrinthProject

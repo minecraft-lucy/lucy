@@ -114,8 +114,12 @@ func (p PackageId) String() string {
 		p.Platform == AllPlatform,
 		"", string(p.Platform)+"/",
 	) +
-	string(p.Name) +
-	tools.Ternary(p.Version == AllVersion, "", "@"+string(p.Version))
+		string(p.Name) +
+		tools.Ternary(
+			p.Version == AllVersion,
+			"",
+			"@"+string(p.Version),
+		)
 }
 
 func (p PackageId) StringFull() string {
@@ -125,3 +129,37 @@ func (p PackageId) StringFull() string {
 func (p PackageId) StringNameVersion() string {
 	return string(p.Name) + "@" + p.Version.String()
 }
+
+// RawVersion is the version of a package. Here we expect mods and plugins
+// use semver (which they should). A known exception is Minecraft snapshots.
+//
+// There are several special constant values for RawVersion. You MUST call
+// remote.InferVersion() before parsing them to SemanticVersion.
+type RawVersion string
+
+func (v RawVersion) String() string {
+	if v == AllVersion {
+		return "any"
+	}
+	if v == NoVersion || v == "" {
+		return "none"
+	}
+	if v == UnknownVersion {
+		return "unknown"
+	}
+	if v == LatestVersion {
+		return "latest"
+	}
+	if v == LatestCompatibleVersion {
+		return "compatible"
+	}
+	return string(v)
+}
+
+var (
+	AllVersion              RawVersion = "all"
+	NoVersion               RawVersion = "none"
+	UnknownVersion          RawVersion = "unknown"
+	LatestVersion           RawVersion = "latest"
+	LatestCompatibleVersion RawVersion = "compatible"
+)

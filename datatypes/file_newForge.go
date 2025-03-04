@@ -16,7 +16,9 @@ limitations under the License.
 
 package datatypes
 
-import "lucy/lucytypes"
+import (
+	"lucy/lucytypes"
+)
 
 // ForgeModIdentifierNew is for 1.13+ forge & neoforge. This is a toml file.
 type ForgeModIdentifierNew struct {

@@ -24,7 +24,6 @@ package remote
 
 import (
 	"fmt"
-
 	"lucy/logger"
 	"lucy/lucytypes"
 )
@@ -66,4 +65,23 @@ func SearchForProject(
 	query string,
 ) []lucytypes.PackageName {
 	return nil
+}
+
+// InferVersion replaces inferable version constants with their inferred versions
+// through sources. You should call this function before parsing the version to
+// SemanticVersion.
+//
+// TODO: Implement InferVersion for all RawVersion constants.
+func InferVersion(id lucytypes.PackageId) (infer lucytypes.PackageId) {
+	switch id.Version {
+	case lucytypes.AllVersion, lucytypes.LatestVersion:
+		// API call
+	case lucytypes.LatestCompatibleVersion:
+		// API call
+	case lucytypes.NoVersion, lucytypes.UnknownVersion:
+		// Do nothing
+	default:
+		// Do nothing
+	}
+	return id
 }
