@@ -1,4 +1,4 @@
-package lucyversion
+package dependency
 
 import (
 	"lucy/lucytypes"

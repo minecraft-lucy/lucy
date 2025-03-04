@@ -1,4 +1,4 @@
-package lucyversion
+package dependency
 
 func (p1 SemanticVersion) Eq(p2 SemanticVersion) bool {
 	// If the labels are different, the versions are not comparable.

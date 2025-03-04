@@ -1,4 +1,4 @@
-package lucyversion
+package dependency
 
 // SemanticVersion is not exactly semver. However, I cannot find a better name
 // for a structural version type. This will be mainly used in the construction of
