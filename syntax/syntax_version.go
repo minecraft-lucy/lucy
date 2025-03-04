@@ -90,7 +90,7 @@ func ComparePackageVersions(p1, p2 *lucytypes.PackageId) (c int8, err error) {
 	return int8(semver.Compare("v"+string(v1), "v"+string(v2))), nil
 }
 
-func compareMinecraftVersions(v1, v2 lucytypes.PackageVersion) (
+func compareMinecraftVersions(v1, v2 lucytypes.RawVersion) (
 	c int8,
 	err error,
 ) {
@@ -101,10 +101,10 @@ func compareMinecraftVersions(v1, v2 lucytypes.PackageVersion) (
 
 	i1, i2 := -1, -1
 	for i, v := range manifest.Versions {
-		if v1 == lucytypes.PackageVersion(v.Id) {
+		if v1 == lucytypes.RawVersion(v.Id) {
 			i1 = i
 		}
-		if v2 == lucytypes.PackageVersion(v.Id) {
+		if v2 == lucytypes.RawVersion(v.Id) {
 			i2 = i
 		}
 	}

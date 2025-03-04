@@ -138,7 +138,7 @@ func analyzeMcdrPlugin(file *os.File) (
 				Id: lucytypes.PackageId{
 					Platform: lucytypes.Mcdr,
 					Name:     lucytypes.PackageName(pluginInfo.Id),
-					Version:  lucytypes.PackageVersion(pluginInfo.Version),
+					Version:  lucytypes.RawVersion(pluginInfo.Version),
 				},
 				Local: &lucytypes.PackageInstallation{
 					Path: file.Name(),

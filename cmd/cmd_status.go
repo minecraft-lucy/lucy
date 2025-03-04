@@ -114,8 +114,8 @@ func serverInfoToStatus(
 					modNames,
 					tools.Ternary(
 						longOutput,
-						mod.Id.FullString(),
-						mod.Id.StringVersion(),
+						mod.Id.StringFull(),
+						mod.Id.StringNameVersion(),
 					),
 				)
 				modPaths = append(modPaths, mod.Local.Path)
@@ -158,8 +158,8 @@ func serverInfoToStatus(
 				pluginNames,
 				tools.Ternary(
 					longOutput,
-					plugin.Id.FullString(),
-					plugin.Id.StringVersion(),
+					plugin.Id.StringFull(),
+					plugin.Id.StringNameVersion(),
 				),
 			)
 			pluginPaths = append(

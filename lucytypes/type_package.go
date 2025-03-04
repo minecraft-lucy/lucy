@@ -71,7 +71,7 @@ type Package struct {
 // a Package struct. It is usually used in any command that requires operating
 // local packages, such as `lucy install` or `lucy remove`.
 type PackageDependencies struct {
-	SupportedVersions  []PackageVersion
+	SupportedVersions  []RawVersion
 	SupportedPlatforms []Platform
 	Required           []PackageId
 	Optional           []PackageId

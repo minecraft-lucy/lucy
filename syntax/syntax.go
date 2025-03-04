@@ -79,7 +79,7 @@ func Parse(s string) (p lucytypes.PackageId) {
 			logger.Fatal(err)
 		}
 	}
-	logger.Debug("parsed input as package: " + p.FullString())
+	logger.Debug("parsed input as package: " + p.StringFull())
 	return
 }
 
@@ -88,7 +88,7 @@ func Parse(s string) (p lucytypes.PackageId) {
 func parseOperatorAt(s string) (
 	pl lucytypes.Platform,
 	n lucytypes.PackageName,
-	v lucytypes.PackageVersion,
+	v lucytypes.RawVersion,
 	err error,
 ) {
 	split := strings.Split(s, "@")
@@ -101,7 +101,7 @@ func parseOperatorAt(s string) (
 	if len(split) == 1 {
 		v = lucytypes.AllVersion
 	} else if len(split) == 2 {
-		v = lucytypes.PackageVersion(split[1])
+		v = lucytypes.RawVersion(split[1])
 		if v == lucytypes.NoVersion || v == lucytypes.AllVersion {
 			return "", "", "", ESyntax
 		}

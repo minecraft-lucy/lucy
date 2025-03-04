@@ -229,7 +229,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = lucytypes.PackageVersion(obj.Id)
+	exec.GameVersion = lucytypes.RawVersion(obj.Id)
 	return
 }
 
@@ -246,12 +246,12 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = lucytypes.PackageVersion(
+	exec.GameVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[1], "=")[1],
 	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = lucytypes.PackageVersion(
+	exec.LoaderVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[0], "=")[1],
 	)
 
@@ -289,12 +289,12 @@ func analyzeFabricLauncher(
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = lucytypes.PackageVersion(
+			exec.GameVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = lucytypes.PackageVersion(
+			exec.LoaderVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}

@@ -203,7 +203,7 @@ func Dependencies(id lucytypes.PackageId) (dependencies *lucytypes.PackageDepend
 	project := getProjectByName(id.Name)
 	version, _ := getVersion(id)
 	dependencies = &lucytypes.PackageDependencies{
-		SupportedVersions:  []lucytypes.PackageVersion{},
+		SupportedVersions:  []lucytypes.RawVersion{},
 		SupportedPlatforms: []lucytypes.Platform{},
 		Required:           []lucytypes.PackageId{},
 	}
@@ -211,7 +211,7 @@ func Dependencies(id lucytypes.PackageId) (dependencies *lucytypes.PackageDepend
 	for _, version := range project.GameVersions {
 		dependencies.SupportedVersions = append(
 			dependencies.SupportedVersions,
-			lucytypes.PackageVersion(version),
+			lucytypes.RawVersion(version),
 		)
 	}
 

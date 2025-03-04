@@ -91,7 +91,7 @@ func DependencyToPackage(
 	}
 
 	p.Name = lucytypes.PackageName(project.Slug)
-	p.Version = lucytypes.PackageVersion(version.VersionNumber)
+	p.Version = lucytypes.RawVersion(version.VersionNumber)
 
 	return p, nil
 }

@@ -96,10 +96,10 @@ func (p PackageName) String() string {
 type PackageId struct {
 	Platform Platform
 	Name     PackageName
-	Version  PackageVersion
+	Version  RawVersion
 }
 
-func (p *PackageId) NewPackage() *Package {
+func (p PackageId) NewPackage() *Package {
 	return &Package{
 		Id: PackageId{
 			Platform: p.Platform,
@@ -109,7 +109,7 @@ func (p *PackageId) NewPackage() *Package {
 	}
 }
 
-func (p *PackageId) String() string {
+func (p PackageId) String() string {
 	return tools.Ternary(
 		p.Platform == AllPlatform,
 		"", string(p.Platform)+"/",
@@ -118,38 +118,10 @@ func (p *PackageId) String() string {
 	tools.Ternary(p.Version == AllVersion, "", "@"+string(p.Version))
 }
 
-func (p *PackageId) FullString() string {
-	return string(p.Platform) + "/" + p.StringVersion()
+func (p PackageId) StringFull() string {
+	return string(p.Platform) + "/" + p.StringNameVersion()
 }
 
-func (p *PackageId) StringVersion() string {
+func (p PackageId) StringNameVersion() string {
 	return string(p.Name) + "@" + p.Version.String()
 }
-
-// PackageVersion is the version of a package. Here we expect mods and plugins
-// use semver (which they should). A known exception is Minecraft snapshots.
-type PackageVersion string
-
-func (p PackageVersion) String() string {
-	if p == AllVersion || p == "" {
-		return "any"
-	}
-	if p == NoVersion {
-		return "none"
-	}
-	if p == LatestVersion {
-		return "latest"
-	}
-	if p == LatestCompatibleVersion {
-		return "compatible"
-	}
-	return string(p)
-}
-
-var (
-	AllVersion              PackageVersion = "all"
-	NoVersion               PackageVersion = "none"
-	UnknownVersion          PackageVersion = "unknown"
-	LatestVersion           PackageVersion = "latest"
-	LatestCompatibleVersion PackageVersion = "compatible"
-)

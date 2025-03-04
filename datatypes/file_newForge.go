@@ -26,16 +26,16 @@ type ForgeModIdentifierNew struct {
 	LogoFile        string `toml:"logoFile"`
 	License         string `toml:"license"`
 	Mods            []struct {
-		ModID         lucytypes.PackageName    `toml:"modId"`
-		Version       lucytypes.PackageVersion `toml:"version"`
-		DisplayName   string                   `toml:"displayName"`
-		ItemIcon      string                   `toml:"itemIcon"`
-		DisplayURL    string                   `toml:"displayURL"`
-		UpdateJSONURL string                   `toml:"updateJSONURL"`
-		LogoFile      string                   `toml:"logoFile"`
-		Credits       string                   `toml:"credits"`
-		Authors       string                   `toml:"authors"`
-		Description   string                   `toml:"description"`
+		ModID         lucytypes.PackageName `toml:"modId"`
+		Version       lucytypes.RawVersion  `toml:"version"`
+		DisplayName   string                `toml:"displayName"`
+		ItemIcon      string                `toml:"itemIcon"`
+		DisplayURL    string                `toml:"displayURL"`
+		UpdateJSONURL string                `toml:"updateJSONURL"`
+		LogoFile      string                `toml:"logoFile"`
+		Credits       string                `toml:"credits"`
+		Authors       string                `toml:"authors"`
+		Description   string                `toml:"description"`
 	} `toml:"mods"`
 	Dependencies  map[string][]ForgeDependencies `toml:"dependencies"`
 	ModProperties map[string]string              `toml:"-"` // ignored

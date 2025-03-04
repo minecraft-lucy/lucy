@@ -143,7 +143,7 @@ type ModrinthVersion struct {
 	AuthorId        string                        `json:"author_id"`
 	Featured        bool                          `json:"featured"`
 	Name            string                        `json:"name"`
-	VersionNumber   lucytypes.PackageVersion      `json:"version_number"`
+	VersionNumber   lucytypes.RawVersion          `json:"version_number"`
 	Changelog       string                        `json:"changelog"`
 	ChangelogUrl    interface{}                   `json:"changelog_url"`
 	DatePublished   time.Time                     `json:"date_published"`

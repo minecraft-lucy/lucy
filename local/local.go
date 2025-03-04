@@ -308,7 +308,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Fabric,
 						Name:     lucytypes.PackageName(modInfo.Id),
-						Version:  lucytypes.PackageVersion(modInfo.Version),
+						Version:  lucytypes.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -338,7 +338,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Forge,
 						Name:     lucytypes.PackageName(modInfo.ModId),
-						Version:  lucytypes.PackageVersion(modInfo.Version),
+						Version:  lucytypes.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -394,7 +394,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 	return nil
 }
 
-func getForgeVariableVersion(zip *zip.Reader) lucytypes.PackageVersion {
+func getForgeVariableVersion(zip *zip.Reader) lucytypes.RawVersion {
 	var r io.ReadCloser
 	var err error
 	for _, f := range zip.File {
@@ -418,5 +418,5 @@ func getForgeVariableVersion(zip *zip.Reader) lucytypes.PackageVersion {
 	v := manifest[i:]
 	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
-	return lucytypes.PackageVersion(v)
+	return lucytypes.RawVersion(v)
 }
