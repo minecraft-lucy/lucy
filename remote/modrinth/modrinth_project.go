@@ -61,19 +61,22 @@ func getProjectByName(slug lucytypes.ProjectName) (
 	project = &datatypes.ModrinthProject{}
 	err = json.Unmarshal(data, project)
 	if err != nil {
-		return nil, ENoMember
+		return nil, ENoProject
 	}
 	return
 }
 
-func getProjectMembers(id string) (members []*datatypes.ModrinthMember) {
+func getProjectMembers(id string) (
+	members []*datatypes.ModrinthMember,
+	err error,
+) {
 	res, _ := http.Get(projectMemberUrl(id))
 	data, _ := io.ReadAll(res.Body)
-	err := json.Unmarshal(data, &members)
+	err = json.Unmarshal(data, &members)
 	if err != nil {
-		return nil
+		return nil, ENoMember
 	}
-	return
+	return members, nil
 }
 
 var ErrorInvalidDependency = errors.New("invalid dependency")

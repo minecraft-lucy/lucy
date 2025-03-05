@@ -187,17 +187,21 @@ err error,
 	}
 
 	// Fill in authors
-	members := getProjectMembers(project.Id)
-	for _, member := range members {
-		information.Author = append(
-			information.Author,
-			lucytypes.PackageMember{
-				Name:  member.User.Username,
-				Role:  member.Role,
-				Url:   userHomepageUrl(member.User.Id),
-				Email: member.User.Email,
-			},
-		)
+	members, err := getProjectMembers(project.Id)
+	if err != nil {
+		logger.WarnNow(err)
+	} else {
+		for _, member := range members {
+			information.Author = append(
+				information.Author,
+				lucytypes.PackageMember{
+					Name:  member.User.Username,
+					Role:  member.Role,
+					Url:   userHomepageUrl(member.User.Id),
+					Email: member.User.Email,
+				},
+			)
+		}
 	}
 
 	return information, nil

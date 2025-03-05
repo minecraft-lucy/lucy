@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"lucy/lucyerrors"
 	"slices"
 
@@ -71,10 +72,19 @@ var actionInfo cli.ActionFunc = func(
 			out = infoOutput(p)
 			break
 		}
-		return lucyerrors.ENotFound
+		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
+		logger.ErrorNow(err)
+		return err
 	case lucytypes.Fabric, lucytypes.Forge:
 		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
+		if err != nil {
+			logger.ErrorNow(err)
+		}
 		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
+		if err != nil {
+			logger.ErrorNow(err)
+			return err
+		}
 		out = infoOutput(p)
 	case lucytypes.Mcdr:
 		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(id.Name)
