@@ -61,10 +61,15 @@ var getExecutableInfo = tools.Memoize(
 			logger.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
 			if len(jarPaths) == 0 {
-				// if still no jars found in libraries, search the whole directory
-				logger.Info("still no server jar found, attempting even more aggressive search")
-				logger.Info("note that this may take a long time, and the accuracy is not guaranteed")
-				jarPaths = findJarRecursive(workPath)
+
+				// The following code is commented out due to the aggressive search
+				// being too slow and inaccurate. It is kept here for future reference.
+				//
+				// logger.Info("still no server jar found, attempting even more aggressive search")
+				// logger.Info("note that this may take a long time, and the accuracy is not guaranteed")
+				// jarPaths = findJarRecursive(workPath)
+
+				return nil
 			}
 			mu := sync.Mutex{}
 			wg := sync.WaitGroup{}
