@@ -3,8 +3,9 @@ package mojang
 import (
 	"encoding/json"
 	"io"
-	"lucy/datatypes"
 	"net/http"
+
+	"lucy/datatypes"
 )
 
 const VersionManifestURL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"

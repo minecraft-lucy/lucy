@@ -19,6 +19,8 @@ package cmd
 import (
 	"context"
 	"errors"
+	"slices"
+
 	"lucy/datatypes"
 	"lucy/logger"
 	"lucy/lucytypes"
@@ -27,7 +29,6 @@ import (
 	"lucy/remote/mcdr"
 	"lucy/syntax"
 	"lucy/tools"
-	"slices"
 
 	"github.com/urfave/cli/v3"
 )
@@ -46,9 +47,7 @@ var subcmdInfo = &cli.Command{
 	),
 }
 
-var (
-	ENotFound = errors.New("package not found")
-)
+var ENotFound = errors.New("package not found")
 
 var actionInfo cli.ActionFunc = func(
 	ctx context.Context,

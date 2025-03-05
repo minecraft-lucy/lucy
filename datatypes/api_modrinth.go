@@ -20,8 +20,9 @@ limitations under the License.
 package datatypes
 
 import (
-	"lucy/dependency"
 	"time"
+
+	"lucy/dependency"
 )
 
 // ModrinthProject is a struct that represents a Modrinth project, the basic

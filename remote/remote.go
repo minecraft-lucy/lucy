@@ -25,6 +25,7 @@ package remote
 import (
 	"errors"
 	"fmt"
+
 	"lucy/dependency"
 	"lucy/lucytypes"
 	"lucy/remote/modrinth"

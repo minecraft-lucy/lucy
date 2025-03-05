@@ -11,8 +11,8 @@ type Dependency struct {
 }
 
 func (d Dependency) Satisfy(
-id PackageId,
-v dependency.SemanticVersion,
+	id PackageId,
+	v dependency.SemanticVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false

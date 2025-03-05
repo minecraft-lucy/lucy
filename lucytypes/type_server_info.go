@@ -17,8 +17,9 @@ limitations under the License.
 package lucytypes
 
 import (
-	"lucy/dependency"
 	"os/exec"
+
+	"lucy/dependency"
 )
 
 // ServerInfo components that do not exist, use an empty string. Note Executable

@@ -30,13 +30,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"lucy/dependency"
-	"lucy/syntax"
 	"os"
 	"path"
 	"sort"
 	"strings"
 	"sync"
+
+	"lucy/dependency"
+	"lucy/syntax"
 
 	"github.com/pelletier/go-toml"
 

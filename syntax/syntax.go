@@ -32,8 +32,9 @@ package syntax
 
 import (
 	"errors"
-	"lucy/dependency"
 	"strings"
+
+	"lucy/dependency"
 
 	"lucy/logger"
 	"lucy/lucytypes"

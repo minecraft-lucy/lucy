@@ -56,6 +56,8 @@ func (v SemanticVersion) Validate() bool {
 	}
 }
 
-const maxWeek uint16 = 52 + 2
-const maxInWeekIndex = uint16('h')
-const minInWeekIndex = uint16('a')
+const (
+	maxWeek        uint16 = 52 + 2
+	maxInWeekIndex        = uint16('h')
+	minInWeekIndex        = uint16('a')
+)

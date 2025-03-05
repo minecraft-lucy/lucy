@@ -20,12 +20,13 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"io"
-	"lucy/dependency"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"lucy/dependency"
 
 	"github.com/pelletier/go-toml"
 

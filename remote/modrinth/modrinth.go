@@ -31,10 +31,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"lucy/dependency"
-	"lucy/syntax"
 	"net/http"
 	"strconv"
+
+	"lucy/dependency"
+	"lucy/syntax"
 
 	"lucy/datatypes"
 	"lucy/logger"
@@ -49,8 +50,8 @@ var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func Search(
-name lucytypes.ProjectName,
-options lucytypes.SearchOptions,
+	name lucytypes.ProjectName,
+	options lucytypes.SearchOptions,
 ) (result *lucytypes.SearchResults, err error) {
 	var facets []facetItems
 	switch options.Platform {
@@ -106,8 +107,8 @@ options lucytypes.SearchOptions,
 }
 
 func Fetch(id lucytypes.PackageId) (
-remote *lucytypes.PackageRemote,
-err error,
+	remote *lucytypes.PackageRemote,
+	err error,
 ) {
 	id = inferVersion(id)
 	project := getProjectByName(id.Name)
@@ -128,8 +129,8 @@ err error,
 }
 
 func Information(slug lucytypes.ProjectName) (
-information *lucytypes.ProjectInformation,
-err error,
+	information *lucytypes.ProjectInformation,
+	err error,
 ) {
 	project := getProjectByName(slug)
 	information = &lucytypes.ProjectInformation{
@@ -197,8 +198,8 @@ err error,
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
 func Support(id lucytypes.PackageId) (
-supports *lucytypes.ProjectSupports,
-err error,
+	supports *lucytypes.ProjectSupports,
+	err error,
 ) {
 	project := getProjectByName(id.Name)
 	supports = &lucytypes.ProjectSupports{

@@ -18,8 +18,9 @@ limitations under the License.
 package lucytypes
 
 import (
-	"lucy/dependency"
 	"strings"
+
+	"lucy/dependency"
 
 	"lucy/tools"
 )

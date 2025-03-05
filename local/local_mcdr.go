@@ -21,10 +21,11 @@ import (
 	"encoding/json"
 	"io"
 	"log"
-	"lucy/dependency"
-	"lucy/syntax"
 	"os"
 	"path"
+
+	"lucy/dependency"
+	"lucy/syntax"
 
 	"gopkg.in/yaml.v3"
 
