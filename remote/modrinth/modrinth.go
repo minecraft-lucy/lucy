@@ -87,7 +87,7 @@ options lucytypes.SearchOptions,
 		return result, ErrorInvalidAPIResponse
 	}
 	data, err := io.ReadAll(resp.Body)
-	defer tools.CloseReader(resp.Body, logger.Warning)
+	defer tools.CloseReader(resp.Body, logger.Warn)
 	var searchResults datatypes.ModrinthSearchResults
 	err = json.Unmarshal(data, &searchResults)
 	if err != nil {

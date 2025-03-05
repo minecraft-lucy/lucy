@@ -59,9 +59,9 @@ var checkServerFileLock = tools.Memoize(
 		}
 
 		file, err := os.OpenFile(lockPath, os.O_RDWR|os.O_APPEND, 0o666)
-		defer tools.CloseReader(file, logger.Warning)
+		defer tools.CloseReader(file, logger.Warn)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 			return nil
 		}
 
@@ -73,7 +73,7 @@ var checkServerFileLock = tools.Memoize(
 				Type: syscall.F_WRLCK,
 			}
 			err = syscall.FcntlFlock(file.Fd(), syscall.F_GETLK, &fl)
-			logger.Warning(
+			logger.Warn(
 				fmt.Errorf("activity detected but cannot get pid: %w", err),
 			)
 			if err != nil {
@@ -92,7 +92,7 @@ var checkServerFileLock = tools.Memoize(
 		logger.Debug("no lock found on the file: " + file.Name())
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 		}
 
 		return &lucytypes.Activity{

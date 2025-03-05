@@ -204,7 +204,7 @@ var getServerDotProperties = tools.Memoize(
 		file, err := ini.Load(propertiesPath)
 		if err != nil {
 			if exec != UnknownExecutable {
-				logger.Warning(errors.New("this server is missing a server.properties"))
+				logger.Warn(errors.New("this server is missing a server.properties"))
 			}
 			return nil
 		}
@@ -243,7 +243,7 @@ var getMods = tools.Memoize(
 		path := getServerModPath()
 		jarPaths, err := findJar(path)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 			logger.Info("this server might not have a mod folder")
 			return nil
 		}

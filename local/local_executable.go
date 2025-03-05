@@ -45,7 +45,7 @@ var getExecutableInfo = tools.Memoize(
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 			logger.Info("cannot read the current directory, most features will be disabled")
 		}
 		for _, jar := range jars {
@@ -230,7 +230,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Minecraft
 	reader, _ := versionJson.Open()
-	defer tools.CloseReader(reader, logger.Warning)
+	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
@@ -246,7 +246,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := installProperties.Open()
-	defer tools.CloseReader(r, logger.Warning)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
@@ -282,7 +282,7 @@ func analyzeFabricLauncher(
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := manifest.Open()
-	defer tools.CloseReader(r, logger.Warning)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 	if !strings.Contains(s, "Class-Path: ") {
@@ -309,7 +309,7 @@ func analyzeFabricLauncher(
 
 func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
-	defer tools.CloseReader(r, logger.Warning)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	p := &datatypes.ForgeModIdentifierNew{}
 	err := toml.Unmarshal(data, p)

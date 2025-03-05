@@ -53,8 +53,8 @@ func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
 }
 
 func getProjectByName(slug lucytypes.ProjectName) (
-project *datatypes.ModrinthProject,
-err error,
+	project *datatypes.ModrinthProject,
+	err error,
 ) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	data, _ := io.ReadAll(res.Body)
@@ -79,11 +79,11 @@ func getProjectMembers(id string) (members []*datatypes.ModrinthMember) {
 var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
-dependent lucytypes.PackageId,
-dependency *datatypes.ModrinthVersionDependencies,
+	dependent lucytypes.PackageId,
+	dependency *datatypes.ModrinthVersionDependencies,
 ) (
-p lucytypes.PackageId,
-err error,
+	p lucytypes.PackageId,
+	err error,
 ) {
 	var version *datatypes.ModrinthVersion
 	var project *datatypes.ModrinthProject

@@ -51,18 +51,18 @@ var getMcdrConfig = tools.Memoize(
 
 		configFile, err := os.Open(mcdrConfigFileName)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 		}
 
 		configData, err := io.ReadAll(configFile)
 		defer func(configFile io.ReadCloser) {
 			err := configFile.Close()
 			if err != nil {
-				logger.Warning(err)
+				logger.Warn(err)
 			}
 		}(configFile)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 		}
 
 		if err := yaml.Unmarshal(configData, config); err != nil {
@@ -93,14 +93,14 @@ var getMcdrPlugins = tools.Memoize(
 						pluginPath.Name(),
 					),
 				)
-				defer tools.CloseReader(pluginFile, logger.Warning)
+				defer tools.CloseReader(pluginFile, logger.Warn)
 				if err != nil {
-					logger.Warning(err)
+					logger.Warn(err)
 					continue
 				}
 				plugin, err := analyzeMcdrPlugin(pluginFile)
 				if err != nil {
-					logger.Warning(err)
+					logger.Warn(err)
 					continue
 				}
 				plugins = append(plugins, *plugin)

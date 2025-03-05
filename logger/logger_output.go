@@ -31,11 +31,11 @@ func pop() {
 }
 
 var color = map[logLevel]func(any) string{
-	lInfo:    tools.Cyan,
-	lWarning: tools.Yellow,
-	lError:   tools.Red,
-	lFatal:   tools.Red,
-	lDebug:   tools.Green,
+	lInfo:  tools.Cyan,
+	lWarn:  tools.Yellow,
+	lError: tools.Red,
+	lFatal: tools.Red,
+	lDebug: tools.Green,
 }
 
 func (level logLevel) prefix(colored bool) string {
@@ -48,17 +48,21 @@ func (level logLevel) prefix(colored bool) string {
 
 func writeItem(message *logItem) {
 	if toConsole {
-		_, _ = fmt.Fprintln(
-			os.Stderr,
-			message.Level.prefix(true),
-			message.Content,
-		)
+		writeToConsole(message)
 	}
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	_, _ = fmt.Fprintln(
 		LogFile,
 		timestamp,
 		message.Level.prefix(false),
+		message.Content,
+	)
+}
+
+func writeToConsole(message *logItem) {
+	_, _ = fmt.Fprintln(
+		os.Stderr,
+		message.Level.prefix(true),
 		message.Content,
 	)
 }

@@ -35,6 +35,12 @@ func UseConsoleOutput() {
 	toConsole = true
 }
 
+func WriteAll() {
+	for queue.Empty() == false {
+		pop()
+	}
+}
+
 var queue = singlylinkedlist.New()
 
 func createLogFactory(level logLevel) func(content error) {
@@ -43,13 +49,19 @@ func createLogFactory(level logLevel) func(content error) {
 	}
 }
 
+func writeNowFactory(level logLevel) func(content error) {
+	return func(content error) {
+		writeToConsole(&logItem{Level: level, Content: content})
+	}
+}
+
 var (
 	Info = func(content any) {
 		queue.Add(&logItem{Level: lInfo, Content: content})
 	}
-	Warning = createLogFactory(lWarning)
-	Error   = createLogFactory(lError)
-	Fatal   = func(content error) {
+	Warn  = createLogFactory(lWarn)
+	Error = createLogFactory(lError)
+	Fatal = func(content error) {
 		defer os.Exit(1)
 		createLogFactory(lFatal)(content)
 		WriteAll()
@@ -61,8 +73,12 @@ var (
 	}
 )
 
-func WriteAll() {
-	for queue.Empty() == false {
-		pop()
+// These functions bypass the toConsole flag and write directly to the console.
+// Use them to communicate with the user in a way that cannot be suppressed.
+var (
+	InfoNow = func(content any) {
+		writeToConsole(&logItem{Level: lInfo, Content: content})
 	}
-}
+	WarnNow  = writeNowFactory(lWarn)
+	ErrorNow = writeNowFactory(lError)
+)

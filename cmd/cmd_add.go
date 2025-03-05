@@ -99,7 +99,7 @@ var actionAdd cli.ActionFunc = func(
 	)
 	if err != nil {
 		if errors.Is(err, lucyerrors.NoLucyError) {
-			logger.Warning(err)
+			logger.Warn(err)
 		} else {
 			logger.Error(errors.New("failed at downloading: " + err.Error()))
 			return nil

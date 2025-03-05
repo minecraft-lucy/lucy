@@ -79,13 +79,13 @@ var actionInfo cli.ActionFunc = func(
 	case lucytypes.Mcdr:
 		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(id.Name)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warn(err)
 			break
 		}
 		out = mcdrPluginInfoToInfo(mcdrPlugin)
 	}
 	if err != nil {
-		logger.Warning(err)
+		logger.Warn(err)
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {
