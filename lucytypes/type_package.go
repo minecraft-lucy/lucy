@@ -68,7 +68,7 @@ type Package struct {
 	Remote       *PackageRemote
 
 	// Project data
-	Supports    *ProjectSupports
+	Supports    *ProjectSupport
 	Information *ProjectInformation
 }
 
@@ -121,7 +121,7 @@ type PackageUpdate struct {
 	Current *PackageRemote
 }
 
-type ProjectSupports struct {
+type ProjectSupport struct {
 	MinecraftVersions []dependency.RawVersion
 	Platforms         []Platform
 }

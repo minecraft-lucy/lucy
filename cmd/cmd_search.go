@@ -89,7 +89,7 @@ var actionSearch cli.ActionFunc = func(
 }
 
 func generateSearchOutput(
-	res *lucytypes.SearchResults,
+	res lucytypes.SearchResults,
 	showAll bool,
 ) *output.Data {
 	var results []string

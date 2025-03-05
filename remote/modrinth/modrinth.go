@@ -34,12 +34,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"lucy/dependency"
-	"lucy/syntax"
-
 	"lucy/datatypes"
+	"lucy/dependency"
 	"lucy/logger"
 	"lucy/lucytypes"
+	"lucy/syntax"
 	"lucy/tools"
 )
 
@@ -50,9 +49,13 @@ var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func Search(
-	name lucytypes.ProjectName,
-	options lucytypes.SearchOptions,
-) (result *lucytypes.SearchResults, err error) {
+name lucytypes.ProjectName,
+options lucytypes.SearchOptions,
+) (result lucytypes.SearchResults, err error) {
+	result = lucytypes.SearchResults{
+		Source:  lucytypes.UnknownSource,
+		Results: nil,
+	}
 	var facets []facetItems
 	switch options.Platform {
 	case lucytypes.Forge:
@@ -81,23 +84,22 @@ func Search(
 	logger.Debug("searching via modrinth api: " + searchUrl)
 	resp, err := http.Get(searchUrl)
 	if err != nil {
-		return nil, ErrorInvalidAPIResponse
+		return result, ErrorInvalidAPIResponse
 	}
 	data, err := io.ReadAll(resp.Body)
 	defer tools.CloseReader(resp.Body, logger.Warning)
 	var searchResults datatypes.ModrinthSearchResults
 	err = json.Unmarshal(data, &searchResults)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	if searchResults.Hits == nil {
-		return nil, nil
+		return result, nil
 	}
 	if searchResults.TotalHits > 100 {
 		logger.Info(strconv.Itoa(searchResults.TotalHits) + " results found on modrinth, only showing first 100")
 	}
 
-	result = &lucytypes.SearchResults{}
 	result.Results = make([]lucytypes.ProjectName, 0, len(searchResults.Hits))
 	result.Source = lucytypes.Modrinth
 	for _, hit := range searchResults.Hits {
@@ -107,14 +109,17 @@ func Search(
 }
 
 func Fetch(id lucytypes.PackageId) (
-	remote *lucytypes.PackageRemote,
-	err error,
+remote *lucytypes.PackageRemote,
+err error,
 ) {
 	id = inferVersion(id)
-	project := getProjectByName(id.Name)
+	project, err := getProjectByName(id.Name)
+	if err != nil {
+		return nil, err
+	}
 	version, err := getVersion(id)
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
 	fileUrl, filename := getFile(version)
 
@@ -129,10 +134,13 @@ func Fetch(id lucytypes.PackageId) (
 }
 
 func Information(slug lucytypes.ProjectName) (
-	information *lucytypes.ProjectInformation,
-	err error,
+information *lucytypes.ProjectInformation,
+err error,
 ) {
-	project := getProjectByName(slug)
+	project, err := getProjectByName(slug)
+	if err != nil {
+		return nil, err
+	}
 	information = &lucytypes.ProjectInformation{
 		Title:       project.Title,
 		Brief:       project.Description,
@@ -197,12 +205,12 @@ func Information(slug lucytypes.ProjectName) (
 
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
-func Support(id lucytypes.PackageId) (
-	supports *lucytypes.ProjectSupports,
-	err error,
+func Support(name lucytypes.ProjectName) (
+supports *lucytypes.ProjectSupport,
+err error,
 ) {
-	project := getProjectByName(id.Name)
-	supports = &lucytypes.ProjectSupports{
+	project, _ := getProjectByName(name)
+	supports = &lucytypes.ProjectSupport{
 		MinecraftVersions: make([]dependency.RawVersion, 0),
 		Platforms:         make([]lucytypes.Platform, 0),
 	}
@@ -227,17 +235,21 @@ func Support(id lucytypes.PackageId) (
 func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
 	infer.Platform = p.Platform
 	infer.Name = p.Name
+	var v *datatypes.ModrinthVersion
+	var err error
 
 	switch p.Version {
 	case dependency.LatestCompatibleVersion:
-		version := LatestCompatibleVersion(p.Name)
-		infer.Version = version.VersionNumber
+		v, err = LatestCompatibleVersion(p.Name)
 	case dependency.AllVersion, dependency.NoVersion, dependency.LatestVersion:
-		version := latestVersion(p.Name)
-		infer.Version = version.VersionNumber
+		v, err = latestVersion(p.Name)
 	default:
 		return p
 	}
+	if err != nil {
+		return p
+	}
+	infer.Version = v.VersionNumber
 
 	return infer
 }

@@ -18,7 +18,7 @@ package cmd
 
 import (
 	"context"
-	"errors"
+	"lucy/lucyerrors"
 	"slices"
 
 	"lucy/datatypes"
@@ -47,8 +47,6 @@ var subcmdInfo = &cli.Command{
 	),
 }
 
-var ENotFound = errors.New("package not found")
-
 var actionInfo cli.ActionFunc = func(
 	ctx context.Context,
 	cmd *cli.Command,
@@ -73,7 +71,7 @@ var actionInfo cli.ActionFunc = func(
 			out = infoOutput(p)
 			break
 		}
-		return ENotFound
+		return lucyerrors.ENotFound
 	case lucytypes.Fabric, lucytypes.Forge:
 		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
 		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)

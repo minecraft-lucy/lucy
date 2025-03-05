@@ -26,11 +26,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"lucy/dependency"
-
 	"github.com/pelletier/go-toml"
 
 	"lucy/datatypes"
+	"lucy/dependency"
 	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/output"
@@ -61,7 +60,6 @@ var getExecutableInfo = tools.Memoize(
 			logger.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
 			if len(jarPaths) == 0 {
-
 				// The following code is commented out due to the aggressive search
 				// being too slow and inaccurate. It is kept here for future reference.
 				//

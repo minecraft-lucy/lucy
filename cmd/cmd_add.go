@@ -88,7 +88,7 @@ var actionAdd cli.ActionFunc = func(
 		return nil
 	}
 
-	newestVersion := modrinth.LatestCompatibleVersion(p.Name)
+	newestVersion, _ := modrinth.LatestCompatibleVersion(p.Name)
 	downloadFile, err := util.DownloadFile(
 		// Not sure how to deal with multiple files
 		// As the motivation for publishers to provide multiple files is unclear

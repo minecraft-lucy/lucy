@@ -61,8 +61,8 @@ func Dependencies(
 	source lucytypes.Source,
 	id lucytypes.PackageId,
 ) (deps *lucytypes.PackageDependencies, err error) {
+	// TODO: Implement dependency fetching
 	switch source {
-
 	case lucytypes.Modrinth:
 		fallthrough
 	case lucytypes.CurseForge:
@@ -71,6 +71,23 @@ func Dependencies(
 		fallthrough
 	default:
 		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+	}
+}
+
+func Support(source lucytypes.Source, name lucytypes.ProjectName) (
+	supports *lucytypes.ProjectSupport,
+	err error,
+) {
+	switch source {
+	case lucytypes.Modrinth:
+		return modrinth.Support(name)
+	case lucytypes.CurseForge:
+		fallthrough
+	case lucytypes.McdrWebsite:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+
 	}
 }
 
@@ -98,12 +115,20 @@ func Search(
 	source lucytypes.Source,
 	name lucytypes.ProjectName,
 	option lucytypes.SearchOptions,
-) (res *lucytypes.SearchResults, err error) {
+) (res lucytypes.SearchResults, err error) {
 	switch source {
 	case lucytypes.Modrinth:
-		return modrinth.Search(name, option)
+		res, err = modrinth.Search(name, option)
+		if err != nil {
+			return res, err
+		}
+		return res, nil
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		res = lucytypes.SearchResults{
+			Source:  lucytypes.UnknownSource,
+			Results: nil,
+		}
+		return res, fmt.Errorf("%w: %s", ESourceNotSupported, source)
 	}
 }
 
