@@ -31,6 +31,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"lucy/dependency"
+	"lucy/syntax"
 	"net/http"
 	"strconv"
 
@@ -47,20 +49,19 @@ var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func Search(
-	packageId lucytypes.PackageId,
-	options lucytypes.SearchOptions,
+name lucytypes.ProjectName,
+options lucytypes.SearchOptions,
 ) (result *lucytypes.SearchResults, err error) {
 	var facets []facetItems
-	query := packageId.Name
-
-	switch packageId.Platform {
+	switch options.Platform {
 	case lucytypes.Forge:
 		facets = append(facets, facetForge)
 	case lucytypes.Fabric:
 		facets = append(facets, facetFabric)
+	case lucytypes.AllPlatform:
+		fallthrough
 	default:
 		facets = append(facets, facetForge, facetAllLoaders)
-
 	}
 
 	if options.ShowClientPackage {
@@ -73,10 +74,7 @@ func Search(
 		index:  options.IndexBy.ToModrinth(),
 		facets: facets,
 	}
-	searchUrl := searchUrl(
-		query,
-		internalOptions,
-	)
+	searchUrl := searchUrl(name, internalOptions)
 
 	// Make the call to Modrinth API
 	logger.Debug("searching via modrinth api: " + searchUrl)
@@ -99,17 +97,17 @@ func Search(
 	}
 
 	result = &lucytypes.SearchResults{}
-	result.Results = make([]string, 0, len(searchResults.Hits))
+	result.Results = make([]lucytypes.ProjectName, 0, len(searchResults.Hits))
 	result.Source = lucytypes.Modrinth
 	for _, hit := range searchResults.Hits {
-		result.Results = append(result.Results, hit.Slug)
+		result.Results = append(result.Results, syntax.PackageName(hit.Slug))
 	}
 	return result, nil
 }
 
 func Fetch(id lucytypes.PackageId) (
-	remote *lucytypes.PackageRemote,
-	err error,
+remote *lucytypes.PackageRemote,
+err error,
 ) {
 	id = inferVersion(id)
 	project := getProjectByName(id.Name)
@@ -129,13 +127,13 @@ func Fetch(id lucytypes.PackageId) (
 	return remote, nil
 }
 
-func Information(slug lucytypes.PackageName) (
-	information *lucytypes.PackageInformation,
-	err error,
+func Information(slug lucytypes.ProjectName) (
+information *lucytypes.ProjectInformation,
+err error,
 ) {
 	project := getProjectByName(slug)
-	information = &lucytypes.PackageInformation{
-		Name:        project.Title,
+	information = &lucytypes.ProjectInformation{
+		Title:       project.Title,
 		Brief:       project.Description,
 		Description: tools.MarkdownToPlainText(project.Body),
 		Author:      []lucytypes.PackageMember{},
@@ -196,85 +194,33 @@ func Information(slug lucytypes.PackageName) (
 	return information, nil
 }
 
-// Dependencies from Modrinth API is extremely unreliable. A local check (if any
+// Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
-func Dependencies(id lucytypes.PackageId) (dependencies *lucytypes.PackageDependencies) {
-	id = inferVersion(id)
+func Support(id lucytypes.PackageId) (
+supports *lucytypes.ProjectSupports,
+err error,
+) {
 	project := getProjectByName(id.Name)
-	version, _ := getVersion(id)
-	dependencies = &lucytypes.PackageDependencies{
-		SupportedVersions:  []lucytypes.RawVersion{},
-		SupportedPlatforms: []lucytypes.Platform{},
-		Required:           []lucytypes.PackageId{},
+	supports = &lucytypes.ProjectSupports{
+		MinecraftVersions: make([]dependency.RawVersion, 0),
+		Platforms:         make([]lucytypes.Platform, 0),
 	}
 
 	for _, version := range project.GameVersions {
-		dependencies.SupportedVersions = append(
-			dependencies.SupportedVersions,
-			lucytypes.RawVersion(version),
+		supports.MinecraftVersions = append(
+			supports.MinecraftVersions,
+			dependency.RawVersion(version),
 		)
 	}
 
 	for _, platform := range project.Loaders {
-		dependencies.SupportedPlatforms = append(
-			dependencies.SupportedPlatforms,
+		supports.Platforms = append(
+			supports.Platforms,
 			lucytypes.Platform(platform),
 		)
 	}
 
-	for _, dependency := range version.Dependencies {
-		switch dependency.DependencyType {
-		case datatypes.ModrinthVersionDependencyTypeIncompatible:
-			d, err := DependencyToPackage(id, &dependency)
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-			dependencies.Incompatible = append(
-				dependencies.Incompatible,
-				d,
-			)
-		case datatypes.ModrinthVersionDependencyTypeOptional:
-			d, err := DependencyToPackage(id, &dependency)
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-			dependencies.Optional = append(
-				dependencies.Optional,
-				d,
-			)
-		case datatypes.ModrinthVersionDependencyTypeRequired:
-			d, err := DependencyToPackage(id, &dependency)
-			if err != nil {
-				logger.Warning(err)
-				continue
-			}
-			dependencies.Required = append(
-				dependencies.Required,
-				d,
-			)
-		}
-	}
-
-	return dependencies
-}
-
-func GetProjectByName(packageName lucytypes.PackageName) (
-	project *datatypes.ModrinthProject,
-	err error,
-) {
-	res, err := http.Get(projectUrl(string(packageName)))
-	if err != nil {
-		return
-	}
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-	project = &datatypes.ModrinthProject{}
-	err = json.Unmarshal(data, project)
-	return
+	return supports, nil
 }
 
 func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
@@ -282,10 +228,10 @@ func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
 	infer.Name = p.Name
 
 	switch p.Version {
-	case lucytypes.AllVersion, lucytypes.NoVersion, lucytypes.LatestCompatibleVersion:
+	case dependency.LatestCompatibleVersion:
 		version := LatestCompatibleVersion(p.Name)
 		infer.Version = version.VersionNumber
-	case lucytypes.LatestVersion:
+	case dependency.AllVersion, dependency.NoVersion, dependency.LatestVersion:
 		version := latestVersion(p.Name)
 		infer.Version = version.VersionNumber
 	default:

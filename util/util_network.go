@@ -37,9 +37,9 @@ import (
 // All downloaded files are stored in .lucy/downloads/{subdir}/{filename}
 // Current policy for path is the slug of the package
 func DownloadFile(
-url string,
-subdir string,
-filename string,
+	url string,
+	subdir string,
+	filename string,
 ) (out *os.File, err error) {
 	if _, err := os.Stat(ProgramPath); os.IsNotExist(err) {
 		return nil, lucyerrors.NoLucyError
@@ -142,7 +142,7 @@ func MultiSourceDownload(urls []string, path string) {
 						"canceling:",
 						url,
 						"("+strconv.FormatInt(downloadedSize, 10)+"/"+
-						strconv.FormatInt(totalSize, 10), "bytes)",
+							strconv.FormatInt(totalSize, 10), "bytes)",
 					)
 					return
 				}
@@ -153,7 +153,7 @@ func MultiSourceDownload(urls []string, path string) {
 							"winning:",
 							url,
 							"("+strconv.FormatInt(downloadedSize, 10)+"/"+
-							strconv.FormatInt(totalSize, 10), "bytes)",
+								strconv.FormatInt(totalSize, 10), "bytes)",
 						)
 						win = true
 						data = &buffer

@@ -1,14 +1,13 @@
 package dependency
 
 import (
-	"lucy/lucytypes"
 	"strconv"
 	"strings"
 )
 
-func Parse(raw lucytypes.RawVersion, label VersionLabel) SemanticVersion {
+func Parse(raw RawVersion, label VersionLabel) SemanticVersion {
 	switch raw {
-	case lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion, lucytypes.NoVersion, lucytypes.AllVersion, lucytypes.UnknownVersion:
+	case LatestVersion, LatestCompatibleVersion, NoVersion, AllVersion, UnknownVersion:
 		return InvalidVersion
 	}
 	switch label {

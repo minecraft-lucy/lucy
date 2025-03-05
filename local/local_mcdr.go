@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"lucy/dependency"
+	"lucy/syntax"
 	"os"
 	"path"
 
@@ -137,8 +139,8 @@ func analyzeMcdrPlugin(file *os.File) (
 			return &lucytypes.Package{
 				Id: lucytypes.PackageId{
 					Platform: lucytypes.Mcdr,
-					Name:     lucytypes.PackageName(pluginInfo.Id),
-					Version:  lucytypes.RawVersion(pluginInfo.Version),
+					Name:     syntax.PackageName(pluginInfo.Id),
+					Version:  dependency.RawVersion(pluginInfo.Version),
 				},
 				Local: &lucytypes.PackageInstallation{
 					Path: file.Name(),

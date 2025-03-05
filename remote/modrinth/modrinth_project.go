@@ -20,13 +20,15 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	dependency2 "lucy/dependency"
+	"lucy/syntax"
 	"net/http"
 
 	"lucy/datatypes"
 	"lucy/lucytypes"
 )
 
-func getProjectId(slug lucytypes.PackageName) (id string) {
+func getProjectId(slug lucytypes.ProjectName) (id string) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	modrinthProject := datatypes.ModrinthProject{}
 	data, _ := io.ReadAll(res.Body)
@@ -43,7 +45,7 @@ func getProjectById(id string) (project *datatypes.ModrinthProject) {
 	return
 }
 
-func getProjectByName(slug lucytypes.PackageName) (project *datatypes.ModrinthProject) {
+func getProjectByName(slug lucytypes.ProjectName) (project *datatypes.ModrinthProject) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	data, _ := io.ReadAll(res.Body)
 	project = &datatypes.ModrinthProject{}
@@ -61,11 +63,11 @@ func getProjectMembers(id string) (members []*datatypes.ModrinthMember) {
 var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
-depedent lucytypes.PackageId,
-dependency *datatypes.ModrinthVersionDependencies,
+	depedent lucytypes.PackageId,
+	dependency *datatypes.ModrinthVersionDependencies,
 ) (
-p lucytypes.PackageId,
-err error,
+	p lucytypes.PackageId,
+	err error,
 ) {
 	var version *datatypes.ModrinthVersion
 	var project *datatypes.ModrinthProject
@@ -84,14 +86,14 @@ err error,
 	} else if dependency.ProjectId != "" {
 		project = getProjectById(dependency.ProjectId)
 		// This is not safe, TODO: use better inference method
-		version = latestVersion(lucytypes.PackageName(project.Slug))
-		p.Version = lucytypes.LatestVersion
+		version = latestVersion(lucytypes.ProjectName(project.Slug))
+		p.Version = dependency2.LatestVersion
 	} else {
 		return p, ErrorInvalidDependency
 	}
 
-	p.Name = lucytypes.PackageName(project.Slug)
-	p.Version = lucytypes.RawVersion(version.VersionNumber)
+	p.Name = syntax.PackageName(project.Slug)
+	p.Version = dependency2.RawVersion(version.VersionNumber)
 
 	return p, nil
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package lucytypes
 
 import (
+	"lucy/dependency"
 	"os/exec"
 )
 
@@ -35,9 +36,9 @@ type ServerInfo struct {
 
 type ExecutableInfo struct {
 	Path          string
-	GameVersion   RawVersion
+	GameVersion   dependency.RawVersion
 	Platform      Platform
-	LoaderVersion RawVersion
+	LoaderVersion dependency.RawVersion
 	BootCommand   *exec.Cmd
 }
 

@@ -16,6 +16,8 @@ limitations under the License.
 
 package lucytypes
 
+import "lucy/dependency"
+
 type PackageUrlType uint8
 
 const (
@@ -60,28 +62,27 @@ type Package struct {
 	// Id is the basic package identifier
 	Id PackageId
 
-	// Optional attributions
-	Information  *PackageInformation
+	// Package specific data
 	Dependencies *PackageDependencies
 	Local        *PackageInstallation
 	Remote       *PackageRemote
+
+	// Project data
+	Supports    *ProjectSupports
+	Information *ProjectInformation
 }
 
 // PackageDependencies is one of the optional attributions that can be added to
 // a Package struct. It is usually used in any command that requires operating
 // local packages, such as `lucy install` or `lucy remove`.
 type PackageDependencies struct {
-	SupportedVersions  []RawVersion
-	SupportedPlatforms []Platform
-	Required           []PackageId
-	Optional           []PackageId
-	Incompatible       []PackageId
+	Dependencies []Dependency
 }
 
-// PackageInformation is a struct that contains informational data about the
+// ProjectInformation is a struct that contains informational data about the
 // package. It is typically used in `lucy info`.
-type PackageInformation struct {
-	Name        string
+type ProjectInformation struct {
+	Title       string
 	Brief       string
 	Description string
 	Author      []PackageMember
@@ -118,4 +119,9 @@ type PackageRemote struct {
 type PackageUpdate struct {
 	// Just refer this to the PackageRemote under the same Package struct.
 	Current *PackageRemote
+}
+
+type ProjectSupports struct {
+	MinecraftVersions []dependency.RawVersion
+	Platforms         []Platform
 }

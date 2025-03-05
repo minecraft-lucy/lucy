@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"lucy/dependency"
 	"net/http"
 
 	"lucy/logger"
@@ -36,7 +37,7 @@ import (
 
 var ErrorVersionNotFound = errors.New("modrinth version not found")
 
-func listVersions(slug lucytypes.PackageName) (versions []*datatypes.ModrinthVersion) {
+func listVersions(slug lucytypes.ProjectName) (versions []*datatypes.ModrinthVersion) {
 	res, _ := http.Get(versionsUrl(slug))
 	data, _ := io.ReadAll(res.Body)
 	json.Unmarshal(data, &versions)
@@ -50,7 +51,7 @@ func getVersion(id lucytypes.PackageId) (
 	err error,
 ) {
 	versions := listVersions(id.Name)
-	if id.Version == lucytypes.LatestVersion {
+	if id.Version == dependency.LatestVersion {
 		return latestVersion(id.Name), nil
 	}
 	for _, version := range versions {
@@ -82,7 +83,7 @@ func versionSupportsLoader(
 	return false
 }
 
-func latestVersion(slug lucytypes.PackageName) (v *datatypes.ModrinthVersion) {
+func latestVersion(slug lucytypes.ProjectName) (v *datatypes.ModrinthVersion) {
 	versions := listVersions(slug)
 	for _, version := range versions {
 		if version.VersionType == "release" &&
@@ -98,7 +99,7 @@ func latestVersion(slug lucytypes.PackageName) (v *datatypes.ModrinthVersion) {
 	return v
 }
 
-func LatestCompatibleVersion(slug lucytypes.PackageName) (v *datatypes.ModrinthVersion) {
+func LatestCompatibleVersion(slug lucytypes.ProjectName) (v *datatypes.ModrinthVersion) {
 	versions := listVersions(slug)
 	serverInfo := local.GetServerInfo()
 	if serverInfo.Executable == local.UnknownExecutable {

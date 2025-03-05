@@ -73,8 +73,8 @@ var (
 	Cyan      = styleFactory(StyleCyanText)
 )
 
-// PrintAsJson is usually used for debugging purposes
-func PrintAsJson(v interface{}) {
+// PrintJson is usually used for debugging purposes
+func PrintJson(v interface{}) {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		fmt.Println(err)

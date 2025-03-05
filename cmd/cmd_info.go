@@ -18,18 +18,16 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"slices"
-	"strconv"
-
+	"errors"
 	"lucy/datatypes"
 	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/output"
+	"lucy/remote"
 	"lucy/remote/mcdr"
-	"lucy/remote/modrinth"
 	"lucy/syntax"
 	"lucy/tools"
+	"slices"
 
 	"github.com/urfave/cli/v3"
 )
@@ -38,14 +36,8 @@ var subcmdInfo = &cli.Command{
 	Name:  "info",
 	Usage: "Display information of a mod or plugin",
 	Flags: []cli.Flag{
-		// TODO: This flag is not yet implemented
-		&cli.BoolFlag{
-			Name:    "markdown",
-			Aliases: []string{"Md"},
-			Usage:   "Print raw Markdown",
-			Value:   false,
-		},
 		sourceFlag(lucytypes.Modrinth),
+		flagJsonOutput,
 	},
 	Action: tools.Decorate(
 		actionInfo,
@@ -54,84 +46,62 @@ var subcmdInfo = &cli.Command{
 	),
 }
 
+var (
+	ENotFound = errors.New("package not found")
+)
+
 var actionInfo cli.ActionFunc = func(
 	ctx context.Context,
 	cmd *cli.Command,
 ) error {
-	p := syntax.Parse(cmd.Args().First())
+	id := syntax.Parse(cmd.Args().First())
+	p := id.NewPackage()
 
-	var multiSourceData []*output.Data
+	var out *output.Data
+	var err error
 
-	switch p.Platform {
+	switch id.Platform {
 	case lucytypes.AllPlatform:
-		var packageFromModrinth lucytypes.Package
-		packageFromModrinth.Remote, _ = modrinth.Fetch(p)
-		packageFromModrinth.Information, _ = modrinth.Information(p.Name)
-		packageFromModrinth.Dependencies = modrinth.Dependencies(p)
-		multiSourceData = append(
-			multiSourceData,
-			cInfoOutput(packageFromModrinth),
-		)
-	case lucytypes.Fabric:
-		// TODO: Fabric specific search
-		modrinthProject, err := modrinth.GetProjectByName(p.Name)
-		if err != nil {
-			logger.Warning(err)
+		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
+		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
+		if err == nil {
+			out = infoOutput(p)
 			break
 		}
-		multiSourceData = append(
-			multiSourceData,
-			modrinthProjectToInfo(modrinthProject),
-		)
-	case lucytypes.Forge:
-		// TODO: Forge
-		logger.Fatal(fmt.Errorf("forge is not yet supported"))
+		p.Information, err = remote.Information(lucytypes.McdrWebsite, id.Name)
+		p.Remote, err = remote.Fetch(lucytypes.McdrWebsite, id)
+		if err == nil {
+			out = infoOutput(p)
+			break
+		}
+		return ENotFound
+	case lucytypes.Fabric, lucytypes.Forge:
+		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
+		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
+		out = infoOutput(p)
 	case lucytypes.Mcdr:
-		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(p.Name)
+		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(id.Name)
 		if err != nil {
 			logger.Warning(err)
 			break
 		}
-		multiSourceData = append(
-			multiSourceData,
-			mcdrPluginInfoToInfo(mcdrPlugin),
-		)
+		out = mcdrPluginInfoToInfo(mcdrPlugin)
 	}
-
-	for _, data := range multiSourceData {
-		output.Flush(data)
+	if err != nil {
+		logger.Warning(err)
+		return err
 	}
-
+	if cmd.Bool(flagJsonOutput.Name) {
+		tools.PrintJson(p)
+		return nil
+	}
+	output.Flush(out)
 	return nil
 }
 
 // TODO: Link to newest version
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
-
-func modrinthProjectToInfo(source *datatypes.ModrinthProject) *output.Data {
-	return &output.Data{
-		Fields: []output.Field{
-			&output.FieldShortText{
-				Title: "Name",
-				Text:  source.Title,
-			},
-			&output.FieldShortText{
-				Title: "Description",
-				Text:  source.Description,
-			},
-			&output.FieldShortText{
-				Title: "Downloads",
-				Text:  strconv.Itoa(source.Downloads),
-			},
-			&output.FieldLabels{
-				Title:    "Versions",
-				Labels:   source.GameVersions,
-				MaxWidth: 0,
-			},
-		},
-	}
-}
 
 func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
 	info := &output.Data{
@@ -168,7 +138,7 @@ func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
 	return info
 }
 
-func cInfoOutput(p lucytypes.Package) *output.Data {
+func infoOutput(p *lucytypes.Package) *output.Data {
 	o := &output.Data{
 		Fields: []output.Field{
 			&output.FieldAnnotation{
@@ -176,7 +146,7 @@ func cInfoOutput(p lucytypes.Package) *output.Data {
 			},
 			&output.FieldShortText{
 				Title: "Name",
-				Text:  p.Information.Name,
+				Text:  p.Information.Title,
 			},
 			&output.FieldShortText{
 				Title: "Description",
@@ -213,15 +183,16 @@ func cInfoOutput(p lucytypes.Package) *output.Data {
 
 	// TODO: Put current server version on the top
 	// TODO: Hide snapshot versions, except if the current server is using it
-	if !slices.Contains(p.Dependencies.SupportedPlatforms, lucytypes.Mcdr) &&
-		(p.Dependencies.SupportedPlatforms != nil || len(p.Dependencies.SupportedPlatforms) != 0) {
+	if p.Supports != nil &&
+		p.Supports.Platforms != nil &&
+		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
 		f := &output.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},
 			MaxWidth: 0,
 			MaxLines: tools.TermHeight() / 2,
 		}
-		for _, version := range p.Dependencies.SupportedVersions {
+		for _, version := range p.Supports.MinecraftVersions {
 			f.Labels = append(f.Labels, version.String())
 		}
 		o.Fields = append(o.Fields, f)

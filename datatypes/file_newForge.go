@@ -17,6 +17,7 @@ limitations under the License.
 package datatypes
 
 import (
+	"lucy/dependency"
 	"lucy/lucytypes"
 )
 
@@ -28,8 +29,8 @@ type ForgeModIdentifierNew struct {
 	LogoFile        string `toml:"logoFile"`
 	License         string `toml:"license"`
 	Mods            []struct {
-		ModID         lucytypes.PackageName `toml:"modId"`
-		Version       lucytypes.RawVersion  `toml:"version"`
+		ModID         lucytypes.ProjectName `toml:"modId"`
+		Version       dependency.RawVersion `toml:"version"`
 		DisplayName   string                `toml:"displayName"`
 		ItemIcon      string                `toml:"itemIcon"`
 		DisplayURL    string                `toml:"displayURL"`
@@ -44,7 +45,7 @@ type ForgeModIdentifierNew struct {
 }
 
 type ForgeDependencies struct {
-	ModID        lucytypes.PackageName `toml:"modId"`
+	ModID        lucytypes.ProjectName `toml:"modId"`
 	Mandatory    bool                  `toml:"mandatory"`
 	VersionRange string                `toml:"versionRange"`
 	Ordering     string                `toml:"ordering"`

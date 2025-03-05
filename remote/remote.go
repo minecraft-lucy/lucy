@@ -23,48 +23,87 @@ limitations under the License.
 package remote
 
 import (
+	"errors"
 	"fmt"
-	"lucy/logger"
+	"lucy/dependency"
 	"lucy/lucytypes"
+	"lucy/remote/modrinth"
 )
 
-func FetchSource(
+var (
+	ESourceNotSupported  = errors.New("source not supported")
+	ECannotInferPlatform = errors.New("cannot infer platform")
+	ECannotInferSource   = errors.New("cannot infer source") // This will be reintroduced when the auto source detection is implemented.
+)
+
+func Fetch(
 	source lucytypes.Source,
 	id lucytypes.PackageId,
-) (remote *lucytypes.PackageRemote) {
-	if source == lucytypes.Auto {
-		source = SelectSource(id.Platform)
-	}
-
+) (remote *lucytypes.PackageRemote, err error) {
 	switch source {
 	case lucytypes.Modrinth:
-		// return modrinth.Fetch(id)
+		fetch, err := modrinth.Fetch(id)
+		if err != nil {
+			return nil, err
+		}
+		return fetch, nil
+	case lucytypes.CurseForge:
+		fallthrough
+	case lucytypes.McdrWebsite:
+		fallthrough
 	default:
-		logger.Fatal(fmt.Errorf("source fetch not supported yet:" + source.String()))
+		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
 	}
-
-	return nil // unreachable
 }
 
-func GetDependencies(
+func Dependencies(
 	source lucytypes.Source,
 	id lucytypes.PackageId,
-) *lucytypes.PackageDependencies {
-	return nil
+) (deps *lucytypes.PackageDependencies, err error) {
+	switch source {
+
+	case lucytypes.Modrinth:
+		fallthrough
+	case lucytypes.CurseForge:
+		fallthrough
+	case lucytypes.McdrWebsite:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+	}
 }
 
-func GetInformation(
+func Information(
 	source lucytypes.Source,
-	id lucytypes.PackageId,
-) *lucytypes.PackageInformation {
-	return nil
+	name lucytypes.ProjectName,
+) (info *lucytypes.ProjectInformation, err error) {
+	switch source {
+	case lucytypes.Modrinth:
+		info, err = modrinth.Information(name)
+		if err != nil {
+			return nil, err
+		}
+		return info, nil
+	case lucytypes.CurseForge:
+		fallthrough
+	case lucytypes.McdrWebsite:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+	}
 }
 
-func SearchForProject(
+func Search(
 	source lucytypes.Source,
-	query string,
-) []lucytypes.PackageName {
-	return nil
+	name lucytypes.ProjectName,
+	option lucytypes.SearchOptions,
+) (res *lucytypes.SearchResults, err error) {
+	switch source {
+	case lucytypes.Modrinth:
+		return modrinth.Search(name, option)
+	default:
+		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+	}
 }
 
 // InferVersion replaces inferable version constants with their inferred versions
@@ -72,13 +111,16 @@ func SearchForProject(
 // SemanticVersion.
 //
 // TODO: Implement InferVersion for all RawVersion constants.
-func InferVersion(id lucytypes.PackageId) (infer lucytypes.PackageId) {
+func InferVersion(
+	source lucytypes.Source,
+	id lucytypes.PackageId,
+) (infer lucytypes.PackageId) {
 	switch id.Version {
-	case lucytypes.AllVersion, lucytypes.LatestVersion:
+	case dependency.AllVersion, dependency.LatestVersion:
 		// API call
-	case lucytypes.LatestCompatibleVersion:
+	case dependency.LatestCompatibleVersion:
 		// API call
-	case lucytypes.NoVersion, lucytypes.UnknownVersion:
+	case dependency.NoVersion, dependency.UnknownVersion:
 		// Do nothing
 	default:
 		// Do nothing

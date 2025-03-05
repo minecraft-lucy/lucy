@@ -18,6 +18,7 @@ limitations under the License.
 package lucytypes
 
 import (
+	"lucy/dependency"
 	"strings"
 
 	"lucy/tools"
@@ -30,17 +31,17 @@ import (
 type Platform string
 
 const (
+	AllPlatform     Platform = ""
 	Minecraft       Platform = "minecraft"
 	Fabric          Platform = "fabric"
 	Forge           Platform = "forge"
 	Neoforge        Platform = "neoforge"
 	Mcdr            Platform = "mcdr"
-	AllPlatform     Platform = "all"
 	UnknownPlatform Platform = "unknown"
 )
 
 func (p Platform) Title() string {
-	if p.IsAll() {
+	if p == AllPlatform {
 		return "Any"
 	}
 	if p.Valid() {
@@ -49,8 +50,11 @@ func (p Platform) Title() string {
 	return "Unknown"
 }
 
-func (p Platform) IsAll() bool {
-	return p == AllPlatform
+func (p Platform) String() string {
+	if p == AllPlatform {
+		return "any"
+	}
+	return string(p)
 }
 
 // Valid should be edited if you added a new platform.
@@ -72,7 +76,7 @@ func (p Platform) Eq(other Platform) bool {
 	return p == other
 }
 
-// PackageName is the slug of the package, using hyphens as separators. For example,
+// ProjectName is the slug of the package, using hyphens as separators. For example,
 // "fabric-api".
 //
 // It is non-case-sensitive, though lowercase is recommended. Underlines '_' are
@@ -81,22 +85,22 @@ func (p Platform) Eq(other Platform) bool {
 // A slug from an upstream API is preferred, if possible. Otherwise, the slug is
 // obtained from the executable file. No exceptions since a package must either
 // exist on a remote API or user's local files.
-type PackageName string
+type ProjectName string
 
 // Title Replaces underlines or hyphens with spaces, then capitalize the first
 // letter.
-func (p PackageName) Title() string {
+func (p ProjectName) Title() string {
 	return tools.Capitalize(strings.ReplaceAll(string(p), "-", " "))
 }
 
-func (p PackageName) String() string {
+func (p ProjectName) String() string {
 	return string(p)
 }
 
 type PackageId struct {
 	Platform Platform
-	Name     PackageName
-	Version  RawVersion
+	Name     ProjectName
+	Version  dependency.RawVersion
 }
 
 func (p PackageId) NewPackage() *Package {
@@ -116,50 +120,16 @@ func (p PackageId) String() string {
 	) +
 		string(p.Name) +
 		tools.Ternary(
-			p.Version == AllVersion,
+			p.Version == dependency.AllVersion,
 			"",
 			"@"+string(p.Version),
 		)
 }
 
 func (p PackageId) StringFull() string {
-	return string(p.Platform) + "/" + p.StringNameVersion()
+	return p.Platform.String() + "/" + p.StringNameVersion()
 }
 
 func (p PackageId) StringNameVersion() string {
 	return string(p.Name) + "@" + p.Version.String()
 }
-
-// RawVersion is the version of a package. Here we expect mods and plugins
-// use semver (which they should). A known exception is Minecraft snapshots.
-//
-// There are several special constant values for RawVersion. You MUST call
-// remote.InferVersion() before parsing them to SemanticVersion.
-type RawVersion string
-
-func (v RawVersion) String() string {
-	if v == AllVersion {
-		return "any"
-	}
-	if v == NoVersion || v == "" {
-		return "none"
-	}
-	if v == UnknownVersion {
-		return "unknown"
-	}
-	if v == LatestVersion {
-		return "latest"
-	}
-	if v == LatestCompatibleVersion {
-		return "compatible"
-	}
-	return string(v)
-}
-
-var (
-	AllVersion              RawVersion = "all"
-	NoVersion               RawVersion = "none"
-	UnknownVersion          RawVersion = "unknown"
-	LatestVersion           RawVersion = "latest"
-	LatestCompatibleVersion RawVersion = "compatible"
-)

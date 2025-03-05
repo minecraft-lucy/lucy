@@ -19,25 +19,23 @@ package lucytypes
 type Source uint8
 
 const (
-	Auto Source = iota
-	CurseForge
+	CurseForge Source = iota
 	Modrinth
 	GitHub
-	McdrRepo
+	McdrWebsite
 	UnknownSource
+	// Auto is temporarily removed.
 )
 
 func (s Source) String() string {
 	switch s {
-	case Auto:
-		return "auto"
 	case CurseForge:
 		return "curseforge"
 	case Modrinth:
 		return "modrinth"
 	case GitHub:
 		return "github"
-	case McdrRepo:
+	case McdrWebsite:
 		return "mcdr"
 	default:
 		return "unknown"
@@ -52,7 +50,7 @@ func (s Source) Title() string {
 		return "Modrinth"
 	case GitHub:
 		return "GitHub"
-	case McdrRepo:
+	case McdrWebsite:
 		return "MCDR"
 	default:
 		return "Unknown"

@@ -32,11 +32,16 @@ package syntax
 
 import (
 	"errors"
+	"lucy/dependency"
 	"strings"
 
 	"lucy/logger"
 	"lucy/lucytypes"
 )
+
+func PackageName(s string) lucytypes.ProjectName {
+	return lucytypes.ProjectName(sanitize(s))
+}
 
 // sanitize tolerates some common interchangeability between characters. This
 // includes underscores, chinese full stops, and backslashes. It also converts
@@ -87,8 +92,8 @@ func Parse(s string) (p lucytypes.PackageId) {
 // to a lower priority).
 func parseOperatorAt(s string) (
 	pl lucytypes.Platform,
-	n lucytypes.PackageName,
-	v lucytypes.RawVersion,
+	n lucytypes.ProjectName,
+	v dependency.RawVersion,
 	err error,
 ) {
 	split := strings.Split(s, "@")
@@ -99,10 +104,10 @@ func parseOperatorAt(s string) (
 	}
 
 	if len(split) == 1 {
-		v = lucytypes.AllVersion
+		v = dependency.AllVersion
 	} else if len(split) == 2 {
-		v = lucytypes.RawVersion(split[1])
-		if v == lucytypes.NoVersion || v == lucytypes.AllVersion {
+		v = dependency.RawVersion(split[1])
+		if v == dependency.NoVersion || v == dependency.AllVersion {
 			return "", "", "", ESyntax
 		}
 	} else {
@@ -114,27 +119,27 @@ func parseOperatorAt(s string) (
 
 func parseOperatorSlash(s string) (
 	pl lucytypes.Platform,
-	n lucytypes.PackageName,
+	n lucytypes.ProjectName,
 	err error,
 ) {
 	split := strings.Split(s, "/")
 
 	if len(split) == 1 {
 		pl = lucytypes.AllPlatform
-		n = lucytypes.PackageName(split[0])
+		n = lucytypes.ProjectName(split[0])
 		if lucytypes.Platform(n).Valid() {
 			// Remember, all platforms are also valid packages under themselves.
 			// This literal is for users to specify the platform itself. See the
 			// docs for syntaxtypes.Platform for more information.
 			pl = lucytypes.Platform(n)
-			n = lucytypes.PackageName(pl)
+			n = lucytypes.ProjectName(pl)
 		}
 	} else if len(split) == 2 {
 		pl = lucytypes.Platform(split[0])
 		if !pl.Valid() {
 			return "", "", EPlatform
 		}
-		n = lucytypes.PackageName(split[1])
+		n = lucytypes.ProjectName(split[1])
 	} else {
 		return "", "", ESyntax
 	}

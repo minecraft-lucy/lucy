@@ -30,6 +30,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"lucy/dependency"
+	"lucy/syntax"
 	"os"
 	"path"
 	"sort"
@@ -307,8 +309,8 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 				lucytypes.Package{
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Fabric,
-						Name:     lucytypes.PackageName(modInfo.Id),
-						Version:  lucytypes.RawVersion(modInfo.Version),
+						Name:     syntax.PackageName(modInfo.Id),
+						Version:  dependency.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -337,8 +339,8 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 				p := lucytypes.Package{
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Forge,
-						Name:     lucytypes.PackageName(modInfo.ModId),
-						Version:  lucytypes.RawVersion(modInfo.Version),
+						Name:     syntax.PackageName(modInfo.ModId),
+						Version:  dependency.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -394,29 +396,29 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 	return nil
 }
 
-func getForgeVariableVersion(zip *zip.Reader) lucytypes.RawVersion {
+func getForgeVariableVersion(zip *zip.Reader) dependency.RawVersion {
 	var r io.ReadCloser
 	var err error
 	for _, f := range zip.File {
 		if f.Name == javaManifest {
 			r, err = f.Open()
 			if err != nil {
-				return lucytypes.UnknownVersion
+				return dependency.UnknownVersion
 			}
 		}
 	}
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return lucytypes.UnknownVersion
+		return dependency.UnknownVersion
 	}
 	manifest := string(data)
 	const versionField = "Implementation-Version: "
 	i := strings.Index(manifest, versionField) + len(versionField)
 	if i == -1 {
-		return lucytypes.UnknownVersion
+		return dependency.UnknownVersion
 	}
 	v := manifest[i:]
 	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
-	return lucytypes.RawVersion(v)
+	return dependency.RawVersion(v)
 }

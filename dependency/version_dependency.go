@@ -1,7 +1,5 @@
 package dependency
 
-import "lucy/lucytypes"
-
 type VersionOperator uint8
 
 const (
@@ -13,35 +11,36 @@ const (
 	LessThanOrEqual
 )
 
-// Dependency can describe a dependency relationship. You MUST NOT use the
-// Id's PackageId.Version field. Instead, you should use the Value and Operator.
-type Dependency struct {
-	Id       lucytypes.PackageId
-	Value    SemanticVersion
-	Operator VersionOperator
+// RawVersion is the version of a package. Here we expect mods and plugins
+// use semver (which they should). A known exception is Minecraft snapshots.
+//
+// There are several special constant values for RawVersion. You MUST call
+// remote.InferVersion() before parsing them to SemanticVersion.
+type RawVersion string
+
+func (v RawVersion) String() string {
+	if v == AllVersion {
+		return "any"
+	}
+	if v == NoVersion || v == "" {
+		return "none"
+	}
+	if v == UnknownVersion {
+		return "unknown"
+	}
+	if v == LatestVersion {
+		return "latest"
+	}
+	if v == LatestCompatibleVersion {
+		return "compatible"
+	}
+	return string(v)
 }
 
-func (d Dependency) Satisfy(
-	id lucytypes.PackageId,
-	v SemanticVersion,
-) bool {
-	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
-		return false
-	}
-	switch d.Operator {
-	case Equal:
-		return v.Eq(d.Value)
-	case NotEqual:
-		return v.Neq(d.Value)
-	case GreaterThan:
-		return v.Gt(d.Value)
-	case GreaterThanOrEqual:
-		return v.Gte(d.Value)
-	case LessThan:
-		return v.Lt(d.Value)
-	case LessThanOrEqual:
-		return v.Lte(d.Value)
-	default:
-		return false
-	}
-}
+var (
+	AllVersion              RawVersion = "all"
+	NoVersion               RawVersion = "none"
+	UnknownVersion          RawVersion = "unknown"
+	LatestVersion           RawVersion = "latest"
+	LatestCompatibleVersion RawVersion = "compatible"
+)

@@ -28,21 +28,7 @@ import (
 	"lucy/syntax"
 )
 
-func mcdrPluginInfoToPackageInfo(s *datatypes.McdrPluginInfo) *lucytypes.Package {
-	name := lucytypes.PackageName(s.Id)
-
-	info := &lucytypes.Package{
-		Id: lucytypes.PackageId{
-			Platform: lucytypes.Mcdr,
-			Name:     name,
-			Version:  lucytypes.LatestVersion,
-		},
-	}
-
-	return info
-}
-
-func SearchMcdrPluginCatalogue(search lucytypes.PackageName) (
+func SearchMcdrPluginCatalogue(search lucytypes.ProjectName) (
 	pluginInfo *datatypes.McdrPluginInfo,
 	err error,
 ) {

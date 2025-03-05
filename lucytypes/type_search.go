@@ -19,6 +19,7 @@ package lucytypes
 type SearchOptions struct {
 	ShowClientPackage bool
 	IndexBy           SearchIndex
+	Platform          Platform
 }
 
 type SearchIndex string
@@ -29,7 +30,7 @@ const (
 	ByNewest    = "newest"
 )
 
-func (i SearchIndex) Validate() bool {
+func (i SearchIndex) Valid() bool {
 	switch i {
 	case ByRelevance, ByDownloads, ByNewest:
 		return true
@@ -51,9 +52,7 @@ func (i SearchIndex) ToModrinth() string {
 	}
 }
 
-// func (i SearchIndex) ToCurseForge() string
-
 type SearchResults struct {
 	Source  Source
-	Results []string // PackageNames
+	Results []ProjectName
 }

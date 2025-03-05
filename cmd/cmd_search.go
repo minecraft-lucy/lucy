@@ -42,7 +42,7 @@ var subcmdSearch = &cli.Command{
 			Usage:   "Index search results by `INDEX`",
 			Value:   "relevance",
 			Validator: func(s string) error {
-				if lucytypes.SearchIndex(s).Validate() {
+				if lucytypes.SearchIndex(s).Valid() {
 					return nil
 				}
 				return errors.New("must be one of \"relevance\", \"downloads\",\"newest\"")
@@ -74,7 +74,7 @@ var actionSearch cli.ActionFunc = func(
 	indexBy := lucytypes.SearchIndex(cmd.String("index"))
 
 	res, err := modrinth.Search(
-		p,
+		p.Name,
 		lucytypes.SearchOptions{
 			ShowClientPackage: showClientPackage,
 			IndexBy:           indexBy,
@@ -92,6 +92,10 @@ func generateSearchOutput(
 	res *lucytypes.SearchResults,
 	showAll bool,
 ) *output.Data {
+	var results []string
+	for _, r := range res.Results {
+		results = append(results, r.String())
+	}
 	return &output.Data{
 		Fields: []output.Field{
 			&output.FieldShortText{
@@ -100,7 +104,7 @@ func generateSearchOutput(
 			},
 			&output.FieldDynamicColumnLabels{
 				Title:    ">>>",
-				Labels:   res.Results,
+				Labels:   results,
 				MaxLines: tools.Ternary(showAll, 0, tools.TermHeight()-6),
 			},
 		},

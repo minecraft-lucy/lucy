@@ -20,7 +20,7 @@ limitations under the License.
 package datatypes
 
 import (
-	"lucy/lucytypes"
+	"lucy/dependency"
 	"time"
 )
 
@@ -142,7 +142,7 @@ type ModrinthVersion struct {
 	AuthorId        string                        `json:"author_id"`
 	Featured        bool                          `json:"featured"`
 	Name            string                        `json:"name"`
-	VersionNumber   lucytypes.RawVersion          `json:"version_number"`
+	VersionNumber   dependency.RawVersion         `json:"version_number"`
 	Changelog       string                        `json:"changelog"`
 	ChangelogUrl    interface{}                   `json:"changelog_url"`
 	DatePublished   time.Time                     `json:"date_published"`
