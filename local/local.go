@@ -180,8 +180,8 @@ func buildServerInfo() lucytypes.ServerInfo {
 
 var getServerModPath = tools.Memoize(
 	func() string {
-		exec := getExecutableInfo()
-		if exec.Platform == lucytypes.Fabric || exec.Platform == lucytypes.Forge {
+
+		if exec := getExecutableInfo(); exec != nil && (exec.Platform == lucytypes.Fabric || exec.Platform == lucytypes.Forge) {
 			return path.Join(getServerWorkPath(), "mods")
 		}
 		return ""

@@ -19,6 +19,8 @@ package tools
 import (
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -114,4 +116,20 @@ func Decorate[T interface{}](f T, decorators ...func(T) T) T {
 		f = decorator(f)
 	}
 	return f
+}
+
+// UnderCd checks if the path is under the current working directory (non-recursive).
+func UnderCd(path string) bool {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	cd, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+
+	parent := filepath.Dir(abs)
+	return parent == cd
 }

@@ -19,6 +19,15 @@ package output
 import (
 	"github.com/manifoldco/promptui"
 	"lucy/lucytypes"
+	"lucy/tools"
+)
+
+type PromptNote string
+
+var PromptNotePrefix = tools.Cyan("*") + " "
+
+var (
+	SuspectPrePackagedServer PromptNote = "This is likely a pre-packaged server. Therefore, you might want to ignore the paths, and only look for the executable with your expected game version and mod loader."
 )
 
 var selectExecutableTemplate = &promptui.SelectTemplates{
@@ -27,14 +36,21 @@ var selectExecutableTemplate = &promptui.SelectTemplates{
 	Selected: `{{ "✔︎" | green }} {{ .Path | bold }} [2m(Minecraft {{ .GameVersion }}, {{ if eq .Platform "minecraft" }}Vanilla{{ else }}{{ .Platform }} {{ .LoaderVersion }}{{ end }})[0m`,
 }
 
-func PromptSelectExecutable(executables []*lucytypes.ExecutableInfo) int {
-	// data, _ := json.MarshalIndent(executables, "", "  ")
-	// println(string(data))
+func PromptSelectExecutable(
+executables []*lucytypes.ExecutableInfo,
+note []PromptNote,
+) int {
+	prompt := selectExecutableTemplate
+	if note != nil {
+		for _, n := range note {
+			prompt.Details += PromptNotePrefix + string(n) + "\n"
+		}
+	}
 	selectExecutable := promptui.Select{
 		Label:     "Multiple possible executables detected, select one",
 		Items:     executables,
 		Templates: selectExecutableTemplate,
-		Size:      8,
+		Size:      max(8, len(executables)/3),
 	}
 	index, _, _ := selectExecutable.Run()
 	return index

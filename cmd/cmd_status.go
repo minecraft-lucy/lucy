@@ -38,8 +38,8 @@ var subcmdStatus = &cli.Command{
 }
 
 var actionStatus cli.ActionFunc = func(
-	_ context.Context,
-	cmd *cli.Command,
+_ context.Context,
+cmd *cli.Command,
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
@@ -51,10 +51,20 @@ var actionStatus cli.ActionFunc = func(
 }
 
 func serverInfoToStatus(
-	data *lucytypes.ServerInfo,
-	longOutput bool,
-) *output.Data {
-	status := &output.Data{
+data *lucytypes.ServerInfo,
+longOutput bool,
+) (status *output.Data) {
+	if data.Executable == nil {
+		return &output.Data{
+			Fields: []output.Field{
+				&output.FieldAnnotation{
+					Annotation: "(No server found)",
+				},
+			},
+		}
+	}
+
+	status = &output.Data{
 		Fields: []output.Field{},
 	}
 

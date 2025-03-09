@@ -94,8 +94,23 @@ var getExecutableInfo = tools.Memoize(
 		} else if len(valid) == 1 {
 			return valid[0]
 		}
-		index := output.PromptSelectExecutable(valid)
-		return valid[index]
+
+		var choice int
+		noExecUnderCd := true
+		for _, exec := range valid {
+			if tools.UnderCd(exec.Path) {
+				noExecUnderCd = false
+			}
+		}
+		if noExecUnderCd {
+			choice = output.PromptSelectExecutable(
+				valid,
+				[]output.PromptNote{output.SuspectPrePackagedServer},
+			)
+		} else {
+			choice = output.PromptSelectExecutable(valid, nil)
+		}
+		return valid[choice]
 	},
 )
 
