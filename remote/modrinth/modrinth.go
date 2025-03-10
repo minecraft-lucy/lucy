@@ -49,8 +49,8 @@ var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func Search(
-name lucytypes.ProjectName,
-options lucytypes.SearchOptions,
+	name lucytypes.ProjectName,
+	options lucytypes.SearchOptions,
 ) (result lucytypes.SearchResults, err error) {
 	result = lucytypes.SearchResults{
 		Source:  lucytypes.UnknownSource,
@@ -109,8 +109,8 @@ options lucytypes.SearchOptions,
 }
 
 func Fetch(id lucytypes.PackageId) (
-remote *lucytypes.PackageRemote,
-err error,
+	remote *lucytypes.PackageRemote,
+	err error,
 ) {
 	id = inferVersion(id)
 	project, err := getProjectByName(id.Name)
@@ -134,8 +134,8 @@ err error,
 }
 
 func Information(slug lucytypes.ProjectName) (
-information *lucytypes.ProjectInformation,
-err error,
+	information *lucytypes.ProjectInformation,
+	err error,
 ) {
 	project, err := getProjectByName(slug)
 	if err != nil {
@@ -210,8 +210,8 @@ err error,
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
 func Support(name lucytypes.ProjectName) (
-supports *lucytypes.ProjectSupport,
-err error,
+	supports *lucytypes.ProjectSupport,
+	err error,
 ) {
 	project, _ := getProjectByName(name)
 	supports = &lucytypes.ProjectSupport{

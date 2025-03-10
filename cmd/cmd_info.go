@@ -19,11 +19,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"lucy/lucyerrors"
 	"slices"
 
 	"lucy/datatypes"
 	"lucy/logger"
+	"lucy/lucyerrors"
 	"lucy/lucytypes"
 	"lucy/output"
 	"lucy/remote"

@@ -26,9 +26,7 @@ type PromptNote string
 
 var PromptNotePrefix = tools.Cyan("*") + " "
 
-var (
-	SuspectPrePackagedServer PromptNote = "This is likely a pre-packaged server. Therefore, you might want to ignore the paths, and only look for the executable with your expected game version and mod loader."
-)
+var SuspectPrePackagedServer PromptNote = "This is likely a pre-packaged server. Therefore, you might want to ignore the paths, and only look for the executable with your expected game version and mod loader."
 
 var selectExecutableTemplate = &promptui.SelectTemplates{
 	Active:   `{{ "●" | blue }} {{ .Path | bold }} [2m(Minecraft {{ .GameVersion }}, {{ if eq .Platform "minecraft" }}Vanilla{{ else }}{{ .Platform }} {{ .LoaderVersion }}{{ end }})[0m`,
@@ -37,8 +35,8 @@ var selectExecutableTemplate = &promptui.SelectTemplates{
 }
 
 func PromptSelectExecutable(
-executables []*lucytypes.ExecutableInfo,
-note []PromptNote,
+	executables []*lucytypes.ExecutableInfo,
+	note []PromptNote,
 ) int {
 	prompt := selectExecutableTemplate
 	if note != nil {
