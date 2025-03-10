@@ -36,7 +36,7 @@ var keyValueWriter = tabwriter.NewWriter(
 )
 
 func key(title string) {
-	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Mangeta(title)))
+	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta(title)))
 }
 
 func value(value string) {
@@ -56,7 +56,7 @@ func newLine() {
 }
 
 func tab() {
-	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Mangeta("")))
+	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta("")))
 }
 
 func flush() {

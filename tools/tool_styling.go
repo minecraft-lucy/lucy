@@ -19,59 +19,73 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"golang.org/x/term"
+	"strings"
 )
 
 const (
-	StyleReset = iota
-	StyleBold
-	StyleDim
-	StyleItalic
-	StyleUnderline
-	StyleBlackText = iota + 25
-	StyleRedText
-	StyleGreenText
-	StyleYellowText
-	StyleBlueText
-	StyleMagentaText
-	StyleCyanText
-	StyleWhiteText
+	styleReset = iota
+	styleBold
+	styleDim
+	styleItalic
+	styleUnderline
+	styleBlackText = iota + 25
+	styleRedText
+	styleGreenText
+	styleYellowText
+	styleBlueText
+	styleMagentaText
+	styleCyanText
+	styleWhiteText
 )
+
+var (
+	Bold      func(any) string
+	Dim       func(any) string
+	Italic    func(any) string
+	Underline func(any) string
+	Red       func(any) string
+	Green     func(any) string
+	Yellow    func(any) string
+	Blue      func(any) string
+	Magenta   func(any) string
+	Cyan      func(any) string
+)
+
+func renewStyleFunctions() {
+	Bold = styleFactory(styleBold)
+	Dim = styleFactory(styleDim)
+	Italic = styleFactory(styleItalic)
+	Underline = styleFactory(styleUnderline)
+	Red = styleFactory(styleRedText)
+	Green = styleFactory(styleGreenText)
+	Yellow = styleFactory(styleYellowText)
+	Blue = styleFactory(styleBlueText)
+	Magenta = styleFactory(styleMagentaText)
+	Cyan = styleFactory(styleCyanText)
+}
+
+func init() {
+	renewStyleFunctions()
+}
 
 const esc = '\u001B'
 
-func styleFactory(i int) func(any) string {
+var styleFactory = func(i int) func(any) string {
 	return func(v any) string {
 		s := v.(string)
-		return fmt.Sprintf("%c[%dm%s%c[%dm", esc, i, s, esc, StyleReset)
+		return fmt.Sprintf("%c[%dm%s%c[%dm", esc, i, s, esc, styleReset)
 	}
 }
 
-func Capitalize(v any) string {
-	s, ok := v.(string)
-	if !ok {
-		s = fmt.Sprintf("%v", v)
+func TurnOffStyles() {
+	styleFactory = func(i int) func(any) string {
+		return func(v any) string {
+			return v.(string)
+		}
 	}
-	if len(s) == 0 {
-		return ""
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
+	renewStyleFunctions()
 }
-
-var (
-	Bold      = styleFactory(StyleBold)
-	Dim       = styleFactory(StyleDim)
-	Italic    = styleFactory(StyleItalic)
-	Underline = styleFactory(StyleUnderline)
-	Red       = styleFactory(StyleRedText)
-	Green     = styleFactory(StyleGreenText)
-	Yellow    = styleFactory(StyleYellowText)
-	Blue      = styleFactory(StyleBlueText)
-	Mangeta   = styleFactory(StyleMagentaText)
-	Cyan      = styleFactory(StyleCyanText)
-)
 
 // PrintJson is usually used for debugging purposes
 func PrintJson(v interface{}) {
@@ -91,4 +105,15 @@ func TermWidth() int {
 func TermHeight() int {
 	_, height, _ := term.GetSize(0)
 	return height
+}
+
+func Capitalize(v any) string {
+	s, ok := v.(string)
+	if !ok {
+		s = fmt.Sprintf("%v", v)
+	}
+	if len(s) == 0 {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }

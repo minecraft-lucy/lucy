@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"lucy/tools"
 
 	"github.com/urfave/cli/v3"
 	"lucy/logger"
@@ -61,5 +62,14 @@ func helpOnErrorDecorator(f cli.ActionFunc) cli.ActionFunc {
 			cli.ShowAppHelpAndExit(cmd, 1)
 		}
 		return err
+	}
+}
+
+func noStyleDecorator(f cli.ActionFunc) cli.ActionFunc {
+	return func(ctx context.Context, cmd *cli.Command) error {
+		if cmd.Bool(flagNoStyle.Name) {
+			tools.TurnOffStyles()
+		}
+		return f(ctx, cmd)
 	}
 }

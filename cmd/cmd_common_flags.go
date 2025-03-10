@@ -50,3 +50,9 @@ func sourceFlag(absent lucytypes.Source) *cli.StringFlag {
 		},
 	}
 }
+
+var flagNoStyle = &cli.BoolFlag{
+	Name:  "no-style",
+	Usage: "Disable colored and styled output",
+	Value: false,
+}

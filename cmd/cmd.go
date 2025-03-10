@@ -39,6 +39,7 @@ var Cli = &cli.Command{
 		actionEmpty,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
+		noStyleDecorator,
 	),
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -59,6 +60,7 @@ var Cli = &cli.Command{
 			Usage:   "Print debug logs",
 			Value:   false,
 		},
+		flagNoStyle,
 	},
 	Commands: []*cli.Command{
 		subcmdStatus,
@@ -75,10 +77,10 @@ var Cli = &cli.Command{
 }
 
 var helpOnUsageError cli.OnUsageErrorFunc = func(
-ctx context.Context,
-cmd *cli.Command,
-err error,
-isSubcommand bool,
+	ctx context.Context,
+	cmd *cli.Command,
+	err error,
+	isSubcommand bool,
 ) error {
 	if isSubcommand {
 		fmt.Println(fmt.Errorf("invalid command: %s", err).Error())
@@ -89,8 +91,8 @@ isSubcommand bool,
 }
 
 var actionEmpty cli.ActionFunc = func(
-ctx context.Context,
-cmd *cli.Command,
+	ctx context.Context,
+	cmd *cli.Command,
 ) error {
 	return nil
 }

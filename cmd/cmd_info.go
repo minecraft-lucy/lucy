@@ -40,11 +40,13 @@ var subcmdInfo = &cli.Command{
 	Flags: []cli.Flag{
 		sourceFlag(lucytypes.Modrinth),
 		flagJsonOutput,
+		flagNoStyle,
 	},
 	Action: tools.Decorate(
 		actionInfo,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
+		noStyleDecorator,
 	),
 }
 

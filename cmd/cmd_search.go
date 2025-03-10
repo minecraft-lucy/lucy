@@ -56,11 +56,13 @@ var subcmdSearch = &cli.Command{
 		},
 		flagJsonOutput,
 		flagLongOutput,
+		flagNoStyle,
 	},
 	Action: tools.Decorate(
 		actionSearch,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
+		noStyleDecorator,
 	),
 }
 

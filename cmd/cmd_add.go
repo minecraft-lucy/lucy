@@ -42,11 +42,13 @@ var subcmdAdd = &cli.Command{
 			Usage:   "Ignore version, dependency, and platform warnings",
 			Value:   false,
 		},
+		flagNoStyle,
 	},
 	Action: tools.Decorate(
 		actionAdd,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
+		noStyleDecorator,
 	),
 }
 
@@ -106,7 +108,7 @@ var actionAdd cli.ActionFunc = func(
 		}
 	}
 
-	util.MoveFile(downloadFile, serverInfo.ModPath)
+	_ = util.MoveFile(downloadFile, serverInfo.ModPath)
 
 	return nil
 }

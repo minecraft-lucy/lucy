@@ -28,9 +28,13 @@ import (
 )
 
 var subcmdStatus = &cli.Command{
-	Name:   "status",
-	Usage:  "Display basic information of the current server",
-	Action: tools.Decorate(actionStatus, globalFlagsDecorator),
+	Name:  "status",
+	Usage: "Display basic information of the current server",
+	Action: tools.Decorate(
+		actionStatus,
+		globalFlagsDecorator,
+		noStyleDecorator,
+	),
 	Flags: []cli.Flag{
 		flagJsonOutput,
 		flagLongOutput,
