@@ -24,7 +24,7 @@ import (
 
 	"lucy/dependency"
 
-	"lucy/logger"
+	"lucy/lnout"
 
 	"lucy/datatypes"
 	"lucy/local"
@@ -118,10 +118,10 @@ func latestVersion(slug lucytypes.ProjectName) (
 		}
 	}
 	if v == nil {
-		logger.Info("no release version found for " + slug.Title())
+		lnout.Info("no release version found for " + slug.Title())
 		return nil, ENoVersion
 	} else {
-		logger.Debug("latest version of " + slug.String() + ": " + v.VersionNumber.String())
+		lnout.Debug("latest version of " + slug.String() + ": " + v.VersionNumber.String())
 	}
 	return v, nil
 }
@@ -136,7 +136,7 @@ func LatestCompatibleVersion(slug lucytypes.ProjectName) (
 	}
 	serverInfo := local.GetServerInfo()
 	if serverInfo.Executable == local.UnknownExecutable {
-		logger.Info("no executable found, unable to infer a compatible version. falling back to latest version")
+		lnout.Info("no executable found, unable to infer a compatible version. falling back to latest version")
 		v, err := latestVersion(slug)
 		if err != nil {
 			return nil, err

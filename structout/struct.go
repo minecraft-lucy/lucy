@@ -22,7 +22,7 @@ limitations under the License.
 // to the commandline.
 //
 // Note the field will not show if its content is empty
-package output
+package structout
 
 import (
 	"strconv"

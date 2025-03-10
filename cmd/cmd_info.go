@@ -22,12 +22,12 @@ import (
 	"slices"
 
 	"lucy/datatypes"
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucyerrors"
 	"lucy/lucytypes"
-	"lucy/output"
 	"lucy/remote"
 	"lucy/remote/mcdr"
+	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
 
@@ -57,7 +57,7 @@ var actionInfo cli.ActionFunc = func(
 	id := syntax.Parse(cmd.Args().First())
 	p := id.NewPackage()
 
-	var out *output.Data
+	var out *structout.Data
 	var err error
 
 	switch id.Platform {
@@ -75,36 +75,36 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
-		logger.ErrorNow(err)
+		lnout.ErrorNow(err)
 		return err
 	case lucytypes.Fabric, lucytypes.Forge:
 		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
 		if err != nil {
-			logger.ErrorNow(err)
+			lnout.ErrorNow(err)
 		}
 		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
 		if err != nil {
-			logger.ErrorNow(err)
+			lnout.ErrorNow(err)
 			return err
 		}
 		out = infoOutput(p)
 	case lucytypes.Mcdr:
 		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(id.Name)
 		if err != nil {
-			logger.Warn(err)
+			lnout.Warn(err)
 			break
 		}
 		out = mcdrPluginInfoToInfo(mcdrPlugin)
 	}
 	if err != nil {
-		logger.Warn(err)
+		lnout.Warn(err)
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {
 		tools.PrintJson(p)
 		return nil
 	}
-	output.Flush(out)
+	structout.Flush(out)
 	return nil
 }
 
@@ -112,23 +112,23 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
-	info := &output.Data{
-		Fields: []output.Field{
-			&output.FieldShortText{
+func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *structout.Data {
+	info := &structout.Data{
+		Fields: []structout.Field{
+			&structout.FieldShortText{
 				Title: "Name",
 				Text:  source.Id,
 			},
-			&output.FieldShortText{
+			&structout.FieldShortText{
 				Title: "Description",
 				Text:  source.Introduction.EnUs,
 			},
-			&output.FieldMultiShortTextWithAnnot{
+			&structout.FieldMultiShortTextWithAnnot{
 				Title:  "Authors",
 				Texts:  []string{},
 				Annots: []string{},
 			},
-			&output.FieldShortText{
+			&structout.FieldShortText{
 				Title: "Source Code",
 				Text:  tools.Underline(source.Repository),
 			},
@@ -137,7 +137,7 @@ func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
 
 	// This is temporary TODO: Use iota for fields instead
 	const authorsField = 2
-	a := info.Fields[authorsField].(*output.FieldMultiShortTextWithAnnot)
+	a := info.Fields[authorsField].(*structout.FieldMultiShortTextWithAnnot)
 
 	for _, p := range source.Authors {
 		a.Texts = append(a.Texts, p.Name)
@@ -147,17 +147,17 @@ func mcdrPluginInfoToInfo(source *datatypes.McdrPluginInfo) *output.Data {
 	return info
 }
 
-func infoOutput(p *lucytypes.Package) *output.Data {
-	o := &output.Data{
-		Fields: []output.Field{
-			&output.FieldAnnotation{
+func infoOutput(p *lucytypes.Package) *structout.Data {
+	o := &structout.Data{
+		Fields: []structout.Field{
+			&structout.FieldAnnotation{
 				Annotation: "(from " + p.Remote.Source.Title() + ")",
 			},
-			&output.FieldShortText{
+			&structout.FieldShortText{
 				Title: "Name",
 				Text:  p.Information.Title,
 			},
-			&output.FieldShortText{
+			&structout.FieldShortText{
 				Title: "Description",
 				Text:  p.Information.Brief,
 			},
@@ -174,7 +174,7 @@ func infoOutput(p *lucytypes.Package) *output.Data {
 
 	for _, url := range p.Information.Urls {
 		o.Fields = append(
-			o.Fields, &output.FieldShortText{
+			o.Fields, &structout.FieldShortText{
 				Title: url.Name,
 				Text:  tools.Underline(url.Url),
 			},
@@ -182,7 +182,7 @@ func infoOutput(p *lucytypes.Package) *output.Data {
 	}
 
 	o.Fields = append(
-		o.Fields, &output.FieldAnnotatedShortText{
+		o.Fields, &structout.FieldAnnotatedShortText{
 			Title:      "Download",
 			Text:       tools.Underline(p.Remote.FileUrl),
 			Annotation: p.Remote.Filename,
@@ -195,7 +195,7 @@ func infoOutput(p *lucytypes.Package) *output.Data {
 	if p.Supports != nil &&
 		p.Supports.Platforms != nil &&
 		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
-		f := &output.FieldLabels{
+		f := &structout.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},
 			MaxWidth: 0,

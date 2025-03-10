@@ -36,7 +36,7 @@ import (
 
 	"lucy/datatypes"
 	"lucy/dependency"
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucytypes"
 	"lucy/syntax"
 	"lucy/tools"
@@ -81,13 +81,13 @@ func Search(
 	searchUrl := searchUrl(name, internalOptions)
 
 	// Make the call to Modrinth API
-	logger.Debug("searching via modrinth api: " + searchUrl)
+	lnout.Debug("searching via modrinth api: " + searchUrl)
 	resp, err := http.Get(searchUrl)
 	if err != nil {
 		return result, ErrorInvalidAPIResponse
 	}
 	data, err := io.ReadAll(resp.Body)
-	defer tools.CloseReader(resp.Body, logger.Warn)
+	defer tools.CloseReader(resp.Body, lnout.Warn)
 	var searchResults datatypes.ModrinthSearchResults
 	err = json.Unmarshal(data, &searchResults)
 	if err != nil {
@@ -97,7 +97,7 @@ func Search(
 		return result, nil
 	}
 	if searchResults.TotalHits > 100 {
-		logger.Info(strconv.Itoa(searchResults.TotalHits) + " results found on modrinth, only showing first 100")
+		lnout.Info(strconv.Itoa(searchResults.TotalHits) + " results found on modrinth, only showing first 100")
 	}
 
 	result.Results = make([]lucytypes.ProjectName, 0, len(searchResults.Hits))
@@ -189,7 +189,7 @@ func Information(slug lucytypes.ProjectName) (
 	// Fill in authors
 	members, err := getProjectMembers(project.Id)
 	if err != nil {
-		logger.WarnNow(err)
+		lnout.WarnNow(err)
 	} else {
 		for _, member := range members {
 			information.Author = append(

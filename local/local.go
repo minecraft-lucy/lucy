@@ -44,7 +44,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"lucy/datatypes"
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucytypes"
 	"lucy/tools"
 )
@@ -203,7 +203,7 @@ var getServerDotProperties = tools.Memoize(
 		file, err := ini.Load(propertiesPath)
 		if err != nil {
 			if exec != UnknownExecutable {
-				logger.Warn(errors.New("this server is missing a server.properties"))
+				lnout.Warn(errors.New("this server is missing a server.properties"))
 			}
 			return nil
 		}
@@ -242,8 +242,8 @@ var getMods = tools.Memoize(
 		path := getServerModPath()
 		jarPaths, err := findJar(path)
 		if err != nil {
-			logger.Warn(err)
-			logger.Info("this server might not have a mod folder")
+			lnout.Warn(err)
+			lnout.Info("this server might not have a mod folder")
 			return nil
 		}
 

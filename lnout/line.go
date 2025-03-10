@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package logger
+package lnout
 
 import (
 	"os"
@@ -43,7 +43,7 @@ func WriteAll() {
 
 var queue = singlylinkedlist.New()
 
-func createLogFactory(level logLevel) func(content error) {
+func logQueuedFactory(level logLevel) func(content error) {
 	return func(content error) {
 		queue.Add(&logItem{Level: level, Content: content})
 	}
@@ -59,11 +59,11 @@ var (
 	Info = func(content any) {
 		queue.Add(&logItem{Level: lInfo, Content: content})
 	}
-	Warn  = createLogFactory(lWarn)
-	Error = createLogFactory(lError)
+	Warn  = logQueuedFactory(lWarn)
+	Error = logQueuedFactory(lError)
 	Fatal = func(content error) {
 		defer os.Exit(1)
-		createLogFactory(lFatal)(content)
+		logQueuedFactory(lFatal)(content)
 		WriteAll()
 	}
 	Debug = func(content any) {

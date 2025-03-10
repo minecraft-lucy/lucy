@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"lucy/local"
 	"lucy/lucytypes"
-	"lucy/output"
+	"lucy/structout"
 	"lucy/tools"
 )
 
@@ -49,7 +49,7 @@ var actionStatus cli.ActionFunc = func(
 	if cmd.Bool("json") {
 		tools.PrintJson(serverInfo)
 	} else {
-		output.Flush(serverInfoToStatus(&serverInfo, cmd.Bool("long")))
+		structout.Flush(serverInfoToStatus(&serverInfo, cmd.Bool("long")))
 	}
 	return nil
 }
@@ -57,23 +57,23 @@ var actionStatus cli.ActionFunc = func(
 func serverInfoToStatus(
 	data *lucytypes.ServerInfo,
 	longOutput bool,
-) (status *output.Data) {
+) (status *structout.Data) {
 	if data.Executable == nil {
-		return &output.Data{
-			Fields: []output.Field{
-				&output.FieldAnnotation{
+		return &structout.Data{
+			Fields: []structout.Field{
+				&structout.FieldAnnotation{
 					Annotation: "(No server found)",
 				},
 			},
 		}
 	}
 
-	status = &output.Data{
-		Fields: []output.Field{},
+	status = &structout.Data{
+		Fields: []structout.Field{},
 	}
 
 	status.Fields = append(
-		status.Fields, &output.FieldAnnotatedShortText{
+		status.Fields, &structout.FieldAnnotatedShortText{
 			Title:      "Game",
 			Text:       data.Executable.GameVersion.String(),
 			Annotation: data.Executable.Path,
@@ -83,7 +83,7 @@ func serverInfoToStatus(
 
 	if data.Executable.Platform != lucytypes.Minecraft {
 		status.Fields = append(
-			status.Fields, &output.FieldAnnotatedShortText{
+			status.Fields, &structout.FieldAnnotatedShortText{
 				Title:      "Modding",
 				Text:       data.Executable.Platform.Title(),
 				Annotation: data.Executable.LoaderVersion.String(),
@@ -94,7 +94,7 @@ func serverInfoToStatus(
 
 	if data.Activity != nil {
 		status.Fields = append(
-			status.Fields, &output.FieldAnnotatedShortText{
+			status.Fields, &structout.FieldAnnotatedShortText{
 				Title: "Activity",
 				Text: tools.Ternary(
 					data.Activity.Active,
@@ -111,7 +111,7 @@ func serverInfoToStatus(
 		)
 	} else {
 		status.Fields = append(
-			status.Fields, &output.FieldShortText{
+			status.Fields, &structout.FieldShortText{
 				Title: "Activity",
 				Text:  tools.Dim("(Unknown)"),
 			},
@@ -136,15 +136,15 @@ func serverInfoToStatus(
 			}
 			status.Fields = append(
 				status.Fields,
-				tools.Ternary[output.Field](
+				tools.Ternary[structout.Field](
 					longOutput,
-					&output.FieldMultiShortTextWithAnnot{
+					&structout.FieldMultiShortTextWithAnnot{
 						Title:     "Mods",
 						Texts:     modNames,
 						Annots:    modPaths,
 						ShowTotal: true,
 					},
-					&output.FieldDynamicColumnLabels{
+					&structout.FieldDynamicColumnLabels{
 						Title:     "Mods",
 						Labels:    modNames,
 						MaxLines:  0,
@@ -154,7 +154,7 @@ func serverInfoToStatus(
 			)
 		} else {
 			status.Fields = append(
-				status.Fields, &output.FieldMultiShortTextWithAnnot{
+				status.Fields, &structout.FieldMultiShortTextWithAnnot{
 					Title:     "Mods",
 					Texts:     []string{tools.Dim("(None)")},
 					Annots:    nil,
@@ -182,7 +182,7 @@ func serverInfoToStatus(
 			)
 		}
 		status.Fields = append(
-			status.Fields, &output.FieldMultiShortTextWithAnnot{
+			status.Fields, &structout.FieldMultiShortTextWithAnnot{
 				Title:     "MCDR Plugins",
 				Texts:     pluginNames,
 				Annots:    pluginPaths,

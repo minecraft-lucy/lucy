@@ -21,7 +21,7 @@ import (
 	"strings"
 	"text/template"
 
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucytypes"
 )
 
@@ -73,7 +73,7 @@ func searchUrl(
 		},
 	)
 	if err != nil {
-		logger.Error(err)
+		lnout.Error(err)
 	}
 
 	urlString = urlBuilder.String()

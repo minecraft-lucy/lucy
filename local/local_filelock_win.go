@@ -22,7 +22,7 @@ import (
 	"os"
 	"path"
 
-	"lucy/logger"
+	"lucy/lnout"
 
 	"golang.org/x/sys/windows"
 	"lucy/lucytypes"
@@ -38,7 +38,7 @@ var checkServerFileLock = tools.Memoize(
 			"session.lock",
 		)
 		file, err := os.OpenFile(lockPath, os.O_RDWR, 0o666)
-		defer tools.CloseReader(file, logger.Warn)
+		defer tools.CloseReader(file, lnout.Warn)
 
 		if err != nil {
 			return nil

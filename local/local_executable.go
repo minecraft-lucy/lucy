@@ -30,9 +30,9 @@ import (
 
 	"lucy/datatypes"
 	"lucy/dependency"
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucytypes"
-	"lucy/output"
+	"lucy/structout"
 	"lucy/tools"
 )
 
@@ -45,8 +45,8 @@ var getExecutableInfo = tools.Memoize(
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
-			logger.Warn(err)
-			logger.Info("cannot read the current directory, most features will be disabled")
+			lnout.Warn(err)
+			lnout.Info("cannot read the current directory, most features will be disabled")
 		}
 		for _, jar := range jars {
 			exec := analyzeExecutable(jar)
@@ -57,7 +57,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			logger.Info("no server jar found, trying to find under libraries")
+			lnout.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
 			if len(jarPaths) == 0 {
 				// The following code is commented out due to the aggressive search
@@ -89,7 +89,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			logger.Info("no server under current directory")
+			lnout.Info("no server under current directory")
 			return UnknownExecutable
 		} else if len(valid) == 1 {
 			return valid[0]
@@ -103,12 +103,12 @@ var getExecutableInfo = tools.Memoize(
 			}
 		}
 		if noExecUnderCd {
-			choice = output.PromptSelectExecutable(
+			choice = structout.PromptSelectExecutable(
 				valid,
-				[]output.PromptNote{output.SuspectPrePackagedServer},
+				[]structout.PromptNote{structout.SuspectPrePackagedServer},
 			)
 		} else {
-			choice = output.PromptSelectExecutable(valid, nil)
+			choice = structout.PromptSelectExecutable(valid, nil)
 		}
 		return valid[choice]
 	},
@@ -145,7 +145,7 @@ func findJarRecursive(dir string) (jarFiles []string) {
 	// TODO: Use semaphore to limit the number of goroutines
 	for _, entry := range entries {
 		if atomic.LoadInt32(&fileCount) >= fileCountThreshold {
-			logger.Info("file count threshold reached, stopping search")
+			lnout.Info("file count threshold reached, stopping search")
 			break
 		}
 		if entry.IsDir() {
@@ -245,7 +245,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Minecraft
 	reader, _ := versionJson.Open()
-	defer tools.CloseReader(reader, logger.Warn)
+	defer tools.CloseReader(reader, lnout.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
@@ -261,7 +261,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := installProperties.Open()
-	defer tools.CloseReader(r, logger.Warn)
+	defer tools.CloseReader(r, lnout.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
@@ -297,7 +297,7 @@ func analyzeFabricLauncher(
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := manifest.Open()
-	defer tools.CloseReader(r, logger.Warn)
+	defer tools.CloseReader(r, lnout.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 	if !strings.Contains(s, "Class-Path: ") {
@@ -324,7 +324,7 @@ func analyzeFabricLauncher(
 
 func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
-	defer tools.CloseReader(r, logger.Warn)
+	defer tools.CloseReader(r, lnout.Warn)
 	data, _ := io.ReadAll(r)
 	p := &datatypes.ForgeModIdentifierNew{}
 	err := toml.Unmarshal(data, p)

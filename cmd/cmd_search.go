@@ -22,10 +22,10 @@ import (
 	"strconv"
 
 	"github.com/urfave/cli/v3"
-	"lucy/logger"
+	"lucy/lnout"
 	"lucy/lucytypes"
-	"lucy/output"
 	"lucy/remote/modrinth"
+	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
 )
@@ -83,9 +83,9 @@ var actionSearch cli.ActionFunc = func(
 		},
 	)
 	if err != nil {
-		logger.Fatal(err)
+		lnout.Fatal(err)
 	}
-	output.Flush(generateSearchOutput(res, cmd.Bool("long")))
+	structout.Flush(generateSearchOutput(res, cmd.Bool("long")))
 
 	return nil
 }
@@ -93,18 +93,18 @@ var actionSearch cli.ActionFunc = func(
 func generateSearchOutput(
 	res lucytypes.SearchResults,
 	showAll bool,
-) *output.Data {
+) *structout.Data {
 	var results []string
 	for _, r := range res.Results {
 		results = append(results, r.String())
 	}
-	return &output.Data{
-		Fields: []output.Field{
-			&output.FieldShortText{
+	return &structout.Data{
+		Fields: []structout.Field{
+			&structout.FieldShortText{
 				Title: "#  ",
 				Text:  strconv.Itoa(len(res.Results)),
 			},
-			&output.FieldDynamicColumnLabels{
+			&structout.FieldDynamicColumnLabels{
 				Title:    ">>>",
 				Labels:   results,
 				MaxLines: tools.Ternary(showAll, 0, tools.TermHeight()-6),

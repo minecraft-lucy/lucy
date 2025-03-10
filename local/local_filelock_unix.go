@@ -29,7 +29,7 @@ import (
 	"strings"
 	"syscall"
 
-	"lucy/logger"
+	"lucy/lnout"
 
 	"lucy/lucytypes"
 	"lucy/tools"
@@ -59,21 +59,21 @@ var checkServerFileLock = tools.Memoize(
 		}
 
 		file, err := os.OpenFile(lockPath, os.O_RDWR|os.O_APPEND, 0o666)
-		defer tools.CloseReader(file, logger.Warn)
+		defer tools.CloseReader(file, lnout.Warn)
 		if err != nil {
-			logger.Warn(err)
+			lnout.Warn(err)
 			return nil
 		}
 
-		logger.Debug("checking lock on: " + file.Name())
+		lnout.Debug("checking lock on: " + file.Name())
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		if errors.Is(err, syscall.EWOULDBLOCK) {
-			logger.Debug("found a lock on the file: " + err.Error())
+			lnout.Debug("found a lock on the file: " + err.Error())
 			fl := syscall.Flock_t{
 				Type: syscall.F_WRLCK,
 			}
 			err = syscall.FcntlFlock(file.Fd(), syscall.F_GETLK, &fl)
-			logger.Warn(
+			lnout.Warn(
 				fmt.Errorf("activity detected but cannot get pid: %w", err),
 			)
 			if err != nil {
@@ -89,10 +89,10 @@ var checkServerFileLock = tools.Memoize(
 		} else if err != nil {
 			return nil
 		}
-		logger.Debug("no lock found on the file: " + file.Name())
+		lnout.Debug("no lock found on the file: " + file.Name())
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
 		if err != nil {
-			logger.Warn(err)
+			lnout.Warn(err)
 		}
 
 		return &lucytypes.Activity{
@@ -110,7 +110,7 @@ func lsof(filePath string) (pid int, err error) {
 	if err != nil {
 		return 0, err
 	}
-	logger.Debug("got output from lsof:\n" + out.String())
+	lnout.Debug("got output from lsof:\n" + out.String())
 
 	lines := strings.Split(out.String(), "\n")
 	outputBegin := 0
