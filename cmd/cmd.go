@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"lucy/tools"
 
@@ -66,11 +67,30 @@ var Cli = &cli.Command{
 		subcmdAdd,
 		subcmdInit,
 	},
+	EnableShellCompletion:  true,
+	Suggest:                true,
+	UseShortOptionHandling: true,
+	DefaultCommand:         "help",
+	OnUsageError:           helpOnUsageError,
+}
+
+var helpOnUsageError cli.OnUsageErrorFunc = func(
+ctx context.Context,
+cmd *cli.Command,
+err error,
+isSubcommand bool,
+) error {
+	if isSubcommand {
+		fmt.Println(fmt.Errorf("invalid command: %s", err).Error())
+		cli.ShowAppHelpAndExit(cmd, 1)
+	}
+	fmt.Println(err.Error())
+	return err
 }
 
 var actionEmpty cli.ActionFunc = func(
-	ctx context.Context,
-	cmd *cli.Command,
+ctx context.Context,
+cmd *cli.Command,
 ) error {
 	return nil
 }

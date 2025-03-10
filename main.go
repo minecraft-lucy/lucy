@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"lucy/cmd"
@@ -29,5 +30,7 @@ func main() {
 		logger.Debug("program finished with exit code 0")
 		logger.WriteAll()
 	}()
-	cmd.Cli.Run(context.Background(), os.Args)
+	if err := cmd.Cli.Run(context.Background(), os.Args); err != nil {
+		log.Println(err)
+	}
 }
