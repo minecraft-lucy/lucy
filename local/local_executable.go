@@ -20,6 +20,7 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"io"
+	"lucy/prompt"
 	"os"
 	"path"
 	"strings"
@@ -32,7 +33,6 @@ import (
 	"lucy/dependency"
 	"lucy/lnout"
 	"lucy/lucytypes"
-	"lucy/structout"
 	"lucy/tools"
 )
 
@@ -103,12 +103,12 @@ var getExecutableInfo = tools.Memoize(
 			}
 		}
 		if noExecUnderCd {
-			choice = structout.PromptSelectExecutable(
+			choice = prompt.SelectExecutable(
 				valid,
-				[]structout.PromptNote{structout.SuspectPrePackagedServer},
+				[]prompt.Note{prompt.NoteSuspectPrePackagedServer},
 			)
 		} else {
-			choice = structout.PromptSelectExecutable(valid, nil)
+			choice = prompt.SelectExecutable(valid, nil)
 		}
 		return valid[choice]
 	},
