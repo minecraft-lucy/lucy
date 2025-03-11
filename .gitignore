@@ -35,4 +35,7 @@ go.work.sum
 dist
 
 # Testing server
-test_server*
+test_*
+
+# Documents
+documents
