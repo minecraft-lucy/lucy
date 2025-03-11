@@ -23,6 +23,10 @@ import (
 	"strings"
 )
 
+func init() {
+	renewStyleFunctions()
+}
+
 const (
 	styleReset = iota
 	styleBold
@@ -38,6 +42,8 @@ const (
 	styleCyanText
 	styleWhiteText
 )
+
+const esc = '\u001B'
 
 var (
 	Bold      func(any) string
@@ -65,26 +71,31 @@ func renewStyleFunctions() {
 	Cyan = styleFactory(styleCyanText)
 }
 
-func init() {
-	renewStyleFunctions()
-}
-
-const esc = '\u001B'
-
-var styleFactory = func(i int) func(any) string {
-	return func(v any) string {
-		s := v.(string)
-		return fmt.Sprintf("%c[%dm%s%c[%dm", esc, i, s, esc, styleReset)
-	}
-}
-
 func TurnOffStyles() {
 	styleFactory = func(i int) func(any) string {
 		return func(v any) string {
-			return v.(string)
+			switch v := v.(type) {
+			case rune:
+				return string(v)
+			default:
+				return fmt.Sprintf("%v", v)
+			}
 		}
 	}
 	renewStyleFunctions()
+}
+
+var styleFactory = func(i int) func(any) string {
+	return func(v any) string {
+		var s string
+		switch v := v.(type) {
+		case rune:
+			s = string(v)
+		default:
+			s = fmt.Sprintf("%v", v)
+		}
+		return fmt.Sprintf("%c[%dm%s%c[%dm", esc, i, s, esc, styleReset)
+	}
 }
 
 // PrintJson is usually used for debugging purposes

@@ -62,7 +62,6 @@ var subcmdSearch = &cli.Command{
 		actionSearch,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
-		noStyleDecorator,
 	),
 }
 

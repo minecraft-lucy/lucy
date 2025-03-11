@@ -46,7 +46,6 @@ var subcmdInfo = &cli.Command{
 		actionInfo,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
-		noStyleDecorator,
 	),
 }
 

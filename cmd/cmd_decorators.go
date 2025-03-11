@@ -37,6 +37,9 @@ func globalFlagsDecorator(f cli.ActionFunc) cli.ActionFunc {
 		if cmd.Bool("debug") {
 			lnout.UseDebug()
 		}
+		if cmd.Bool("no-style") {
+			tools.TurnOffStyles()
+		}
 		return f(ctx, cmd)
 	}
 }
@@ -62,14 +65,5 @@ func helpOnErrorDecorator(f cli.ActionFunc) cli.ActionFunc {
 			cli.ShowAppHelpAndExit(cmd, 1)
 		}
 		return err
-	}
-}
-
-func noStyleDecorator(f cli.ActionFunc) cli.ActionFunc {
-	return func(ctx context.Context, cmd *cli.Command) error {
-		if cmd.Bool(flagNoStyle.Name) {
-			tools.TurnOffStyles()
-		}
-		return f(ctx, cmd)
 	}
 }

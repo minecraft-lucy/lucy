@@ -39,7 +39,6 @@ var Cli = &cli.Command{
 		actionEmpty,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
-		noStyleDecorator,
 	),
 	Flags: []cli.Flag{
 		&cli.BoolFlag{

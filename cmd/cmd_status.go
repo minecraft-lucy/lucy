@@ -33,7 +33,6 @@ var subcmdStatus = &cli.Command{
 	Action: tools.Decorate(
 		actionStatus,
 		globalFlagsDecorator,
-		noStyleDecorator,
 	),
 	Flags: []cli.Flag{
 		flagJsonOutput,

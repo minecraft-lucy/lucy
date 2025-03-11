@@ -48,7 +48,6 @@ var subcmdAdd = &cli.Command{
 		actionAdd,
 		globalFlagsDecorator,
 		helpOnNoInputDecorator,
-		noStyleDecorator,
 	),
 }
 
