@@ -19,6 +19,7 @@ package local
 import (
 	"archive/zip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"lucy/prompt"
 	"os"
@@ -229,7 +230,7 @@ func analyzeExecutable(filePath string) (exec *lucytypes.ExecutableInfo) {
 			if exec != nil {
 				return nil
 			}
-			exec = analyzeForge(f)
+			exec = analyzeForge(file, f)
 		}
 	}
 
@@ -292,7 +293,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-	manifest *zip.File,
+manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
@@ -322,7 +323,10 @@ func analyzeFabricLauncher(
 	return
 }
 
-func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
+func analyzeForge(
+jar *os.File,
+file *zip.File,
+) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
 	defer tools.CloseReader(r, lnout.Warn)
 	data, _ := io.ReadAll(r)
@@ -333,14 +337,58 @@ func analyzeForge(file *zip.File) (exec *lucytypes.ExecutableInfo) {
 	}
 	for _, mod := range p.Mods {
 		if mod.ModID == "forge" {
-			return &lucytypes.ExecutableInfo{
-				GameVersion:   dependency.UnknownVersion,
-				Platform:      lucytypes.Forge,
-				LoaderVersion: mod.Version,
-				BootCommand:   nil,
+			dir := path.Dir(jar.Name())
+			exec := &lucytypes.ExecutableInfo{
+				Platform:    lucytypes.Forge,
+				BootCommand: nil,
 			}
+			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
+			if err != nil {
+				lnout.Debug(fmt.Errorf("cannot open unix_args.txt: %w", err))
+				argFile, err = os.Open(path.Join(dir, "win_args.txt"))
+			}
+			if err != nil {
+				lnout.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
+				exec.GameVersion = dependency.UnknownVersion
+				exec.LoaderVersion = dependency.UnknownVersion
+				return exec
+			} else if mod.Version == "${global.forgeVersion}" {
+				exec.LoaderVersion, exec.GameVersion = analyzeForgeArgFile(argFile)
+			} else {
+				_, exec.GameVersion = analyzeForgeArgFile(argFile)
+			}
+			return exec
 		}
 	}
 
 	return nil
+}
+
+func analyzeForgeArgFile(file *os.File) (
+forgeVersion dependency.RawVersion,
+mcVersion dependency.RawVersion,
+) {
+	data, _ := io.ReadAll(file)
+	s := string(data)
+	lines := strings.Split(s, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "--fml.forgeVersion") {
+			split := strings.Split(line, " ")
+			if len(split) == 2 {
+				forgeVersion = dependency.RawVersion(split[1])
+				continue
+			}
+			forgeVersion = dependency.UnknownVersion
+		}
+		if strings.HasPrefix(line, "--fml.mcVersion") {
+			split := strings.Split(line, " ")
+			if len(split) == 2 {
+				mcVersion = dependency.RawVersion(split[1])
+				continue
+			}
+			mcVersion = dependency.UnknownVersion
+		}
+	}
+
+	return forgeVersion, mcVersion
 }
