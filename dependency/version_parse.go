@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+// Parse is the main function to parse a RawVersion into a SemanticVersion.
+//
+// If the raw version is one of the special constants (which should be inferred
+// before passing to this function), it returns InvalidVersion.
+//
+// It will attempt each type of version parsing, in order of specificity.
+//
+// If the label is not compatible with the version, return a semantic version
+// that is labeled as Raw and contains the raw version as it is. This is to
+// ensure a basic support to some non-standard versions numbers by only supporting
+// Eq and Neq comparisons.
 func Parse(raw RawVersion, label VersionLabel) SemanticVersion {
 	switch raw {
 	case LatestVersion, LatestCompatibleVersion, NoVersion, AllVersion, UnknownVersion:
@@ -65,6 +76,9 @@ func operatorDot(s string) (v SemanticVersion) {
 	tokens := strings.Split(s, ".")
 	if len(tokens) >= 2 {
 		major, err := strconv.Atoi(tokens[0])
+		if err != nil {
+			return InvalidVersion
+		}
 		minor, err := strconv.Atoi(tokens[1])
 		if err != nil {
 			return InvalidVersion
@@ -92,6 +106,9 @@ func operatorWeek(s string) (v SemanticVersion) {
 		return InvalidVersion
 	}
 	major, err := strconv.Atoi(tokens[0])
+	if err != nil {
+		return InvalidVersion
+	}
 	minor, err := strconv.Atoi(tokens[1])
 	if err != nil {
 		return InvalidVersion
