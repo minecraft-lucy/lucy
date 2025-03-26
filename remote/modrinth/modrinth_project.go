@@ -22,7 +22,6 @@ import (
 	"io"
 	"net/http"
 
-	dependency2 "lucy/dependency"
 	"lucy/syntax"
 
 	"lucy/datatypes"
@@ -53,8 +52,8 @@ func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
 }
 
 func getProjectByName(slug lucytypes.ProjectName) (
-	project *datatypes.ModrinthProject,
-	err error,
+project *datatypes.ModrinthProject,
+err error,
 ) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	data, _ := io.ReadAll(res.Body)
@@ -67,8 +66,8 @@ func getProjectByName(slug lucytypes.ProjectName) (
 }
 
 func getProjectMembers(id string) (
-	members []*datatypes.ModrinthMember,
-	err error,
+members []*datatypes.ModrinthMember,
+err error,
 ) {
 	res, _ := http.Get(projectMemberUrl(id))
 	data, _ := io.ReadAll(res.Body)
@@ -82,11 +81,11 @@ func getProjectMembers(id string) (
 var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
-	dependent lucytypes.PackageId,
-	dependency *datatypes.ModrinthVersionDependencies,
+dependent lucytypes.PackageId,
+dependency *datatypes.ModrinthVersionDependencies,
 ) (
-	p lucytypes.PackageId,
-	err error,
+p lucytypes.PackageId,
+err error,
 ) {
 	var version *datatypes.ModrinthVersion
 	var project *datatypes.ModrinthProject
@@ -106,13 +105,13 @@ func DependencyToPackage(
 		project, _ = getProjectById(dependency.ProjectId)
 		// This is not safe, TODO: use better inference method
 		version, _ = latestVersion(lucytypes.ProjectName(project.Slug))
-		p.Version = dependency2.LatestVersion
+		p.Version = lucytypes.LatestVersion
 	} else {
 		return p, ErrorInvalidDependency
 	}
 
 	p.Name = syntax.PackageName(project.Slug)
-	p.Version = version.VersionNumber
+	p.Version = lucytypes.RawVersion(version.VersionNumber)
 
 	return p, nil
 }

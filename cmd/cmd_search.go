@@ -19,12 +19,12 @@ package cmd
 import (
 	"context"
 	"errors"
+	"lucy/lucytypes"
+	"lucy/remote"
 	"strconv"
 
 	"github.com/urfave/cli/v3"
 	"lucy/lnout"
-	"lucy/lucytypes"
-	"lucy/remote/modrinth"
 	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
@@ -34,7 +34,6 @@ var subcmdSearch = &cli.Command{
 	Name:  "search",
 	Usage: "Search for mods and plugins",
 	Flags: []cli.Flag{
-		// TODO: This flag is not yet implemented
 		sourceFlag(lucytypes.Modrinth),
 		&cli.StringFlag{
 			Name:    "index",
@@ -42,7 +41,7 @@ var subcmdSearch = &cli.Command{
 			Usage:   "Index search results by `INDEX`",
 			Value:   "relevance",
 			Validator: func(s string) error {
-				if lucytypes.SearchIndex(s).Valid() {
+				if remote.SearchIndex(s).Valid() {
 					return nil
 				}
 				return errors.New("must be one of \"relevance\", \"downloads\",\"newest\"")
@@ -66,17 +65,18 @@ var subcmdSearch = &cli.Command{
 }
 
 var actionSearch cli.ActionFunc = func(
-	_ context.Context,
-	cmd *cli.Command,
+_ context.Context,
+cmd *cli.Command,
 ) error {
 	p := syntax.Parse(cmd.Args().First())
 	_ = cmd.String("index")
 	showClientPackage := cmd.Bool("client")
-	indexBy := lucytypes.SearchIndex(cmd.String("index"))
+	indexBy := remote.SearchIndex(cmd.String("index"))
 
-	res, err := modrinth.Search(
+	res, err := remote.Search(
+		lucytypes.StringToSource(flagSourceName),
 		p.Name,
-		lucytypes.SearchOptions{
+		remote.SearchOptions{
 			ShowClientPackage: showClientPackage,
 			IndexBy:           indexBy,
 		},
@@ -90,8 +90,8 @@ var actionSearch cli.ActionFunc = func(
 }
 
 func generateSearchOutput(
-	res lucytypes.SearchResults,
-	showAll bool,
+res remote.SearchResults,
+showAll bool,
 ) *structout.Data {
 	var results []string
 	for _, r := range res.Results {

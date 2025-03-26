@@ -36,7 +36,6 @@ import (
 	"strings"
 	"sync"
 
-	"lucy/dependency"
 	"lucy/syntax"
 
 	"github.com/pelletier/go-toml"
@@ -310,7 +309,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Fabric,
 						Name:     syntax.PackageName(modInfo.Id),
-						Version:  dependency.RawVersion(modInfo.Version),
+						Version:  lucytypes.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -340,7 +339,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Forge,
 						Name:     syntax.PackageName(modInfo.ModId),
-						Version:  dependency.RawVersion(modInfo.Version),
+						Version:  lucytypes.RawVersion(modInfo.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -374,8 +373,8 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 				p := lucytypes.Package{
 					Id: lucytypes.PackageId{
 						Platform: lucytypes.Forge,
-						Name:     mod.ModID,
-						Version:  mod.Version,
+						Name:     lucytypes.ProjectName(mod.ModID),
+						Version:  lucytypes.RawVersion(mod.Version),
 					},
 					Local: &lucytypes.PackageInstallation{
 						Path: file.Name(),
@@ -396,29 +395,29 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 	return nil
 }
 
-func getForgeVariableVersion(zip *zip.Reader) dependency.RawVersion {
+func getForgeVariableVersion(zip *zip.Reader) lucytypes.RawVersion {
 	var r io.ReadCloser
 	var err error
 	for _, f := range zip.File {
 		if f.Name == javaManifest {
 			r, err = f.Open()
 			if err != nil {
-				return dependency.UnknownVersion
+				return lucytypes.UnknownVersion
 			}
 		}
 	}
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return dependency.UnknownVersion
+		return lucytypes.UnknownVersion
 	}
 	manifest := string(data)
 	const versionField = "Implementation-Version: "
 	i := strings.Index(manifest, versionField) + len(versionField)
 	if i == -1 {
-		return dependency.UnknownVersion
+		return lucytypes.UnknownVersion
 	}
 	v := manifest[i:]
 	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
-	return dependency.RawVersion(v)
+	return lucytypes.RawVersion(v)
 }

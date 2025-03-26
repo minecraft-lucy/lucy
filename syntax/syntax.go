@@ -34,8 +34,6 @@ import (
 	"errors"
 	"strings"
 
-	"lucy/dependency"
-
 	"lucy/lnout"
 	"lucy/lucytypes"
 )
@@ -92,10 +90,10 @@ func Parse(s string) (p lucytypes.PackageId) {
 // parseOperatorAt is called first since '@' operator always occur after '/' (equivalent
 // to a lower priority).
 func parseOperatorAt(s string) (
-pl lucytypes.Platform,
-n lucytypes.ProjectName,
-v dependency.RawVersion,
-err error,
+	pl lucytypes.Platform,
+	n lucytypes.ProjectName,
+	v lucytypes.RawVersion,
+	err error,
 ) {
 	split := strings.Split(s, "@")
 
@@ -105,10 +103,10 @@ err error,
 	}
 
 	if len(split) == 1 {
-		v = dependency.AllVersion
+		v = lucytypes.AllVersion
 	} else if len(split) == 2 {
-		v = dependency.RawVersion(split[1])
-		if v == dependency.NoVersion || v == dependency.AllVersion {
+		v = lucytypes.RawVersion(split[1])
+		if v == lucytypes.NoVersion || v == lucytypes.AllVersion {
 			return "", "", "", ESyntax
 		}
 	} else {
@@ -119,9 +117,9 @@ err error,
 }
 
 func parseOperatorSlash(s string) (
-pl lucytypes.Platform,
-n lucytypes.ProjectName,
-err error,
+	pl lucytypes.Platform,
+	n lucytypes.ProjectName,
+	err error,
 ) {
 	split := strings.Split(s, "/")
 

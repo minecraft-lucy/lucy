@@ -31,7 +31,6 @@ import (
 	"github.com/pelletier/go-toml"
 
 	"lucy/datatypes"
-	"lucy/dependency"
 	"lucy/lnout"
 	"lucy/lucytypes"
 	"lucy/tools"
@@ -250,7 +249,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = dependency.RawVersion(obj.Id)
+	exec.GameVersion = lucytypes.RawVersion(obj.Id)
 	return
 }
 
@@ -267,12 +266,12 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = dependency.RawVersion(
+	exec.GameVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[1], "=")[1],
 	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = dependency.RawVersion(
+	exec.LoaderVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[0], "=")[1],
 	)
 
@@ -293,7 +292,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-manifest *zip.File,
+	manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
@@ -310,12 +309,12 @@ manifest *zip.File,
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = dependency.RawVersion(
+			exec.GameVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = dependency.RawVersion(
+			exec.LoaderVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
@@ -324,8 +323,8 @@ manifest *zip.File,
 }
 
 func analyzeForge(
-jar *os.File,
-file *zip.File,
+	jar *os.File,
+	file *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
 	defer tools.CloseReader(r, lnout.Warn)
@@ -349,8 +348,8 @@ file *zip.File,
 			}
 			if err != nil {
 				lnout.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
-				exec.GameVersion = dependency.UnknownVersion
-				exec.LoaderVersion = dependency.UnknownVersion
+				exec.GameVersion = lucytypes.UnknownVersion
+				exec.LoaderVersion = lucytypes.UnknownVersion
 				return exec
 			} else if mod.Version == "${global.forgeVersion}" {
 				exec.LoaderVersion, exec.GameVersion = analyzeForgeArgFile(argFile)
@@ -365,8 +364,8 @@ file *zip.File,
 }
 
 func analyzeForgeArgFile(file *os.File) (
-forgeVersion dependency.RawVersion,
-mcVersion dependency.RawVersion,
+	forgeVersion lucytypes.RawVersion,
+	mcVersion lucytypes.RawVersion,
 ) {
 	data, _ := io.ReadAll(file)
 	s := string(data)
@@ -375,18 +374,18 @@ mcVersion dependency.RawVersion,
 		if strings.HasPrefix(line, "--fml.forgeVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				forgeVersion = dependency.RawVersion(split[1])
+				forgeVersion = lucytypes.RawVersion(split[1])
 				continue
 			}
-			forgeVersion = dependency.UnknownVersion
+			forgeVersion = lucytypes.UnknownVersion
 		}
 		if strings.HasPrefix(line, "--fml.mcVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				mcVersion = dependency.RawVersion(split[1])
+				mcVersion = lucytypes.RawVersion(split[1])
 				continue
 			}
-			mcVersion = dependency.UnknownVersion
+			mcVersion = lucytypes.UnknownVersion
 		}
 	}
 

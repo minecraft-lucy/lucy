@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 
-	"lucy/dependency"
 	"lucy/lucytypes"
 	"lucy/remote/modrinth"
 )
@@ -111,20 +110,33 @@ func Information(
 	}
 }
 
+var ENoResults = errors.New("no results found")
+
 func Search(
 	source lucytypes.Source,
 	name lucytypes.ProjectName,
-	option lucytypes.SearchOptions,
-) (res lucytypes.SearchResults, err error) {
+	option SearchOptions,
+) (res SearchResults, err error) {
 	switch source {
 	case lucytypes.Modrinth:
-		res, err = modrinth.Search(name, option)
+		rawRes, err := modrinth.Search(
+			name,
+			option.ShowClientPackage,
+			option.IndexBy.ToModrinth(),
+			option.Platform,
+		)
 		if err != nil {
 			return res, err
 		}
+		if rawRes.TotalHits == 0 {
+			return res, fmt.Errorf("%w on %s", ENoResults, source)
+		}
+		for _, hit := range rawRes.Hits {
+			res.Results = append(res.Results, lucytypes.ProjectName(hit.Slug))
+		}
 		return res, nil
 	default:
-		res = lucytypes.SearchResults{
+		res = SearchResults{
 			Source:  lucytypes.UnknownSource,
 			Results: nil,
 		}
@@ -142,11 +154,11 @@ func InferVersion(
 	id lucytypes.PackageId,
 ) (infer lucytypes.PackageId) {
 	switch id.Version {
-	case dependency.AllVersion, dependency.LatestVersion:
+	case lucytypes.AllVersion, lucytypes.LatestVersion:
 		// API call
-	case dependency.LatestCompatibleVersion:
+	case lucytypes.LatestCompatibleVersion:
 		// API call
-	case dependency.NoVersion, dependency.UnknownVersion:
+	case lucytypes.NoVersion, lucytypes.UnknownVersion:
 		// Do nothing
 	default:
 		// Do nothing

@@ -16,8 +16,6 @@ limitations under the License.
 
 package lucytypes
 
-import "lucy/dependency"
-
 type PackageUrlType uint8
 
 const (
@@ -106,22 +104,16 @@ type PackageInstallation struct {
 // PackageRemote is an optional attribution to lucytypes.Package. It is used to
 // represent package's presence in a remote source.
 type PackageRemote struct {
-	Source Source
-	// Whatever the remote source uses to identify this package.
-	RemoteId string
-	// The URL to download the package's specified version When package.Id.Version
+	// This string should come from a remote.Source. It is here because structured
+	// sources exists only in the remote package.
+	Source   Source
 	FileUrl  string
 	Filename string
 }
 
-// PackageUpdate is a struct to represent the update status of a package. It must
-// be used with PackageRemote.
-type PackageUpdate struct {
-	// Just refer this to the PackageRemote under the same Package struct.
-	Current *PackageRemote
-}
-
+// ProjectSupport reflects the support information of the whole project. For
+// specific dependency of a single package, use the PackageDependencies struct.
 type ProjectSupport struct {
-	MinecraftVersions []dependency.RawVersion
+	MinecraftVersions []RawVersion
 	Platforms         []Platform
 }

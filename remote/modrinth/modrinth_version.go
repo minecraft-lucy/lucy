@@ -22,8 +22,6 @@ import (
 	"io"
 	"net/http"
 
-	"lucy/dependency"
-
 	"lucy/lnout"
 
 	"lucy/datatypes"
@@ -42,8 +40,8 @@ var (
 )
 
 func listVersions(slug lucytypes.ProjectName) (
-	versions []*datatypes.ModrinthVersion,
-	err error,
+versions []*datatypes.ModrinthVersion,
+err error,
 ) {
 	res, _ := http.Get(versionsUrl(slug))
 	data, _ := io.ReadAll(res.Body)
@@ -57,14 +55,14 @@ func listVersions(slug lucytypes.ProjectName) (
 // getVersion is named as so because a Package in lucy is equivalent to a version
 // in Modrinth.
 func getVersion(id lucytypes.PackageId) (
-	v *datatypes.ModrinthVersion,
-	err error,
+v *datatypes.ModrinthVersion,
+err error,
 ) {
 	versions, err := listVersions(id.Name)
 	if err != nil {
 		return nil, ENoVersion
 	}
-	if id.Version == dependency.LatestVersion {
+	if id.Version == lucytypes.LatestVersion {
 		v, err = latestVersion(id.Name)
 		if err != nil {
 			return nil, err
@@ -72,8 +70,8 @@ func getVersion(id lucytypes.PackageId) (
 		return v, nil
 	}
 	for _, version := range versions {
-		if version.VersionNumber == id.Version &&
-			versionSupportsLoader(version, id.Platform) {
+		if lucytypes.RawVersion(version.VersionNumber) == id.Version &&
+		versionSupportsLoader(version, id.Platform) {
 			return version, nil
 		}
 	}
@@ -92,8 +90,8 @@ func getVersionById(id string) (v *datatypes.ModrinthVersion, err error) {
 }
 
 func versionSupportsLoader(
-	version *datatypes.ModrinthVersion,
-	loader lucytypes.Platform,
+version *datatypes.ModrinthVersion,
+loader lucytypes.Platform,
 ) bool {
 	for _, l := range version.Loaders {
 		if lucytypes.Platform(l).Eq(loader) {
@@ -104,8 +102,8 @@ func versionSupportsLoader(
 }
 
 func latestVersion(slug lucytypes.ProjectName) (
-	v *datatypes.ModrinthVersion,
-	err error,
+v *datatypes.ModrinthVersion,
+err error,
 ) {
 	versions, err := listVersions(slug)
 	if err != nil {
@@ -113,7 +111,7 @@ func latestVersion(slug lucytypes.ProjectName) (
 	}
 	for _, version := range versions {
 		if version.VersionType == "release" &&
-			(v == nil || version.DatePublished.After(v.DatePublished)) {
+		(v == nil || version.DatePublished.After(v.DatePublished)) {
 			v = version
 		}
 	}
@@ -121,14 +119,14 @@ func latestVersion(slug lucytypes.ProjectName) (
 		lnout.Info("no release version found for " + slug.Title())
 		return nil, ENoVersion
 	} else {
-		lnout.Debug("latest version of " + slug.String() + ": " + v.VersionNumber.String())
+		lnout.Debug("latest version of " + slug.String() + ": " + v.VersionNumber)
 	}
 	return v, nil
 }
 
 func LatestCompatibleVersion(slug lucytypes.ProjectName) (
-	v *datatypes.ModrinthVersion,
-	err error,
+v *datatypes.ModrinthVersion,
+err error,
 ) {
 	versions, err := listVersions(slug)
 	if err != nil {
@@ -146,8 +144,8 @@ func LatestCompatibleVersion(slug lucytypes.ProjectName) (
 	for _, version := range versions {
 		for _, gameVersion := range version.GameVersions {
 			if gameVersion == serverInfo.Executable.GameVersion.String() &&
-				version.VersionType == "release" &&
-				(v == nil || version.DatePublished.After(v.DatePublished)) {
+			version.VersionType == "release" &&
+			(v == nil || version.DatePublished.After(v.DatePublished)) {
 				v = version
 			}
 		}

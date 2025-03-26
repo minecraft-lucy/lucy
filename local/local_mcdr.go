@@ -24,7 +24,6 @@ import (
 	"os"
 	"path"
 
-	"lucy/dependency"
 	"lucy/syntax"
 
 	"gopkg.in/yaml.v3"
@@ -141,7 +140,7 @@ func analyzeMcdrPlugin(file *os.File) (
 				Id: lucytypes.PackageId{
 					Platform: lucytypes.Mcdr,
 					Name:     syntax.PackageName(pluginInfo.Id),
-					Version:  dependency.RawVersion(pluginInfo.Version),
+					Version:  lucytypes.RawVersion(pluginInfo.Version),
 				},
 				Local: &lucytypes.PackageInstallation{
 					Path: file.Name(),

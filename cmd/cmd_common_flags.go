@@ -18,19 +18,25 @@ package cmd
 
 import (
 	"errors"
-
 	"github.com/urfave/cli/v3"
 	"lucy/lucytypes"
 )
 
+const (
+	flagJsonName    = "json"
+	flagLongName    = "long"
+	flagNoStyleName = "no-style"
+	flagSourceName  = "source"
+)
+
 var flagJsonOutput = &cli.BoolFlag{
-	Name:  "json",
+	Name:  flagJsonName,
 	Usage: "Print raw JSON response",
 	Value: false,
 }
 
 var flagLongOutput = &cli.BoolFlag{
-	Name:    "long",
+	Name:    flagLongName,
 	Usage:   "Show hidden or collapsed output",
 	Value:   false,
 	Aliases: []string{"l"},
@@ -38,7 +44,7 @@ var flagLongOutput = &cli.BoolFlag{
 
 func sourceFlag(absent lucytypes.Source) *cli.StringFlag {
 	return &cli.StringFlag{
-		Name:    "source",
+		Name:    flagSourceName,
 		Aliases: []string{"s"},
 		Usage:   "To fetch info from `SOURCE`",
 		Value:   absent.String(),
@@ -52,7 +58,7 @@ func sourceFlag(absent lucytypes.Source) *cli.StringFlag {
 }
 
 var flagNoStyle = &cli.BoolFlag{
-	Name:  "no-style",
+	Name:  flagNoStyleName,
 	Usage: "Disable colored and styled output",
 	Value: false,
 }

@@ -21,8 +21,6 @@ package datatypes
 
 import (
 	"time"
-
-	"lucy/dependency"
 )
 
 // ModrinthProject is a struct that represents a Modrinth project, the basic
@@ -143,7 +141,7 @@ type ModrinthVersion struct {
 	AuthorId        string                        `json:"author_id"`
 	Featured        bool                          `json:"featured"`
 	Name            string                        `json:"name"`
-	VersionNumber   dependency.RawVersion         `json:"version_number"`
+	VersionNumber   string                        `json:"version_number"`
 	Changelog       string                        `json:"changelog"`
 	ChangelogUrl    interface{}                   `json:"changelog_url"`
 	DatePublished   time.Time                     `json:"date_published"`

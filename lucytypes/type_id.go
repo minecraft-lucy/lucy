@@ -20,8 +20,6 @@ package lucytypes
 import (
 	"strings"
 
-	"lucy/dependency"
-
 	"lucy/tools"
 )
 
@@ -101,7 +99,7 @@ func (p ProjectName) String() string {
 type PackageId struct {
 	Platform Platform
 	Name     ProjectName
-	Version  dependency.RawVersion
+	Version  RawVersion
 }
 
 func (p PackageId) NewPackage() *Package {
@@ -121,7 +119,7 @@ func (p PackageId) String() string {
 	) +
 		string(p.Name) +
 		tools.Ternary(
-			p.Version == dependency.AllVersion,
+			p.Version == AllVersion,
 			"",
 			"@"+string(p.Version),
 		)

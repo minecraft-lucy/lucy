@@ -35,10 +35,8 @@ import (
 	"strconv"
 
 	"lucy/datatypes"
-	"lucy/dependency"
 	"lucy/lnout"
 	"lucy/lucytypes"
-	"lucy/syntax"
 	"lucy/tools"
 )
 
@@ -50,14 +48,13 @@ var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
 // https://docs.modrinth.com/api/operations/searchprojects/
 func Search(
 	name lucytypes.ProjectName,
-	options lucytypes.SearchOptions,
-) (result lucytypes.SearchResults, err error) {
-	result = lucytypes.SearchResults{
-		Source:  lucytypes.UnknownSource,
-		Results: nil,
-	}
+	showClient bool,
+	indexBy string,
+	platform lucytypes.Platform,
+) (result *datatypes.ModrinthSearchResults, err error) {
+	result = &datatypes.ModrinthSearchResults{}
 	var facets []facetItems
-	switch options.Platform {
+	switch platform {
 	case lucytypes.Forge:
 		facets = append(facets, facetForge)
 	case lucytypes.Fabric:
@@ -68,14 +65,14 @@ func Search(
 		facets = append(facets, facetForge, facetAllLoaders)
 	}
 
-	if options.ShowClientPackage {
+	if showClient {
 		facets = append(facets, facetServerSupported, facetClientSupported)
 	} else {
 		facets = append(facets, facetServerSupported)
 	}
 
 	internalOptions := searchOptions{
-		index:  options.IndexBy.ToModrinth(),
+		index:  indexBy,
 		facets: facets,
 	}
 	searchUrl := searchUrl(name, internalOptions)
@@ -87,23 +84,16 @@ func Search(
 		return result, ErrorInvalidAPIResponse
 	}
 	data, err := io.ReadAll(resp.Body)
-	defer tools.CloseReader(resp.Body, lnout.Warn)
-	var searchResults datatypes.ModrinthSearchResults
-	err = json.Unmarshal(data, &searchResults)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
-	if searchResults.Hits == nil {
-		return result, nil
+	defer tools.CloseReader(resp.Body, lnout.Warn)
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, err
 	}
-	if searchResults.TotalHits > 100 {
-		lnout.Info(strconv.Itoa(searchResults.TotalHits) + " results found on modrinth, only showing first 100")
-	}
-
-	result.Results = make([]lucytypes.ProjectName, 0, len(searchResults.Hits))
-	result.Source = lucytypes.Modrinth
-	for _, hit := range searchResults.Hits {
-		result.Results = append(result.Results, syntax.PackageName(hit.Slug))
+	if result.TotalHits > 100 {
+		lnout.InfoNow(strconv.Itoa(result.TotalHits) + " results found on modrinth, only showing first 100")
 	}
 	return result, nil
 }
@@ -113,10 +103,10 @@ func Fetch(id lucytypes.PackageId) (
 	err error,
 ) {
 	id = inferVersion(id)
-	project, err := getProjectByName(id.Name)
-	if err != nil {
-		return nil, err
-	}
+	// project, err := getProjectByName(id.Name)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	version, err := getVersion(id)
 	if err != nil {
 		return nil, err
@@ -124,8 +114,6 @@ func Fetch(id lucytypes.PackageId) (
 	fileUrl, filename := getFile(version)
 
 	remote = &lucytypes.PackageRemote{
-		Source:   lucytypes.Modrinth,
-		RemoteId: project.Id,
 		FileUrl:  fileUrl,
 		Filename: filename,
 	}
@@ -215,14 +203,14 @@ func Support(name lucytypes.ProjectName) (
 ) {
 	project, _ := getProjectByName(name)
 	supports = &lucytypes.ProjectSupport{
-		MinecraftVersions: make([]dependency.RawVersion, 0),
+		MinecraftVersions: make([]lucytypes.RawVersion, 0),
 		Platforms:         make([]lucytypes.Platform, 0),
 	}
 
 	for _, version := range project.GameVersions {
 		supports.MinecraftVersions = append(
 			supports.MinecraftVersions,
-			dependency.RawVersion(version),
+			lucytypes.RawVersion(version),
 		)
 	}
 
@@ -243,9 +231,9 @@ func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
 	var err error
 
 	switch p.Version {
-	case dependency.LatestCompatibleVersion:
+	case lucytypes.LatestCompatibleVersion:
 		v, err = LatestCompatibleVersion(p.Name)
-	case dependency.AllVersion, dependency.NoVersion, dependency.LatestVersion:
+	case lucytypes.AllVersion, lucytypes.NoVersion, lucytypes.LatestVersion:
 		v, err = latestVersion(p.Name)
 	default:
 		return p
@@ -253,7 +241,7 @@ func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
 	if err != nil {
 		return p
 	}
-	infer.Version = v.VersionNumber
+	infer.Version = lucytypes.RawVersion(v.VersionNumber)
 
 	return infer
 }
