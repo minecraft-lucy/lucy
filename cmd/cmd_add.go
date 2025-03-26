@@ -23,7 +23,7 @@ import (
 	"lucy/tools"
 
 	"github.com/urfave/cli/v3"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/local"
 	"lucy/lucyerrors"
 	"lucy/lucytypes"
@@ -60,8 +60,8 @@ var subcmdAdd = &cli.Command{
 //
 // TODO: Version specification
 var actionAdd cli.ActionFunc = func(
-	ctx context.Context,
-	cmd *cli.Command,
+ctx context.Context,
+cmd *cli.Command,
 ) error {
 	// TODO: Platform specification
 	// TODO: Platform compatibility check
@@ -80,12 +80,12 @@ var actionAdd cli.ActionFunc = func(
 	} else if p.Platform == lucytypes.Mcdr && serverInfo.Mcdr == nil {
 		// Case where MCDR is not installed but the user wants to download MCDR plugins
 		// TODO: Deal with this
-		lnout.Error(errors.New("no mcdr found, while mcdr plugins requested"))
+		logger.Error(errors.New("no mcdr found, while mcdr plugins requested"))
 		return nil
 	} else if p.Platform != lucytypes.AllPlatform && p.Platform != serverInfo.Executable.Platform {
 		// Case where the platform of the mod is different from the server
 		// TODO: Deal with this
-		lnout.Error(errors.New("platform mismatch"))
+		logger.Error(errors.New("platform mismatch"))
 		return nil
 	}
 
@@ -100,9 +100,9 @@ var actionAdd cli.ActionFunc = func(
 	)
 	if err != nil {
 		if errors.Is(err, lucyerrors.NoLucyError) {
-			lnout.Warn(err)
+			logger.Warn(err)
 		} else {
-			lnout.Error(errors.New("failed at downloading: " + err.Error()))
+			logger.Error(errors.New("failed at downloading: " + err.Error()))
 			return nil
 		}
 	}

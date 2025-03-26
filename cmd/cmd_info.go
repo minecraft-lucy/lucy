@@ -22,7 +22,7 @@ import (
 	"slices"
 
 	"lucy/datatypes"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/lucyerrors"
 	"lucy/lucytypes"
 	"lucy/remote"
@@ -74,29 +74,29 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
-		lnout.ErrorNow(err)
+		logger.ErrorNow(err)
 		return err
 	case lucytypes.Fabric, lucytypes.Forge:
 		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
 		if err != nil {
-			lnout.ErrorNow(err)
+			logger.ErrorNow(err)
 		}
 		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
 		if err != nil {
-			lnout.ErrorNow(err)
+			logger.ErrorNow(err)
 			return err
 		}
 		out = infoOutput(p)
 	case lucytypes.Mcdr:
 		mcdrPlugin, err := mcdr.SearchMcdrPluginCatalogue(id.Name)
 		if err != nil {
-			lnout.Warn(err)
+			logger.Warn(err)
 			break
 		}
 		out = mcdrPluginInfoToInfo(mcdrPlugin)
 	}
 	if err != nil {
-		lnout.Warn(err)
+		logger.Warn(err)
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {

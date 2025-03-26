@@ -34,7 +34,7 @@ import (
 	"errors"
 	"strings"
 
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/lucytypes"
 )
 
@@ -80,10 +80,10 @@ func Parse(s string) (p lucytypes.PackageId) {
 		if errors.Is(err, ESyntax) {
 			panic(err)
 		} else {
-			lnout.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
-	lnout.Debug("parsed input as package: " + p.StringFull())
+	logger.Debug("parsed input as package: " + p.StringFull())
 	return
 }
 

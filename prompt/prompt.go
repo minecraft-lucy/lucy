@@ -18,7 +18,7 @@ package prompt
 
 import (
 	"github.com/manifoldco/promptui"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/lucytypes"
 )
 
@@ -37,7 +37,7 @@ func SelectExecutable(
 	}
 	selection, _, err := selectExecutable.Run()
 	if err != nil {
-		lnout.WarnNow(err)
+		logger.WarnNow(err)
 	}
 	return selection
 }

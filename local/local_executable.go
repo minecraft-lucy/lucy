@@ -31,7 +31,7 @@ import (
 	"github.com/pelletier/go-toml"
 
 	"lucy/datatypes"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/tools"
 )
@@ -45,8 +45,8 @@ var getExecutableInfo = tools.Memoize(
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
-			lnout.Warn(err)
-			lnout.Info("cannot read the current directory, most features will be disabled")
+			logger.Warn(err)
+			logger.Info("cannot read the current directory, most features will be disabled")
 		}
 		for _, jar := range jars {
 			exec := analyzeExecutable(jar)
@@ -57,7 +57,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			lnout.Info("no server jar found, trying to find under libraries")
+			logger.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
 			if len(jarPaths) == 0 {
 				// The following code is commented out due to the aggressive search
@@ -89,7 +89,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			lnout.Info("no server under current directory")
+			logger.Info("no server under current directory")
 			return UnknownExecutable
 		} else if len(valid) == 1 {
 			return valid[0]
@@ -145,7 +145,7 @@ func findJarRecursive(dir string) (jarFiles []string) {
 	// TODO: Use semaphore to limit the number of goroutines
 	for _, entry := range entries {
 		if atomic.LoadInt32(&fileCount) >= fileCountThreshold {
-			lnout.Info("file count threshold reached, stopping search")
+			logger.Info("file count threshold reached, stopping search")
 			break
 		}
 		if entry.IsDir() {
@@ -245,7 +245,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Minecraft
 	reader, _ := versionJson.Open()
-	defer tools.CloseReader(reader, lnout.Warn)
+	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
@@ -261,7 +261,7 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := installProperties.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
@@ -297,7 +297,7 @@ func analyzeFabricLauncher(
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := manifest.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 	if !strings.Contains(s, "Class-Path: ") {
@@ -327,7 +327,7 @@ func analyzeForge(
 	file *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	p := &datatypes.ForgeModIdentifierNew{}
 	err := toml.Unmarshal(data, p)
@@ -343,11 +343,11 @@ func analyzeForge(
 			}
 			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
 			if err != nil {
-				lnout.Debug(fmt.Errorf("cannot open unix_args.txt: %w", err))
+				logger.Debug(fmt.Errorf("cannot open unix_args.txt: %w", err))
 				argFile, err = os.Open(path.Join(dir, "win_args.txt"))
 			}
 			if err != nil {
-				lnout.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
+				logger.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
 				exec.GameVersion = lucytypes.UnknownVersion
 				exec.LoaderVersion = lucytypes.UnknownVersion
 				return exec

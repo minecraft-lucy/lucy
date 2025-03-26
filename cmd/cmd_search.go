@@ -24,7 +24,7 @@ import (
 	"strconv"
 
 	"github.com/urfave/cli/v3"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
@@ -82,7 +82,7 @@ cmd *cli.Command,
 		},
 	)
 	if err != nil {
-		lnout.Fatal(err)
+		logger.Fatal(err)
 	}
 	structout.Flush(generateSearchOutput(res, cmd.Bool("long")))
 
