@@ -23,8 +23,8 @@ import (
 	"lucy/tools"
 
 	"github.com/urfave/cli/v3"
-	"lucy/logger"
 	"lucy/local"
+	"lucy/logger"
 	"lucy/lucyerrors"
 	"lucy/lucytypes"
 	"lucy/remote/modrinth"
