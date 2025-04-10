@@ -24,13 +24,12 @@ import (
 
 	"lucy/syntax"
 
-	"lucy/datatypes"
 	"lucy/lucytypes"
 )
 
 func getProjectId(slug lucytypes.ProjectName) (id string, err error) {
 	res, _ := http.Get(projectUrl(string(slug)))
-	modrinthProject := datatypes.ModrinthProject{}
+	modrinthProject := projectResponse{}
 	data, _ := io.ReadAll(res.Body)
 	err = json.Unmarshal(data, &modrinthProject)
 	if err != nil {
@@ -40,10 +39,10 @@ func getProjectId(slug lucytypes.ProjectName) (id string, err error) {
 	return
 }
 
-func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
+func getProjectById(id string) (project *projectResponse, err error) {
 	res, _ := http.Get(projectUrl(id))
 	data, _ := io.ReadAll(res.Body)
-	project = &datatypes.ModrinthProject{}
+	project = &projectResponse{}
 	err = json.Unmarshal(data, project)
 	if err != nil {
 		return nil, ENoProject
@@ -52,12 +51,12 @@ func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
 }
 
 func getProjectByName(slug lucytypes.ProjectName) (
-project *datatypes.ModrinthProject,
-err error,
+	project *projectResponse,
+	err error,
 ) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	data, _ := io.ReadAll(res.Body)
-	project = &datatypes.ModrinthProject{}
+	project = &projectResponse{}
 	err = json.Unmarshal(data, project)
 	if err != nil {
 		return nil, ENoProject
@@ -66,8 +65,8 @@ err error,
 }
 
 func getProjectMembers(id string) (
-members []*datatypes.ModrinthMember,
-err error,
+	members []*memberResponse,
+	err error,
 ) {
 	res, _ := http.Get(projectMemberUrl(id))
 	data, _ := io.ReadAll(res.Body)
@@ -81,14 +80,14 @@ err error,
 var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
-dependent lucytypes.PackageId,
-dependency *datatypes.ModrinthVersionDependencies,
+	dependent lucytypes.PackageId,
+	dependency *dependenciesResponse,
 ) (
-p lucytypes.PackageId,
-err error,
+	p lucytypes.PackageId,
+	err error,
 ) {
-	var version *datatypes.ModrinthVersion
-	var project *datatypes.ModrinthProject
+	var version *versionResponse
+	var project *projectResponse
 
 	// I don't see a case where a package would depend on a project on another
 	// platform. So, we can safely assume that the platform of the dependent

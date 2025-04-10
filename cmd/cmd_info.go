@@ -48,8 +48,8 @@ var subcmdInfo = &cli.Command{
 }
 
 var actionInfo cli.ActionFunc = func(
-ctx context.Context,
-cmd *cli.Command,
+	ctx context.Context,
+	cmd *cli.Command,
 ) error {
 	id := syntax.Parse(cmd.Args().First())
 	p := id.NewPackage()
@@ -155,8 +155,8 @@ func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
 	// TODO: Put current server version on the top
 	// TODO: Hide snapshot versions, except if the current server is using it
 	if p.Supports != nil &&
-	p.Supports.Platforms != nil &&
-	!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
+		p.Supports.Platforms != nil &&
+		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
 		f := &structout.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},

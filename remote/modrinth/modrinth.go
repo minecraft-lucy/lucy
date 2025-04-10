@@ -17,7 +17,7 @@ limitations under the License.
 // Package modrinth provides functions to interact with Modrinth API
 //
 // We here use Modrinth terms in private functions:
-//   - Project: A project is a mod, plugin, or resource pack.
+//   - project: A project is a mod, plugin, or resource pack.
 //   - Version: A version is a release, beta, or alpha version of a project.
 //
 // Generally, a project in Modrinth is equivalent to a project in Lucy. And
@@ -34,25 +34,28 @@ import (
 	"net/http"
 	"strconv"
 
-	"lucy/datatypes"
 	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/tools"
 )
 
-var ErrorInvalidAPIResponse = errors.New("invalid data from modrinth api")
+type self struct{}
+
+var Modrinth self
+
+var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
 
 // Search
 //
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
-func Search(
+func (s self) Search(
 	name lucytypes.ProjectName,
 	showClient bool,
 	indexBy string,
 	platform lucytypes.Platform,
-) (result *datatypes.ModrinthSearchResults, err error) {
-	result = &datatypes.ModrinthSearchResults{}
+) (result *searchResultResponse, err error) {
+	result = &searchResultResponse{}
 	var facets []facetItems
 	switch platform {
 	case lucytypes.Forge:
@@ -81,7 +84,7 @@ func Search(
 	logger.Debug("searching via modrinth api: " + searchUrl)
 	resp, err := http.Get(searchUrl)
 	if err != nil {
-		return result, ErrorInvalidAPIResponse
+		return result, ErrInvalidAPIResponse
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -98,11 +101,11 @@ func Search(
 	return result, nil
 }
 
-func Fetch(id lucytypes.PackageId) (
+func (s self) Fetch(id lucytypes.PackageId) (
 	remote *lucytypes.PackageRemote,
 	err error,
 ) {
-	id = inferVersion(id)
+	id = s.InferAmbiguousVersion(id)
 	// project, err := getProjectByName(id.Name)
 	// if err != nil {
 	// 	return nil, err
@@ -121,7 +124,7 @@ func Fetch(id lucytypes.PackageId) (
 	return remote, nil
 }
 
-func Information(slug lucytypes.ProjectName) (
+func (s self) Information(slug lucytypes.ProjectName) (
 	information *lucytypes.ProjectInformation,
 	err error,
 ) {
@@ -167,7 +170,7 @@ func Information(slug lucytypes.ProjectName) (
 				information.Urls,
 				lucytypes.PackageUrl{
 					Name: "Donation",
-					Type: lucytypes.OthersUrl,
+					Type: lucytypes.DonationUrl,
 					Url:  donationUrl.Url,
 				},
 			)
@@ -197,7 +200,7 @@ func Information(slug lucytypes.ProjectName) (
 
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
-func Support(name lucytypes.ProjectName) (
+func (s self) Support(name lucytypes.ProjectName) (
 	supports *lucytypes.ProjectSupport,
 	err error,
 ) {
@@ -224,10 +227,10 @@ func Support(name lucytypes.ProjectName) (
 	return supports, nil
 }
 
-func inferVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
+func (s self) InferAmbiguousVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
 	infer.Platform = p.Platform
 	infer.Name = p.Name
-	var v *datatypes.ModrinthVersion
+	var v *versionResponse
 	var err error
 
 	switch p.Version {

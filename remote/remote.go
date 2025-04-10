@@ -27,13 +27,17 @@ import (
 	"fmt"
 
 	"lucy/lucytypes"
-	"lucy/remote/modrinth"
+	pmodrinth "lucy/remote/modrinth"
 )
 
 var (
-	ESourceNotSupported  = errors.New("source not supported")
-	ECannotInferPlatform = errors.New("cannot infer platform")
-	ECannotInferSource   = errors.New("cannot infer source") // This will be reintroduced when the auto source detection is implemented.
+	ErrSourceNotSupported  = errors.New("source not supported")
+	ErrCannotInferPlatform = errors.New("cannot infer platform")
+	ErrCannotInferSource   = errors.New("cannot infer source")
+)
+
+var (
+	modrinth = pmodrinth.Modrinth
 )
 
 func Fetch(
@@ -52,7 +56,7 @@ func Fetch(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -69,7 +73,7 @@ func Dependencies(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -85,7 +89,7 @@ func Support(source lucytypes.Source, name lucytypes.ProjectName) (
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 
 	}
 }
@@ -106,7 +110,7 @@ func Information(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -140,7 +144,7 @@ func Search(
 			Source:  lucytypes.UnknownSource,
 			Results: nil,
 		}
-		return res, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return res, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 

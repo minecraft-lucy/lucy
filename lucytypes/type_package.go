@@ -23,6 +23,9 @@ const (
 	HomepageUrl
 	SourceUrl
 	WikiUrl
+	ForumUrl
+	IssuesUrl
+	DonationUrl
 	OthersUrl
 )
 
@@ -88,32 +91,41 @@ type ProjectInformation struct {
 	License     string
 }
 
-type PackageMember struct {
-	Name  string
-	Role  string
-	Url   string
-	Email string
-}
+type (
+	PackageMember struct {
+		Name  string
+		Role  string
+		Url   string
+		Email string
+	}
 
-// PackageInstallation is an optional attribution to lucytypes.Package. It is
-// used for packages that are known to be installed in the local filesystem.
-type PackageInstallation struct {
-	Path string
-}
+	// PackageInstallation is an optional attribution to lucytypes.Package. It is
+	// used for packages that are known to be installed in the local filesystem.
+	PackageInstallation struct {
+		Path string
+	}
 
-// PackageRemote is an optional attribution to lucytypes.Package. It is used to
-// represent package's presence in a remote source.
-type PackageRemote struct {
-	// This string should come from a remote.Source. It is here because structured
-	// sources exists only in the remote package.
-	Source   Source
-	FileUrl  string
-	Filename string
-}
+	// PackageRemote is an optional attribution to lucytypes.Package. It is used to
+	// represent package's presence in a remote source.
+	PackageRemote struct {
+		// This string should come from a remote.Source. It is here because structured
+		// sources exists only in the remote package.
+		Source   Source
+		FileUrl  string
+		Filename string
+	}
 
-// ProjectSupport reflects the support information of the whole project. For
-// specific dependency of a single package, use the PackageDependencies struct.
-type ProjectSupport struct {
-	MinecraftVersions []RawVersion
-	Platforms         []Platform
-}
+	// ProjectSupport reflects the support information of the whole project. For
+	// specific dependency of a single package, use the PackageDependencies struct.
+	ProjectSupport struct {
+		MinecraftVersions []RawVersion
+		Platforms         []Platform
+	}
+)
+
+type (
+	RawProjectSupport      interface{ ToProjectSupport() ProjectSupport }
+	RawProjectInformation  interface{ ToProjectInformation() ProjectInformation }
+	RawPackageRemote       interface{ ToPackageRemote() PackageRemote }
+	RawPackageDependencies interface{ ToPackageDependencies() PackageDependencies }
+)
