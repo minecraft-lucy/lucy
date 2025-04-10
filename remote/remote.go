@@ -119,8 +119,8 @@ var ENoResults = errors.New("no results found")
 func Search(
 	source lucytypes.Source,
 	name lucytypes.ProjectName,
-	option SearchOptions,
-) (res SearchResults, err error) {
+	option lucytypes.SearchOptions,
+) (res lucytypes.SearchResults, err error) {
 	switch source {
 	case lucytypes.Modrinth:
 		rawRes, err := modrinth.Search(
@@ -140,7 +140,7 @@ func Search(
 		}
 		return res, nil
 	default:
-		res = SearchResults{
+		res = lucytypes.SearchResults{
 			Source:  lucytypes.UnknownSource,
 			Results: nil,
 		}
