@@ -25,9 +25,9 @@ package remote
 import (
 	"errors"
 	"fmt"
+	pmodrinth "lucy/remote/internal/modrinth"
 
 	"lucy/lucytypes"
-	pmodrinth "lucy/remote/modrinth"
 )
 
 var (
