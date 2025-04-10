@@ -19,7 +19,7 @@ package cmd
 import (
 	"context"
 	"errors"
-
+	"lucy/remote"
 	"lucy/tools"
 
 	"github.com/urfave/cli/v3"
@@ -27,7 +27,6 @@ import (
 	"lucy/logger"
 	"lucy/lucyerrors"
 	"lucy/lucytypes"
-	"lucy/remote/modrinth"
 	"lucy/syntax"
 	"lucy/util"
 )
@@ -60,14 +59,14 @@ var subcmdAdd = &cli.Command{
 //
 // TODO: Version specification
 var actionAdd cli.ActionFunc = func(
-	ctx context.Context,
-	cmd *cli.Command,
+ctx context.Context,
+cmd *cli.Command,
 ) error {
 	// TODO: Platform specification
 	// TODO: Platform compatibility check
 	// TODO: Error handling
 
-	p := syntax.Parse(cmd.Args().First())
+	id := syntax.Parse(cmd.Args().First())
 	serverInfo := local.GetServerInfo()
 
 	if !serverInfo.HasLucy {
@@ -77,26 +76,28 @@ var actionAdd cli.ActionFunc = func(
 	if serverInfo.Executable == local.UnknownExecutable {
 		// Case where the server is not detected
 		return errors.New("no executable found, `lucy add` requires a server in current directory")
-	} else if p.Platform == lucytypes.Mcdr && serverInfo.Mcdr == nil {
+	} else if id.Platform == lucytypes.Mcdr && serverInfo.Mcdr == nil {
 		// Case where MCDR is not installed but the user wants to download MCDR plugins
 		// TODO: Deal with this
 		logger.Error(errors.New("no mcdr found, while mcdr plugins requested"))
 		return nil
-	} else if p.Platform != lucytypes.AllPlatform && p.Platform != serverInfo.Executable.Platform {
+	} else if id.Platform != lucytypes.AllPlatform && id.Platform != serverInfo.Executable.Platform {
 		// Case where the platform of the mod is different from the server
 		// TODO: Deal with this
 		logger.Error(errors.New("platform mismatch"))
 		return nil
 	}
 
-	newestVersion, _ := modrinth.LatestCompatibleVersion(p.Name)
+	inferredId := remote.InferVersion(lucytypes.Modrinth, id)
+	p := inferredId.NewPackage()
+	p.Remote, _ = remote.Fetch(lucytypes.Modrinth, p.Id)
 	downloadFile, err := util.DownloadFile(
 		// Not sure how to deal with multiple files
 		// As the motivation for publishers to provide multiple files is unclear
 		// TODO: Maybe add a prompt to let the user choose
-		newestVersion.Files[0].Url,
+		p.Remote.FileUrl,
 		"mod",
-		newestVersion.Files[0].Filename,
+		p.Remote.Filename,
 	)
 	if err != nil {
 		if errors.Is(err, lucyerrors.NoLucyError) {
