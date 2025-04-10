@@ -122,10 +122,3 @@ type (
 		Platforms         []Platform
 	}
 )
-
-type (
-	RawProjectSupport      interface{ ToProjectSupport() ProjectSupport }
-	RawProjectInformation  interface{ ToProjectInformation() ProjectInformation }
-	RawPackageRemote       interface{ ToPackageRemote() PackageRemote }
-	RawPackageDependencies interface{ ToPackageDependencies() PackageDependencies }
-)

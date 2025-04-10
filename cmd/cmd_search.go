@@ -41,7 +41,7 @@ var subcmdSearch = &cli.Command{
 			Usage:   "Index search results by `INDEX`",
 			Value:   "relevance",
 			Validator: func(s string) error {
-				if remote.SearchIndex(s).Valid() {
+				if lucytypes.SearchIndex(s).Valid() {
 					return nil
 				}
 				return errors.New("must be one of \"relevance\", \"downloads\",\"newest\"")
@@ -65,18 +65,18 @@ var subcmdSearch = &cli.Command{
 }
 
 var actionSearch cli.ActionFunc = func(
-_ context.Context,
-cmd *cli.Command,
+	_ context.Context,
+	cmd *cli.Command,
 ) error {
 	p := syntax.Parse(cmd.Args().First())
 	_ = cmd.String("index")
 	showClientPackage := cmd.Bool("client")
-	indexBy := remote.SearchIndex(cmd.String("index"))
+	indexBy := lucytypes.SearchIndex(cmd.String("index"))
 
 	res, err := remote.Search(
 		lucytypes.StringToSource(flagSourceName),
 		p.Name,
-		remote.SearchOptions{
+		lucytypes.SearchOptions{
 			ShowClientPackage: showClientPackage,
 			IndexBy:           indexBy,
 		},
@@ -90,8 +90,8 @@ cmd *cli.Command,
 }
 
 func generateSearchOutput(
-res remote.SearchResults,
-showAll bool,
+	res lucytypes.SearchResults,
+	showAll bool,
 ) *structout.Data {
 	var results []string
 	for _, r := range res.Results {
