@@ -14,45 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package lucytypes
+package logger
 
-type Source uint8
-
-const (
-	CurseForge Source = iota
-	Modrinth
-	GitHub
-	McdrWebsite
-	UnknownSource
-	// Auto is temporarily removed.
-)
-
-func (s Source) String() string {
-	switch s {
-	case CurseForge:
-		return "curseforge"
-	case Modrinth:
-		return "modrinth"
-	case GitHub:
-		return "github"
-	case McdrWebsite:
-		return "mcdr"
-	default:
-		return "unknown"
-	}
+type logItem struct {
+	Level   logLevel
+	Content any
 }
 
-func (s Source) Title() string {
-	switch s {
-	case CurseForge:
-		return "CurseForge"
-	case Modrinth:
-		return "Modrinth"
-	case GitHub:
-		return "GitHub"
-	case McdrWebsite:
-		return "MCDR"
+type logLevel uint8
+
+const (
+	lInfo logLevel = iota
+	lWarn
+	lError
+	lFatal
+	lDebug
+)
+
+func (level logLevel) String() string {
+	switch level {
+	case lInfo:
+		return "INFO"
+	case lWarn:
+		return "WARN"
+	case lError:
+		return "ERROR"
+	case lFatal:
+		return "FATAL"
+	case lDebug:
+		return "DEBUG"
 	default:
-		return "Unknown"
+		return "UNKNOWN"
 	}
 }

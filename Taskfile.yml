@@ -1,0 +1,11 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  build:
+    cmds:
+      - GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o dist/lucy-linux-amd64
+      - GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o dist/lucy-windows-amd64.exe
+      - GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o dist/lucy-darwin-amd64
+      - GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -o dist/lucy-darwin-arm64

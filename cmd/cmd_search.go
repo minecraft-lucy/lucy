@@ -19,12 +19,12 @@ package cmd
 import (
 	"context"
 	"errors"
+	"lucy/lucytypes"
+	"lucy/remote"
 	"strconv"
 
 	"github.com/urfave/cli/v3"
-	"lucy/lnout"
-	"lucy/lucytypes"
-	"lucy/remote/modrinth"
+	"lucy/logger"
 	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
@@ -34,7 +34,6 @@ var subcmdSearch = &cli.Command{
 	Name:  "search",
 	Usage: "Search for mods and plugins",
 	Flags: []cli.Flag{
-		// TODO: This flag is not yet implemented
 		sourceFlag(lucytypes.Modrinth),
 		&cli.StringFlag{
 			Name:    "index",
@@ -74,7 +73,8 @@ var actionSearch cli.ActionFunc = func(
 	showClientPackage := cmd.Bool("client")
 	indexBy := lucytypes.SearchIndex(cmd.String("index"))
 
-	res, err := modrinth.Search(
+	res, err := remote.Search(
+		lucytypes.StringToSource(flagSourceName),
 		p.Name,
 		lucytypes.SearchOptions{
 			ShowClientPackage: showClientPackage,
@@ -82,7 +82,7 @@ var actionSearch cli.ActionFunc = func(
 		},
 	)
 	if err != nil {
-		lnout.Fatal(err)
+		logger.Fatal(err)
 	}
 	structout.Flush(generateSearchOutput(res, cmd.Bool("long")))
 

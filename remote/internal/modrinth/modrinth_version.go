@@ -22,11 +22,8 @@ import (
 	"io"
 	"net/http"
 
-	"lucy/dependency"
+	"lucy/logger"
 
-	"lucy/lnout"
-
-	"lucy/datatypes"
 	"lucy/local"
 	"lucy/lucytypes"
 )
@@ -38,11 +35,11 @@ import (
 var (
 	ENoVersion = errors.New("modrinth version not found")
 	ENoProject = errors.New("modrinth project not found")
-	ENoMember  = errors.New("modrinth project member not found")
+	ENoMember  = errors.New("modrinth project memberResponse not found")
 )
 
 func listVersions(slug lucytypes.ProjectName) (
-	versions []*datatypes.ModrinthVersion,
+	versions []*versionResponse,
 	err error,
 ) {
 	res, _ := http.Get(versionsUrl(slug))
@@ -57,14 +54,14 @@ func listVersions(slug lucytypes.ProjectName) (
 // getVersion is named as so because a Package in lucy is equivalent to a version
 // in Modrinth.
 func getVersion(id lucytypes.PackageId) (
-	v *datatypes.ModrinthVersion,
+	v *versionResponse,
 	err error,
 ) {
 	versions, err := listVersions(id.Name)
 	if err != nil {
 		return nil, ENoVersion
 	}
-	if id.Version == dependency.LatestVersion {
+	if id.Version == lucytypes.LatestVersion {
 		v, err = latestVersion(id.Name)
 		if err != nil {
 			return nil, err
@@ -72,7 +69,7 @@ func getVersion(id lucytypes.PackageId) (
 		return v, nil
 	}
 	for _, version := range versions {
-		if version.VersionNumber == id.Version &&
+		if lucytypes.RawVersion(version.VersionNumber) == id.Version &&
 			versionSupportsLoader(version, id.Platform) {
 			return version, nil
 		}
@@ -80,10 +77,10 @@ func getVersion(id lucytypes.PackageId) (
 	return nil, ENoVersion
 }
 
-func getVersionById(id string) (v *datatypes.ModrinthVersion, err error) {
+func getVersionById(id string) (v *versionResponse, err error) {
 	res, _ := http.Get(versionUrl(id))
 	data, _ := io.ReadAll(res.Body)
-	v = &datatypes.ModrinthVersion{}
+	v = &versionResponse{}
 	err = json.Unmarshal(data, v)
 	if err != nil {
 		return nil, ENoVersion
@@ -92,7 +89,7 @@ func getVersionById(id string) (v *datatypes.ModrinthVersion, err error) {
 }
 
 func versionSupportsLoader(
-	version *datatypes.ModrinthVersion,
+	version *versionResponse,
 	loader lucytypes.Platform,
 ) bool {
 	for _, l := range version.Loaders {
@@ -104,7 +101,7 @@ func versionSupportsLoader(
 }
 
 func latestVersion(slug lucytypes.ProjectName) (
-	v *datatypes.ModrinthVersion,
+	v *versionResponse,
 	err error,
 ) {
 	versions, err := listVersions(slug)
@@ -118,16 +115,16 @@ func latestVersion(slug lucytypes.ProjectName) (
 		}
 	}
 	if v == nil {
-		lnout.Info("no release version found for " + slug.Title())
+		logger.Info("no release version found for " + slug.Title())
 		return nil, ENoVersion
 	} else {
-		lnout.Debug("latest version of " + slug.String() + ": " + v.VersionNumber.String())
+		logger.Debug("latest version of " + slug.String() + ": " + v.VersionNumber)
 	}
 	return v, nil
 }
 
 func LatestCompatibleVersion(slug lucytypes.ProjectName) (
-	v *datatypes.ModrinthVersion,
+	v *versionResponse,
 	err error,
 ) {
 	versions, err := listVersions(slug)
@@ -136,7 +133,7 @@ func LatestCompatibleVersion(slug lucytypes.ProjectName) (
 	}
 	serverInfo := local.GetServerInfo()
 	if serverInfo.Executable == local.UnknownExecutable {
-		lnout.Info("no executable found, unable to infer a compatible version. falling back to latest version")
+		logger.Info("no executable found, unable to infer a compatible version. falling back to latest version")
 		v, err := latestVersion(slug)
 		if err != nil {
 			return nil, err

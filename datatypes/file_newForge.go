@@ -16,11 +16,6 @@ limitations under the License.
 
 package datatypes
 
-import (
-	"lucy/dependency"
-	"lucy/lucytypes"
-)
-
 // ForgeModIdentifierNew is for 1.13+ forge & neoforge. This is a toml file.
 type ForgeModIdentifierNew struct {
 	ModLoader       string `toml:"modLoader"`
@@ -29,25 +24,25 @@ type ForgeModIdentifierNew struct {
 	LogoFile        string `toml:"logoFile"`
 	License         string `toml:"license"`
 	Mods            []struct {
-		ModID         lucytypes.ProjectName `toml:"modId"`
-		Version       dependency.RawVersion `toml:"version"`
-		DisplayName   string                `toml:"displayName"`
-		ItemIcon      string                `toml:"itemIcon"`
-		DisplayURL    string                `toml:"displayURL"`
-		UpdateJSONURL string                `toml:"updateJSONURL"`
-		LogoFile      string                `toml:"logoFile"`
-		Credits       string                `toml:"credits"`
-		Authors       string                `toml:"authors"`
-		Description   string                `toml:"description"`
+		ModID         string `toml:"modId"`
+		Version       string `toml:"version"`
+		DisplayName   string `toml:"displayName"`
+		ItemIcon      string `toml:"itemIcon"`
+		DisplayURL    string `toml:"displayURL"`
+		UpdateJSONURL string `toml:"updateJSONURL"`
+		LogoFile      string `toml:"logoFile"`
+		Credits       string `toml:"credits"`
+		Authors       string `toml:"authors"`
+		Description   string `toml:"description"`
 	} `toml:"mods"`
 	Dependencies  map[string][]ForgeDependencies `toml:"dependencies"`
 	ModProperties map[string]string              `toml:"-"` // ignored
 }
 
 type ForgeDependencies struct {
-	ModID        lucytypes.ProjectName `toml:"modId"`
-	Mandatory    bool                  `toml:"mandatory"`
-	VersionRange string                `toml:"versionRange"`
-	Ordering     string                `toml:"ordering"`
-	Side         string                `toml:"side"`
+	ModID        string `toml:"modId"`
+	Mandatory    bool   `toml:"mandatory"`
+	VersionRange string `toml:"versionRange"`
+	Ordering     string `toml:"ordering"`
+	Side         string `toml:"side"`
 }

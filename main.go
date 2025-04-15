@@ -22,13 +22,13 @@ import (
 	"os"
 
 	"lucy/cmd"
-	"lucy/lnout"
+	"lucy/logger"
 )
 
 func main() {
 	defer func() {
-		lnout.Debug("program finished with exit code 0")
-		lnout.WriteAll()
+		logger.Debug("program finished with exit code 0")
+		logger.WriteAll()
 	}()
 	if err := cmd.Cli.Run(context.Background(), os.Args); err != nil {
 		log.Println(err)

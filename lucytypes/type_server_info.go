@@ -18,8 +18,6 @@ package lucytypes
 
 import (
 	"os/exec"
-
-	"lucy/dependency"
 )
 
 // ServerInfo components that do not exist, use an empty string. Note Executable
@@ -37,9 +35,9 @@ type ServerInfo struct {
 
 type ExecutableInfo struct {
 	Path          string
-	GameVersion   dependency.RawVersion
+	GameVersion   RawVersion
 	Platform      Platform
-	LoaderVersion dependency.RawVersion
+	LoaderVersion RawVersion
 	BootCommand   *exec.Cmd
 }
 

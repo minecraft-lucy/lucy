@@ -31,8 +31,7 @@ import (
 	"github.com/pelletier/go-toml"
 
 	"lucy/datatypes"
-	"lucy/dependency"
-	"lucy/lnout"
+	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/tools"
 )
@@ -46,8 +45,8 @@ var getExecutableInfo = tools.Memoize(
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
-			lnout.Warn(err)
-			lnout.Info("cannot read the current directory, most features will be disabled")
+			logger.Warn(err)
+			logger.Info("cannot read the current directory, most features will be disabled")
 		}
 		for _, jar := range jars {
 			exec := analyzeExecutable(jar)
@@ -58,7 +57,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			lnout.Info("no server jar found, trying to find under libraries")
+			logger.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
 			if len(jarPaths) == 0 {
 				// The following code is commented out due to the aggressive search
@@ -90,7 +89,7 @@ var getExecutableInfo = tools.Memoize(
 		}
 
 		if len(valid) == 0 {
-			lnout.Info("no server under current directory")
+			logger.Info("no server under current directory")
 			return UnknownExecutable
 		} else if len(valid) == 1 {
 			return valid[0]
@@ -146,7 +145,7 @@ func findJarRecursive(dir string) (jarFiles []string) {
 	// TODO: Use semaphore to limit the number of goroutines
 	for _, entry := range entries {
 		if atomic.LoadInt32(&fileCount) >= fileCountThreshold {
-			lnout.Info("file count threshold reached, stopping search")
+			logger.Info("file count threshold reached, stopping search")
 			break
 		}
 		if entry.IsDir() {
@@ -246,11 +245,11 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Minecraft
 	reader, _ := versionJson.Open()
-	defer tools.CloseReader(reader, lnout.Warn)
+	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = dependency.RawVersion(obj.Id)
+	exec.GameVersion = lucytypes.RawVersion(obj.Id)
 	return
 }
 
@@ -262,17 +261,17 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := installProperties.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = dependency.RawVersion(
+	exec.GameVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[1], "=")[1],
 	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = dependency.RawVersion(
+	exec.LoaderVersion = lucytypes.RawVersion(
 		strings.Split(strings.Split(s, "\n")[0], "=")[1],
 	)
 
@@ -293,12 +292,12 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 // Note that line breaks are "\r\n " and the last line ends with "\r\n"
 
 func analyzeFabricLauncher(
-manifest *zip.File,
+	manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
 	exec.Platform = lucytypes.Fabric
 	r, _ := manifest.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 	if !strings.Contains(s, "Class-Path: ") {
@@ -310,12 +309,12 @@ manifest *zip.File,
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = dependency.RawVersion(
+			exec.GameVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = dependency.RawVersion(
+			exec.LoaderVersion = lucytypes.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
@@ -324,11 +323,11 @@ manifest *zip.File,
 }
 
 func analyzeForge(
-jar *os.File,
-file *zip.File,
+	jar *os.File,
+	file *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	r, _ := file.Open()
-	defer tools.CloseReader(r, lnout.Warn)
+	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	p := &datatypes.ForgeModIdentifierNew{}
 	err := toml.Unmarshal(data, p)
@@ -344,13 +343,13 @@ file *zip.File,
 			}
 			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
 			if err != nil {
-				lnout.Debug(fmt.Errorf("cannot open unix_args.txt: %w", err))
+				logger.Debug(fmt.Errorf("cannot open unix_args.txt: %w", err))
 				argFile, err = os.Open(path.Join(dir, "win_args.txt"))
 			}
 			if err != nil {
-				lnout.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
-				exec.GameVersion = dependency.UnknownVersion
-				exec.LoaderVersion = dependency.UnknownVersion
+				logger.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
+				exec.GameVersion = lucytypes.UnknownVersion
+				exec.LoaderVersion = lucytypes.UnknownVersion
 				return exec
 			} else if mod.Version == "${global.forgeVersion}" {
 				exec.LoaderVersion, exec.GameVersion = analyzeForgeArgFile(argFile)
@@ -365,8 +364,8 @@ file *zip.File,
 }
 
 func analyzeForgeArgFile(file *os.File) (
-forgeVersion dependency.RawVersion,
-mcVersion dependency.RawVersion,
+	forgeVersion lucytypes.RawVersion,
+	mcVersion lucytypes.RawVersion,
 ) {
 	data, _ := io.ReadAll(file)
 	s := string(data)
@@ -375,18 +374,18 @@ mcVersion dependency.RawVersion,
 		if strings.HasPrefix(line, "--fml.forgeVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				forgeVersion = dependency.RawVersion(split[1])
+				forgeVersion = lucytypes.RawVersion(split[1])
 				continue
 			}
-			forgeVersion = dependency.UnknownVersion
+			forgeVersion = lucytypes.UnknownVersion
 		}
 		if strings.HasPrefix(line, "--fml.mcVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				mcVersion = dependency.RawVersion(split[1])
+				mcVersion = lucytypes.RawVersion(split[1])
 				continue
 			}
-			mcVersion = dependency.UnknownVersion
+			mcVersion = lucytypes.UnknownVersion
 		}
 	}
 

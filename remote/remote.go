@@ -25,16 +25,19 @@ package remote
 import (
 	"errors"
 	"fmt"
+	pmodrinth "lucy/remote/internal/modrinth"
 
-	"lucy/dependency"
 	"lucy/lucytypes"
-	"lucy/remote/modrinth"
 )
 
 var (
-	ESourceNotSupported  = errors.New("source not supported")
-	ECannotInferPlatform = errors.New("cannot infer platform")
-	ECannotInferSource   = errors.New("cannot infer source") // This will be reintroduced when the auto source detection is implemented.
+	ErrSourceNotSupported  = errors.New("source not supported")
+	ErrCannotInferPlatform = errors.New("cannot infer platform")
+	ErrCannotInferSource   = errors.New("cannot infer source")
+)
+
+var (
+	modrinth = pmodrinth.Modrinth
 )
 
 func Fetch(
@@ -53,7 +56,7 @@ func Fetch(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -70,7 +73,7 @@ func Dependencies(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -86,7 +89,7 @@ func Support(source lucytypes.Source, name lucytypes.ProjectName) (
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 
 	}
 }
@@ -107,9 +110,11 @@ func Information(
 	case lucytypes.McdrWebsite:
 		fallthrough
 	default:
-		return nil, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
+
+var ENoResults = errors.New("no results found")
 
 func Search(
 	source lucytypes.Source,
@@ -118,9 +123,20 @@ func Search(
 ) (res lucytypes.SearchResults, err error) {
 	switch source {
 	case lucytypes.Modrinth:
-		res, err = modrinth.Search(name, option)
+		rawRes, err := modrinth.Search(
+			name,
+			option.ShowClientPackage,
+			option.IndexBy.ToModrinth(),
+			option.Platform,
+		)
 		if err != nil {
 			return res, err
+		}
+		if rawRes.TotalHits == 0 {
+			return res, fmt.Errorf("%w on %s", ENoResults, source)
+		}
+		for _, hit := range rawRes.Hits {
+			res.Results = append(res.Results, lucytypes.ProjectName(hit.Slug))
 		}
 		return res, nil
 	default:
@@ -128,7 +144,7 @@ func Search(
 			Source:  lucytypes.UnknownSource,
 			Results: nil,
 		}
-		return res, fmt.Errorf("%w: %s", ESourceNotSupported, source)
+		return res, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 	}
 }
 
@@ -142,11 +158,11 @@ func InferVersion(
 	id lucytypes.PackageId,
 ) (infer lucytypes.PackageId) {
 	switch id.Version {
-	case dependency.AllVersion, dependency.LatestVersion:
+	case lucytypes.AllVersion, lucytypes.LatestVersion:
 		// API call
-	case dependency.LatestCompatibleVersion:
+	case lucytypes.LatestCompatibleVersion:
 		// API call
-	case dependency.NoVersion, dependency.UnknownVersion:
+	case lucytypes.NoVersion, lucytypes.UnknownVersion:
 		// Do nothing
 	default:
 		// Do nothing

@@ -1,6 +1,7 @@
 package dependency
 
 import (
+	"lucy/lucytypes"
 	"strconv"
 	"strings"
 )
@@ -16,39 +17,42 @@ import (
 // that is labeled as Raw and contains the raw version as it is. This is to
 // ensure a basic support to some non-standard versions numbers by only supporting
 // Eq and Neq comparisons.
-func Parse(raw RawVersion, label VersionLabel) SemanticVersion {
+func Parse(
+	raw lucytypes.RawVersion,
+	label lucytypes.VersionLabel,
+) lucytypes.SemanticVersion {
 	switch raw {
-	case LatestVersion, LatestCompatibleVersion, NoVersion, AllVersion, UnknownVersion:
-		return InvalidVersion
+	case lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion, lucytypes.NoVersion, lucytypes.AllVersion, lucytypes.UnknownVersion:
+		return lucytypes.InvalidVersion
 	}
 	switch label {
-	case Semver:
+	case lucytypes.Semver:
 		return parseSemver(string(raw))
-	case MinecraftRelease:
+	case lucytypes.MinecraftRelease:
 		return parseMinecraftRelease(string(raw))
-	case MinecraftSnapshot:
+	case lucytypes.MinecraftSnapshot:
 		return parseMinecraftSnapshot(string(raw))
 	default:
-		return InvalidVersion
+		return lucytypes.InvalidVersion
 	}
 }
 
-func parseSemver(s string) (v SemanticVersion) {
+func parseSemver(s string) (v lucytypes.SemanticVersion) {
 	return operatorPlus(s)
 }
 
 // These two are equivalent, for now.
-func parseMinecraftRelease(s string) (v SemanticVersion) {
+func parseMinecraftRelease(s string) (v lucytypes.SemanticVersion) {
 	return parseSemver(s)
 }
 
-func operatorPlus(s string) (v SemanticVersion) {
+func operatorPlus(s string) (v lucytypes.SemanticVersion) {
 	tokens := strings.Split(s, "+")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
 	}
 	v = operatorDash(s)
-	if v == InvalidVersion {
+	if v == lucytypes.InvalidVersion {
 		return v
 	}
 	if len(tokens) >= 2 {
@@ -57,13 +61,13 @@ func operatorPlus(s string) (v SemanticVersion) {
 	return v
 }
 
-func operatorDash(s string) (v SemanticVersion) {
+func operatorDash(s string) (v lucytypes.SemanticVersion) {
 	tokens := strings.Split(s, "-")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
 	}
 	v = operatorDot(s)
-	if v == InvalidVersion {
+	if v == lucytypes.InvalidVersion {
 		return v
 	}
 	if len(tokens) >= 2 {
@@ -72,16 +76,16 @@ func operatorDash(s string) (v SemanticVersion) {
 	return v
 }
 
-func operatorDot(s string) (v SemanticVersion) {
+func operatorDot(s string) (v lucytypes.SemanticVersion) {
 	tokens := strings.Split(s, ".")
 	if len(tokens) >= 2 {
 		major, err := strconv.Atoi(tokens[0])
 		if err != nil {
-			return InvalidVersion
+			return lucytypes.InvalidVersion
 		}
 		minor, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return InvalidVersion
+			return lucytypes.InvalidVersion
 		}
 		v.Major = uint16(major)
 		v.Minor = uint16(minor)
@@ -89,46 +93,46 @@ func operatorDot(s string) (v SemanticVersion) {
 	if len(tokens) == 3 {
 		patch, err := strconv.Atoi(tokens[2])
 		if err != nil {
-			return InvalidVersion
+			return lucytypes.InvalidVersion
 		}
 		v.Patch = uint16(patch)
 	}
 	return v
 }
 
-func parseMinecraftSnapshot(s string) SemanticVersion {
+func parseMinecraftSnapshot(s string) lucytypes.SemanticVersion {
 	return operatorInWeekIndex(s)
 }
 
-func operatorWeek(s string) (v SemanticVersion) {
+func operatorWeek(s string) (v lucytypes.SemanticVersion) {
 	tokens := strings.Split(s, "w")
 	if len(tokens) != 2 {
-		return InvalidVersion
+		return lucytypes.InvalidVersion
 	}
 	major, err := strconv.Atoi(tokens[0])
 	if err != nil {
-		return InvalidVersion
+		return lucytypes.InvalidVersion
 	}
 	minor, err := strconv.Atoi(tokens[1])
 	if err != nil {
-		return InvalidVersion
+		return lucytypes.InvalidVersion
 	}
 	v.Major = uint16(major)
 	v.Minor = uint16(minor)
 	return v
 }
 
-func operatorInWeekIndex(s string) (v SemanticVersion) {
+func operatorInWeekIndex(s string) (v lucytypes.SemanticVersion) {
 	tokens := s[len(s)-1]
 	v = operatorWeek(s[:len(s)-1])
-	if v == InvalidVersion {
+	if v == lucytypes.InvalidVersion {
 		return v
 	}
 	switch tokens {
 	case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h':
 		v.Patch = uint16(tokens)
 	default:
-		return InvalidVersion
+		return lucytypes.InvalidVersion
 	}
 	return v
 }

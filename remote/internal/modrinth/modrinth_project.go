@@ -22,16 +22,14 @@ import (
 	"io"
 	"net/http"
 
-	dependency2 "lucy/dependency"
 	"lucy/syntax"
 
-	"lucy/datatypes"
 	"lucy/lucytypes"
 )
 
 func getProjectId(slug lucytypes.ProjectName) (id string, err error) {
 	res, _ := http.Get(projectUrl(string(slug)))
-	modrinthProject := datatypes.ModrinthProject{}
+	modrinthProject := projectResponse{}
 	data, _ := io.ReadAll(res.Body)
 	err = json.Unmarshal(data, &modrinthProject)
 	if err != nil {
@@ -41,10 +39,10 @@ func getProjectId(slug lucytypes.ProjectName) (id string, err error) {
 	return
 }
 
-func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
+func getProjectById(id string) (project *projectResponse, err error) {
 	res, _ := http.Get(projectUrl(id))
 	data, _ := io.ReadAll(res.Body)
-	project = &datatypes.ModrinthProject{}
+	project = &projectResponse{}
 	err = json.Unmarshal(data, project)
 	if err != nil {
 		return nil, ENoProject
@@ -53,12 +51,12 @@ func getProjectById(id string) (project *datatypes.ModrinthProject, err error) {
 }
 
 func getProjectByName(slug lucytypes.ProjectName) (
-	project *datatypes.ModrinthProject,
+	project *projectResponse,
 	err error,
 ) {
 	res, _ := http.Get(projectUrl(string(slug)))
 	data, _ := io.ReadAll(res.Body)
-	project = &datatypes.ModrinthProject{}
+	project = &projectResponse{}
 	err = json.Unmarshal(data, project)
 	if err != nil {
 		return nil, ENoProject
@@ -67,7 +65,7 @@ func getProjectByName(slug lucytypes.ProjectName) (
 }
 
 func getProjectMembers(id string) (
-	members []*datatypes.ModrinthMember,
+	members []*memberResponse,
 	err error,
 ) {
 	res, _ := http.Get(projectMemberUrl(id))
@@ -83,13 +81,13 @@ var ErrorInvalidDependency = errors.New("invalid dependency")
 
 func DependencyToPackage(
 	dependent lucytypes.PackageId,
-	dependency *datatypes.ModrinthVersionDependencies,
+	dependency *dependenciesResponse,
 ) (
 	p lucytypes.PackageId,
 	err error,
 ) {
-	var version *datatypes.ModrinthVersion
-	var project *datatypes.ModrinthProject
+	var version *versionResponse
+	var project *projectResponse
 
 	// I don't see a case where a package would depend on a project on another
 	// platform. So, we can safely assume that the platform of the dependent
@@ -106,13 +104,13 @@ func DependencyToPackage(
 		project, _ = getProjectById(dependency.ProjectId)
 		// This is not safe, TODO: use better inference method
 		version, _ = latestVersion(lucytypes.ProjectName(project.Slug))
-		p.Version = dependency2.LatestVersion
+		p.Version = lucytypes.LatestVersion
 	} else {
 		return p, ErrorInvalidDependency
 	}
 
 	p.Name = syntax.PackageName(project.Slug)
-	p.Version = version.VersionNumber
+	p.Version = lucytypes.RawVersion(version.VersionNumber)
 
 	return p, nil
 }

@@ -16,8 +16,6 @@ limitations under the License.
 
 package lucytypes
 
-import "lucy/dependency"
-
 type PackageUrlType uint8
 
 const (
@@ -25,6 +23,9 @@ const (
 	HomepageUrl
 	SourceUrl
 	WikiUrl
+	ForumUrl
+	IssuesUrl
+	DonationUrl
 	OthersUrl
 )
 
@@ -90,38 +91,34 @@ type ProjectInformation struct {
 	License     string
 }
 
-type PackageMember struct {
-	Name  string
-	Role  string
-	Url   string
-	Email string
-}
+type (
+	PackageMember struct {
+		Name  string
+		Role  string
+		Url   string
+		Email string
+	}
 
-// PackageInstallation is an optional attribution to lucytypes.Package. It is
-// used for packages that are known to be installed in the local filesystem.
-type PackageInstallation struct {
-	Path string
-}
+	// PackageInstallation is an optional attribution to lucytypes.Package. It is
+	// used for packages that are known to be installed in the local filesystem.
+	PackageInstallation struct {
+		Path string
+	}
 
-// PackageRemote is an optional attribution to lucytypes.Package. It is used to
-// represent package's presence in a remote source.
-type PackageRemote struct {
-	Source Source
-	// Whatever the remote source uses to identify this package.
-	RemoteId string
-	// The URL to download the package's specified version When package.Id.Version
-	FileUrl  string
-	Filename string
-}
+	// PackageRemote is an optional attribution to lucytypes.Package. It is used to
+	// represent package's presence in a remote source.
+	PackageRemote struct {
+		// This string should come from a remote.Source. It is here because structured
+		// sources exists only in the remote package.
+		Source   Source
+		FileUrl  string
+		Filename string
+	}
 
-// PackageUpdate is a struct to represent the update status of a package. It must
-// be used with PackageRemote.
-type PackageUpdate struct {
-	// Just refer this to the PackageRemote under the same Package struct.
-	Current *PackageRemote
-}
-
-type ProjectSupport struct {
-	MinecraftVersions []dependency.RawVersion
-	Platforms         []Platform
-}
+	// ProjectSupport reflects the support information of the whole project. For
+	// specific dependency of a single package, use the PackageDependencies struct.
+	ProjectSupport struct {
+		MinecraftVersions []RawVersion
+		Platforms         []Platform
+	}
+)
