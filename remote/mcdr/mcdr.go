@@ -17,6 +17,7 @@ limitations under the License.
 package mcdr
 
 import (
+	"fmt"
 	"lucy/lucytypes"
 	"lucy/remote"
 )
@@ -28,14 +29,19 @@ var Self self
 func (s self) Search(
 	query string,
 	options lucytypes.SearchOptions,
-) (res lucytypes.SearchResults, err error) {
-	res = lucytypes.SearchResults{}
-	res.Source = lucytypes.McdrCatalogue
-	err = match(query)
-	if err != nil {
-		return lucytypes.SearchResults{}, err
+) (res remote.RawSearchResults, err error) {
+	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
+		return nil, fmt.Errorf("unsupported platform: %s", options.Platform)
 	}
-	res.Results, err = sortBy(options.IndexBy)
+	everything, err := getEverything()
+	res = &indexedEverything{
+		Everything: everything,
+		IndexBy:    options.IndexBy,
+	}
+	err = match(query) // this changes getEverything()
+	if err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 

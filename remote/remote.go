@@ -85,10 +85,11 @@ source SourceHandler,
 query lucytypes.ProjectName,
 option lucytypes.SearchOptions,
 ) (res lucytypes.SearchResults, err error) {
-	res, err = source.Search(string(query), option)
+	raw, err := source.Search(string(query), option)
 	if err != nil {
 		return res, err
 	}
+	res = raw.ToSearchResults()
 	if len(res.Results) == 0 {
 		return res, ErrorNoResults
 	}

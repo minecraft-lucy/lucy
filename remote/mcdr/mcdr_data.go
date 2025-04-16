@@ -7,6 +7,21 @@ import (
 	"lucy/tools"
 )
 
+type indexedEverything struct {
+	Everything *everything
+	IndexBy    lucytypes.SearchIndex
+}
+
+func (e indexedEverything) ToSearchResults() lucytypes.SearchResults {
+	res := lucytypes.SearchResults{Source: lucytypes.McdrCatalogue}
+	var err error
+	res.Results, err = sortBy(e.IndexBy)
+	if err != nil {
+		return lucytypes.SearchResults{}
+	}
+	return res
+}
+
 type everything struct {
 	Timestamp int `json:"timestamp"`
 	Authors   struct {
@@ -14,18 +29,6 @@ type everything struct {
 		Authors map[string]author `json:"authors"`
 	} `json:"authors"`
 	Plugins map[string]plugin `json:"plugins"`
-}
-
-func (e everything) ToSearchResults() lucytypes.SearchResults {
-	res := lucytypes.SearchResults{}
-	res.Source = lucytypes.McdrCatalogue
-	for _, plugin := range e.Plugins {
-		res.Results = append(
-			res.Results,
-			lucytypes.ToProjectName(plugin.Meta.Id),
-		)
-	}
-	return res
 }
 
 type author struct {
