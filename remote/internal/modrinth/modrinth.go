@@ -31,6 +31,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"lucy/remote"
 	"net/http"
 	"strconv"
 
@@ -41,23 +42,18 @@ import (
 
 type self struct{}
 
-var Modrinth self
-
-var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
-
 // Search
 //
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func (s self) Search(
-	name lucytypes.ProjectName,
-	showClient bool,
-	indexBy string,
-	platform lucytypes.Platform,
-) (result *searchResultResponse, err error) {
-	result = &searchResultResponse{}
+	query string,
+	options lucytypes.SearchOptions,
+) (res lucytypes.SearchResults, err error) {
+	res = lucytypes.SearchResults{}
+
 	var facets []facetItems
-	switch platform {
+	switch options.Platform {
 	case lucytypes.Forge:
 		facets = append(facets, facetForge)
 	case lucytypes.Fabric:
@@ -68,170 +64,95 @@ func (s self) Search(
 		facets = append(facets, facetForge, facetAllLoaders)
 	}
 
-	if showClient {
+	if options.ShowClientPackage {
 		facets = append(facets, facetServerSupported, facetClientSupported)
 	} else {
 		facets = append(facets, facetServerSupported)
 	}
 
 	internalOptions := searchOptions{
-		index:  indexBy,
+		index:  options.IndexBy.ToModrinth(),
 		facets: facets,
 	}
-	searchUrl := searchUrl(name, internalOptions)
+	searchUrl := searchUrl(lucytypes.ProjectName(query), internalOptions)
 
 	// Make the call to Modrinth API
 	logger.Debug("searching via modrinth api: " + searchUrl)
-	resp, err := http.Get(searchUrl)
+	httpRes, err := http.Get(searchUrl)
 	if err != nil {
-		return result, ErrInvalidAPIResponse
+		return res, ErrInvalidAPIResponse
 	}
-	data, err := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
-	defer tools.CloseReader(resp.Body, logger.Warn)
-	err = json.Unmarshal(data, &result)
+	defer tools.CloseReader(httpRes.Body, logger.Warn)
+	modrinthRes := searchResultResponse{}
+	err = json.Unmarshal(data, &modrinthRes)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
-	if result.TotalHits > 100 {
-		logger.InfoNow(strconv.Itoa(result.TotalHits) + " results found on modrinth, only showing first 100")
+	if modrinthRes.TotalHits > 100 {
+		logger.InfoNow(strconv.Itoa(modrinthRes.TotalHits) + " results found on modrinth, only showing first 100")
 	}
-	return result, nil
+	return res, nil
 }
 
 func (s self) Fetch(id lucytypes.PackageId) (
-	remote *lucytypes.PackageRemote,
+	remote remote.RawPackageRemote,
 	err error,
 ) {
-	id = s.InferAmbiguousVersion(id)
-	// project, err := getProjectByName(id.Name)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	id, err = s.ParseAmbiguousVersion(id)
 	version, err := getVersion(id)
 	if err != nil {
 		return nil, err
 	}
-	fileUrl, filename := getFile(version)
-
-	remote = &lucytypes.PackageRemote{
-		FileUrl:  fileUrl,
-		Filename: filename,
-	}
-
-	return remote, nil
+	return version, nil
 }
 
-func (s self) Information(slug lucytypes.ProjectName) (
-	information *lucytypes.ProjectInformation,
+func (s self) Information(name lucytypes.ProjectName) (
+	info remote.RawProjectInformation,
 	err error,
 ) {
-	project, err := getProjectByName(slug)
+	project, err := getProjectByName(name)
 	if err != nil {
 		return nil, err
 	}
-	information = &lucytypes.ProjectInformation{
-		Title:       project.Title,
-		Brief:       project.Description,
-		Description: tools.MarkdownToPlainText(project.Body),
-		Author:      []lucytypes.PackageMember{},
-		Urls:        []lucytypes.PackageUrl{},
-		License:     project.License.Name,
-	}
-
-	// Fill in URLs
-	if project.WikiUrl != "" {
-		information.Urls = append(
-			information.Urls,
-			lucytypes.PackageUrl{
-				Name: "Wiki",
-				Type: lucytypes.WikiUrl,
-				Url:  project.WikiUrl,
-			},
-		)
-	}
-
-	if project.SourceUrl != "" {
-		information.Urls = append(
-			information.Urls,
-			lucytypes.PackageUrl{
-				Name: "Source Code",
-				Type: lucytypes.SourceUrl,
-				Url:  project.SourceUrl,
-			},
-		)
-	}
-
-	if project.DonationUrls != nil {
-		for _, donationUrl := range project.DonationUrls {
-			information.Urls = append(
-				information.Urls,
-				lucytypes.PackageUrl{
-					Name: "Donation",
-					Type: lucytypes.DonationUrl,
-					Url:  donationUrl.Url,
-				},
-			)
-		}
-	}
-
-	// Fill in authors
-	members, err := getProjectMembers(project.Id)
-	if err != nil {
-		logger.WarnNow(err)
-	} else {
-		for _, member := range members {
-			information.Author = append(
-				information.Author,
-				lucytypes.PackageMember{
-					Name:  member.User.Username,
-					Role:  member.Role,
-					Url:   userHomepageUrl(member.User.Id),
-					Email: member.User.Email,
-				},
-			)
-		}
-	}
-
-	return information, nil
+	return project, nil
 }
 
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
 func (s self) Support(name lucytypes.ProjectName) (
-	supports *lucytypes.ProjectSupport,
+	supports remote.RawProjectSupport,
 	err error,
 ) {
-	project, _ := getProjectByName(name)
-	supports = &lucytypes.ProjectSupport{
-		MinecraftVersions: make([]lucytypes.RawVersion, 0),
-		Platforms:         make([]lucytypes.Platform, 0),
+	project, err := getProjectByName(name)
+	if err != nil {
+		return nil, err
 	}
-
-	for _, version := range project.GameVersions {
-		supports.MinecraftVersions = append(
-			supports.MinecraftVersions,
-			lucytypes.RawVersion(version),
-		)
-	}
-
-	for _, platform := range project.Loaders {
-		supports.Platforms = append(
-			supports.Platforms,
-			lucytypes.Platform(platform),
-		)
-	}
-
-	return supports, nil
+	return project, nil
 }
 
-func (s self) InferAmbiguousVersion(p lucytypes.PackageId) (infer lucytypes.PackageId) {
-	infer.Platform = p.Platform
-	infer.Name = p.Name
+var Modrinth self
+
+var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
+
+func (s self) Dependencies(id lucytypes.PackageId) (
+	deps remote.RawPackageDependencies,
+	err error,
+) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (s self) ParseAmbiguousVersion(p lucytypes.PackageId) (
+	parsed lucytypes.PackageId,
+	err error,
+) {
+	parsed.Platform = p.Platform
+	parsed.Name = p.Name
 	var v *versionResponse
-	var err error
 
 	switch p.Version {
 	case lucytypes.LatestCompatibleVersion:
@@ -239,12 +160,12 @@ func (s self) InferAmbiguousVersion(p lucytypes.PackageId) (infer lucytypes.Pack
 	case lucytypes.AllVersion, lucytypes.NoVersion, lucytypes.LatestVersion:
 		v, err = latestVersion(p.Name)
 	default:
-		return p
+		return p, nil
 	}
 	if err != nil {
-		return p
+		return p, err
 	}
-	infer.Version = lucytypes.RawVersion(v.VersionNumber)
+	parsed.Version = lucytypes.RawVersion(v.VersionNumber)
 
-	return infer
+	return parsed, nil
 }

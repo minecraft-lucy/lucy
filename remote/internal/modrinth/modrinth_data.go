@@ -59,6 +59,28 @@ type projectResponse struct {
 	MonetizationStatus string        `json:"monetization_status"`
 }
 
+func (p *projectResponse) ToProjectSupport() lucytypes.ProjectSupport {
+	supports := lucytypes.ProjectSupport{
+		MinecraftVersions: make([]lucytypes.RawVersion, 0),
+		Platforms:         make([]lucytypes.Platform, 0),
+	}
+
+	for _, version := range p.GameVersions {
+		supports.MinecraftVersions = append(
+			supports.MinecraftVersions,
+			lucytypes.RawVersion(version),
+		)
+	}
+
+	for _, platform := range p.Loaders {
+		supports.Platforms = append(
+			supports.Platforms,
+			lucytypes.Platform(platform),
+		)
+	}
+	return supports
+}
+
 func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformation) {
 	info = lucytypes.ProjectInformation{
 		Title:       p.Title,
@@ -175,7 +197,7 @@ type versionResponse struct {
 	Name            string                 `json:"name"`
 	VersionNumber   string                 `json:"version_number"`
 	Changelog       string                 `json:"changelog"`
-	ChangelogUrl    interface{}            `json:"changelog_url"`
+	ChangelogUrl    string                 `json:"changelog_url"`
 	DatePublished   time.Time              `json:"date_published"`
 	Downloads       int                    `json:"downloads"`
 	VersionType     string                 `json:"version_type"`
@@ -183,6 +205,15 @@ type versionResponse struct {
 	RequestedStatus interface{}            `json:"requested_status"`
 	Files           []fileResponse         `json:"files"`
 	Dependencies    []dependenciesResponse `json:"dependencies"`
+}
+
+func (v versionResponse) ToPackageRemote() lucytypes.PackageRemote {
+	remote := lucytypes.PackageRemote{
+		Source:   lucytypes.Modrinth,
+		FileUrl:  v.Files[0].Url,
+		Filename: v.Files[0].Filename,
+	}
+	return remote
 }
 
 type dependencyType string

@@ -26,8 +26,8 @@ type self struct{}
 var Mcdr self
 
 func (s self) Search(
-query string,
-options lucytypes.SearchOptions,
+	query string,
+	options lucytypes.SearchOptions,
 ) (res lucytypes.SearchResults, err error) {
 	res = lucytypes.SearchResults{}
 	res.Source = lucytypes.McdrCatalogue
@@ -40,39 +40,39 @@ options lucytypes.SearchOptions,
 }
 
 func (s self) Fetch(id lucytypes.PackageId) (
-remote remote.RawPackageRemote,
-err error,
+	remote remote.RawPackageRemote,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Information(name lucytypes.ProjectName) (
-info remote.RawProjectInformation,
-err error,
+	info remote.RawProjectInformation,
+	err error,
 ) {
 	return getPlugin(string(name)), nil
 }
 
 func (s self) Dependencies(id lucytypes.PackageId) (
-deps remote.RawPackageDependencies,
-err error,
+	deps remote.RawPackageDependencies,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Support(name lucytypes.ProjectName) (
-supports remote.RawProjectSupport,
-err error,
+	supports remote.RawProjectSupport,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
-parsed lucytypes.PackageId,
-err error,
+	parsed lucytypes.PackageId,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
