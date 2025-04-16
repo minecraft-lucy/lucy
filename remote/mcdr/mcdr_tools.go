@@ -3,7 +3,6 @@ package mcdr
 import (
 	"lucy/lucytypes"
 	"lucy/tools"
-	"slices"
 	"time"
 )
 
@@ -15,8 +14,8 @@ const matchThreshold = 0.266667
 //
 // This is in-place.
 func match(
-everything *everything,
-query string,
+	everything *everything,
+	query string,
 ) {
 	plugins := everything.Plugins
 	for i, plugin := range plugins {
@@ -28,27 +27,44 @@ query string,
 	}
 }
 
-// sortBy has a VERY BAD implementation.
-// TODO: Refactor
 func sortBy(
-everything *everything,
-index lucytypes.SearchIndex,
+	everything *everything,
+	index lucytypes.SearchIndex,
 ) (res []lucytypes.ProjectName) {
-	n := len(everything.Plugins)
+
 	switch index {
 	case lucytypes.ByRelevance:
-		type keyValueArray []struct {
-			item  lucytypes.ProjectName
-			index float64
+		arr := make(
+			[]tools.KeyValue[lucytypes.ProjectName, float64],
+			0,
+			len(everything.Plugins),
+		)
+		for _, plugin := range everything.Plugins {
+			id := lucytypes.ToProjectName(plugin.Meta.Id)
+			relevance := tools.NormalizedLevenshteinDistance(id.String(), "")
+			arr = append(
+				arr,
+				tools.KeyValue[lucytypes.ProjectName, float64]{id, relevance},
+			)
 		}
-		var arr keyValueArray
-		return cmpByRelevance(arr)
+		return tools.SortAndExtract(
+			arr,
+			func(a, b tools.KeyValue[lucytypes.ProjectName, float64]) int {
+				if a.Index == b.Index {
+					return 0
+				}
+				if a.Index > b.Index {
+					return -1
+				}
+				return 1
+			},
+		)
 	case lucytypes.ByDownloads:
-		type keyValueArray []struct {
-			item  lucytypes.ProjectName
-			index int
-		}
-		var arr = make(keyValueArray, 0, n)
+		arr := make(
+			[]tools.KeyValue[lucytypes.ProjectName, int],
+			0,
+			len(everything.Plugins),
+		)
 		for _, plugin := range everything.Plugins {
 			download := 0
 			for _, release := range plugin.Release.Releases {
@@ -56,111 +72,45 @@ index lucytypes.SearchIndex,
 			}
 			arr = append(
 				arr,
-				struct {
-					item  lucytypes.ProjectName
-					index int
-				}{lucytypes.ToProjectName(plugin.Meta.Id), download},
+				tools.KeyValue[lucytypes.ProjectName, int]{
+					lucytypes.ToProjectName(plugin.Meta.Id), download,
+				},
 			)
 		}
-		return cmpByDownloads(arr)
+		return tools.SortAndExtract(
+			arr,
+			func(a, b tools.KeyValue[lucytypes.ProjectName, int]) int {
+				return b.Index - a.Index
+			},
+		)
 	case lucytypes.ByNewest:
-		type keyValueArray []struct {
-			item  lucytypes.ProjectName
-			index time.Time
-		}
-		var arr = make(keyValueArray, 0, n)
+		arr := make(
+			[]tools.KeyValue[lucytypes.ProjectName, time.Time],
+			0,
+			len(everything.Plugins),
+		)
 		for _, plugin := range everything.Plugins {
 			timestamp := plugin.Release.Releases[0].CreatedAt
 			arr = append(
-				arr, struct {
-					item  lucytypes.ProjectName
-					index time.Time
-				}{lucytypes.ToProjectName(plugin.Meta.Id), timestamp},
+				arr,
+				tools.KeyValue[lucytypes.ProjectName, time.Time]{
+					lucytypes.ToProjectName(plugin.Meta.Id), timestamp,
+				},
 			)
 		}
-		return cmpByNewest(arr)
+		return tools.SortAndExtract(
+			arr,
+			func(a, b tools.KeyValue[lucytypes.ProjectName, time.Time]) int {
+				if a.Index.Equal(b.Index) {
+					return 0
+				}
+				if a.Index.After(b.Index) {
+					return -1
+				}
+				return 1
+			},
+		)
 	}
 
 	return nil
-}
-
-func cmpByRelevance(
-arr []struct {
-	item  lucytypes.ProjectName
-	index float64
-},
-) (res []lucytypes.ProjectName) {
-	slices.SortFunc(
-		arr, func(
-		a, b struct {
-			item  lucytypes.ProjectName
-			index float64
-		},
-		) int {
-			if a.index == b.index {
-				return 0
-			}
-			if a.index > b.index {
-				return -1
-			}
-			return 1
-		},
-	)
-
-	for _, item := range arr {
-		res = append(res, item.item)
-	}
-	return res
-}
-
-func cmpByDownloads(
-arr []struct {
-	item  lucytypes.ProjectName
-	index int
-},
-) (res []lucytypes.ProjectName) {
-	slices.SortFunc(
-		arr, func(
-		a, b struct {
-			item  lucytypes.ProjectName
-			index int
-		},
-		) int {
-			return b.index - a.index
-		},
-	)
-
-	for _, item := range arr {
-		res = append(res, item.item)
-	}
-	return res
-}
-
-func cmpByNewest(
-arr []struct {
-	item  lucytypes.ProjectName
-	index time.Time
-},
-) (res []lucytypes.ProjectName) {
-	slices.SortFunc(
-		arr, func(
-		a, b struct {
-			item  lucytypes.ProjectName
-			index time.Time
-		},
-		) int {
-			if a.index.Equal(b.index) {
-				return 0
-			}
-			if a.index.After(b.index) {
-				return -1
-			}
-			return 1
-		},
-	)
-
-	for _, item := range arr {
-		res = append(res, item.item)
-	}
-	return res
 }
