@@ -187,8 +187,8 @@ func (f *FieldDynamicColumnLabels) Output() {
 
 	for i, label := range f.Labels {
 		value(label)
-		if i == len(f.Labels)-1 {
-			if (i+1)%columns == 0 && f.ShowTotal {
+		if i == len(f.Labels)-1 && f.ShowTotal {
+			if (i+1)%columns == 0 {
 				newLine()
 			}
 			tab()

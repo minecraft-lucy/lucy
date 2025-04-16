@@ -19,6 +19,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"log"
 	"strconv"
 
 	"lucy/lucytypes"
@@ -36,7 +37,7 @@ var subcmdSearch = &cli.Command{
 	Name:  "search",
 	Usage: "Search for mods and plugins",
 	Flags: []cli.Flag{
-		sourceFlag(lucytypes.Modrinth),
+		flagSource(lucytypes.AutoSource),
 		&cli.StringFlag{
 			Name:    "index",
 			Aliases: []string{"i"},
@@ -71,23 +72,41 @@ var actionSearch cli.ActionFunc = func(
 	cmd *cli.Command,
 ) error {
 	p := syntax.Parse(cmd.Args().First())
-	_ = cmd.String("index")
+
 	showClientPackage := cmd.Bool("client")
 	indexBy := lucytypes.SearchIndex(cmd.String("index"))
+	options := lucytypes.SearchOptions{
+		ShowClientPackage: showClientPackage,
+		IndexBy:           indexBy,
+	}
+	source := cmd.String("source")
 
-	res, err := remote.Search(
-		sources.Map[lucytypes.StringToSource(flagSourceName)],
-		p.Name,
-		lucytypes.SearchOptions{
-			ShowClientPackage: showClientPackage,
-			IndexBy:           indexBy,
-		},
-	)
+	var res = lucytypes.SearchResults{}
+	var err error
+	switch source {
+	case lucytypes.AutoSource.String():
+		switch p.Platform {
+		case lucytypes.AllPlatform:
+			res, err = remote.Search(sources.Modrinth, p.Name, options)
+		case lucytypes.Forge, lucytypes.Fabric, lucytypes.Neoforge:
+			res, err = remote.Search(sources.Modrinth, p.Name, options)
+		case lucytypes.Mcdr:
+			res, err = remote.Search(sources.Mcdr, p.Name, options)
+		case lucytypes.UnknownPlatform:
+			log.Fatal("unknown platform")
+		}
+	default:
+		res, err = remote.Search(
+			sources.Map[lucytypes.StringToSource(cmd.String("source"))],
+			p.Name,
+			options,
+		)
+
+	}
 	if err != nil {
 		logger.Fatal(err)
 	}
 	structout.Flush(generateSearchOutput(res, cmd.Bool("long")))
-
 	return nil
 }
 
@@ -99,6 +118,7 @@ func generateSearchOutput(
 	for _, r := range res.Results {
 		results = append(results, r.String())
 	}
+
 	return &structout.Data{
 		Fields: []structout.Field{
 			&structout.FieldShortText{

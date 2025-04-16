@@ -23,7 +23,7 @@ func getAuthor(name string) *author {
 	if err != nil {
 		return nil
 	}
-	a, ok := everything.Authors[name]
+	a, ok := everything.Authors.Authors[name]
 	if !ok {
 		return nil
 	}

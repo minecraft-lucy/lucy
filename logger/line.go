@@ -17,9 +17,8 @@ limitations under the License.
 package logger
 
 import (
-	"os"
-
 	"github.com/emirpasic/gods/lists/singlylinkedlist"
+	"os"
 )
 
 var (
@@ -43,13 +42,13 @@ func WriteAll() {
 
 var queue = singlylinkedlist.New()
 
-func logQueuedFactory(level logLevel) func(content error) {
+func factoryQueuedLog(level logLevel) func(content error) {
 	return func(content error) {
 		queue.Add(&logItem{Level: level, Content: content})
 	}
 }
 
-func writeNowFactory(level logLevel) func(content error) {
+func factoryInstantLog(level logLevel) func(content error) {
 	return func(content error) {
 		writeToConsole(&logItem{Level: level, Content: content})
 	}
@@ -59,13 +58,9 @@ var (
 	Info = func(content any) {
 		queue.Add(&logItem{Level: lInfo, Content: content})
 	}
-	Warn  = logQueuedFactory(lWarn)
-	Error = logQueuedFactory(lError)
-	Fatal = func(content error) {
-		defer os.Exit(1)
-		logQueuedFactory(lFatal)(content)
-		WriteAll()
-	}
+	Warn  = factoryQueuedLog(lWarn)
+	Error = factoryQueuedLog(lError)
+	Fatal = FatalNow
 	Debug = func(content any) {
 		if debug {
 			queue.Add(&logItem{Level: lDebug, Content: content})
@@ -79,6 +74,11 @@ var (
 	InfoNow = func(content any) {
 		writeToConsole(&logItem{Level: lInfo, Content: content})
 	}
-	WarnNow  = writeNowFactory(lWarn)
-	ErrorNow = writeNowFactory(lError)
+	WarnNow  = factoryInstantLog(lWarn)
+	ErrorNow = factoryInstantLog(lError)
+	FatalNow = func(content error) {
+		defer os.Exit(1)
+		factoryInstantLog(lFatal)(content)
+		WriteAll()
+	}
 )

@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
-	"os"
-	"path"
-
+	"io"
 	"lucy/logger"
 	"lucy/tools"
 	"lucy/util"
+	"net/http"
+	"os"
+	"path"
 )
 
 // Everything in this context is an extremely long json file of plugins info
@@ -19,21 +20,24 @@ import (
 
 var getEverything = tools.MemoizeE(fetchEverything)
 
-const EverythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
+const everythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
 
 func fetchEverything() (everything *everything, err error) {
 	if exist, err := checkEverythingCache(); err != nil && exist {
-		return getEverythingCache()
+		everything, err = getEverythingCache()
+		if err == nil {
+			return everything, nil
+		}
+		logger.Warn(fmt.Errorf("failed to read cache: %w", err))
 	}
 
-	resp, err := http.Get(EverythingAPIEndpoint)
+	resp, err := http.Get(everythingAPIEndpoint)
 	if err != nil {
 		return nil, err
 	}
-	tools.CloseReader(resp.Body, logger.Warn)
+	defer tools.CloseReader(resp.Body, logger.Warn)
 
-	var gz []byte
-	_, err = resp.Body.Read(gz)
+	gz, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -45,32 +49,35 @@ func fetchEverything() (everything *everything, err error) {
 	return readEverythingGz(gz)
 }
 
-func readEverythingGz(gz []byte) (everything *everything, err error) {
+func readEverythingGz(gz []byte) (e *everything, err error) {
+	e = &everything{}
 	gzReader, err := gzip.NewReader(bytes.NewBuffer(gz))
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
-	tools.CloseReader(gzReader, logger.Warn)
+	defer tools.CloseReader(gzReader, logger.Warn)
 
-	var buff []byte
-	_, err = gzReader.Read(buff)
+	data, err := io.ReadAll(gzReader)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(buff, everything)
+	err = json.Unmarshal(data, e)
 	if err != nil {
 		return nil, err
 	}
-	return everything, nil
+	return e, nil
 }
 
 func cacheEverythingGz(gz []byte) error {
+	if !util.DoCache {
+		return nil
+	}
 	filepath := path.Join(util.CacheDir, "everything.json.gz")
-	_, err := os.Create(filepath)
+	file, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(filepath, gz, 0o644)
+	_, err = file.Write(gz)
 	if err != nil {
 		return err
 	}
@@ -78,6 +85,9 @@ func cacheEverythingGz(gz []byte) error {
 }
 
 func checkEverythingCache() (bool, error) {
+	if !util.DoCache {
+		return false, nil
+	}
 	filepath := path.Join(util.CacheDir, "everything.json.gz")
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		return false, nil
@@ -89,6 +99,9 @@ func checkEverythingCache() (bool, error) {
 }
 
 func getEverythingCache() (*everything, error) {
+	if !util.DoCache {
+		return nil, fmt.Errorf("cache not available")
+	}
 	filepath := path.Join(util.CacheDir, "everything.json.gz")
 	if exist, err := checkEverythingCache(); exist && err == nil {
 		var gz []byte

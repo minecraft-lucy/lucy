@@ -24,7 +24,6 @@ import (
 	"lucy/remote/sources"
 
 	"lucy/logger"
-	"lucy/lucyerrors"
 	"lucy/lucytypes"
 	"lucy/remote"
 	"lucy/structout"
@@ -38,7 +37,7 @@ var subcmdInfo = &cli.Command{
 	Name:  "info",
 	Usage: "Display information of a mod or plugin",
 	Flags: []cli.Flag{
-		sourceFlag(lucytypes.Modrinth),
+		flagSource(lucytypes.Modrinth),
 		flagJsonOutput,
 		flagNoStyle,
 	},
@@ -109,7 +108,7 @@ var actionInfo cli.ActionFunc = func(
 		return err
 	}
 	if out == nil {
-		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
+		err = fmt.Errorf("%w: %s", remote.ErrorNotFound, id.StringFull())
 		logger.ErrorNow(err)
 		return err
 	}

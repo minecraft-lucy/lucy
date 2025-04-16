@@ -8,9 +8,12 @@ import (
 )
 
 type everything struct {
-	Timestamp int               `json:"timestamp"`
-	Authors   map[string]author `json:"authors"`
-	Plugins   map[string]plugin `json:"plugins"`
+	Timestamp int `json:"timestamp"`
+	Authors   struct {
+		Amount  int               `json:"amount"`
+		Authors map[string]author `json:"authors"`
+	} `json:"authors"`
+	Plugins map[string]plugin `json:"plugins"`
 }
 
 func (e everything) ToSearchResults() lucytypes.SearchResults {

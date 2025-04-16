@@ -6,9 +6,9 @@ import (
 
 	"lucy/lucytypes"
 	"lucy/tools"
-)
 
-const matchThreshold = 0.266667
+	"github.com/sahilm/fuzzy"
+)
 
 // match is a helper function to for self.Search, as the MCDR API just gives
 // the whole catalogue in a single file, we need to filter the results by
@@ -16,25 +16,30 @@ const matchThreshold = 0.266667
 //
 // This is in-place.
 func match(
-	query string,
+query string,
 ) (err error) {
 	everything, err := getEverything()
 	if err != nil {
 		return err
 	}
-	plugins := everything.Plugins
-	for i, plugin := range plugins {
-		id := lucytypes.ToProjectName(plugin.Meta.Id).String()
-		normDist := tools.NormalizedLevenshteinDistance(id, query)
-		if normDist > matchThreshold {
-			delete(plugins, i)
-		}
+	var ids = make([]string, 0, len(everything.Plugins))
+	for id := range everything.Plugins {
+		ids = append(ids, id)
 	}
+
+	matches := fuzzy.Find(query, ids)
+
+	var matchedPlugins = make(map[string]plugin, len(matches))
+	for _, match := range matches {
+		matchedPlugins[match.Str] = everything.Plugins[match.Str]
+	}
+	everything.Plugins = matchedPlugins
+
 	return nil
 }
 
 func sortBy(
-	index lucytypes.SearchIndex,
+index lucytypes.SearchIndex,
 ) (res []lucytypes.ProjectName, err error) {
 	everything, err := getEverything()
 	if err != nil {
