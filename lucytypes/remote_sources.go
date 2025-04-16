@@ -6,7 +6,7 @@ const (
 	CurseForge Source = iota
 	Modrinth
 	GitHub
-	McdrWebsite
+	McdrCatalogue
 	UnknownSource
 	Auto
 )
@@ -19,7 +19,7 @@ func (s Source) String() string {
 		return "modrinth"
 	case GitHub:
 		return "github"
-	case McdrWebsite:
+	case McdrCatalogue:
 		return "mcdr"
 	default:
 		return "unknown"
@@ -34,7 +34,7 @@ func (s Source) Title() string {
 		return "Modrinth"
 	case GitHub:
 		return "GitHub"
-	case McdrWebsite:
+	case McdrCatalogue:
 		return "MCDR"
 	default:
 		return "Unknown"
@@ -45,7 +45,7 @@ var stringToSourceMap = map[string]Source{
 	"curseforge": CurseForge,
 	"modrinth":   Modrinth,
 	"github":     GitHub,
-	"mcdr":       McdrWebsite,
+	"mcdr":       McdrCatalogue,
 	"auto":       Auto,
 	"":           Auto,
 	"unknown":    UnknownSource,
@@ -70,6 +70,7 @@ const (
 	ByRelevance = "relevance"
 	ByDownloads = "downloads"
 	ByNewest    = "newest"
+	ByName      = "name"
 )
 
 func (i SearchIndex) Valid() bool {

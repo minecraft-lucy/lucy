@@ -29,7 +29,7 @@ import (
 var AvailableSources = map[lucytypes.Platform][]lucytypes.Source{
 	lucytypes.Fabric: {lucytypes.CurseForge, lucytypes.Modrinth},
 	lucytypes.Forge:  {lucytypes.CurseForge, lucytypes.Modrinth},
-	lucytypes.Mcdr:   {lucytypes.McdrWebsite},
+	lucytypes.Mcdr:   {lucytypes.McdrCatalogue},
 }
 
 var SpeedTestUrls = map[lucytypes.Source]string{
