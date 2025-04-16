@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -132,4 +133,22 @@ func UnderCd(path string) bool {
 
 	parent := filepath.Dir(abs)
 	return parent == cd
+}
+
+// KeyValue works together with SortAndExtract to sort a slice of Item
+// with their corresponding Index.
+type KeyValue[T, Ti any] struct {
+	Item  T
+	Index Ti
+}
+
+func SortAndExtract[T, Ti any](
+arr []KeyValue[T, Ti],
+cmp func(a, b KeyValue[T, Ti]) int,
+) (res []T) {
+	slices.SortFunc(arr, cmp)
+	for _, item := range arr {
+		res = append(res, item.Item)
+	}
+	return res
 }
