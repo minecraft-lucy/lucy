@@ -37,7 +37,7 @@ var subcmdInfo = &cli.Command{
 	Name:  "info",
 	Usage: "Display information of a mod or plugin",
 	Flags: []cli.Flag{
-		flagSource(lucytypes.Modrinth),
+		flagSource,
 		flagJsonOutput,
 		flagNoStyle,
 	},

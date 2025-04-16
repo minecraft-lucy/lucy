@@ -1,5 +1,7 @@
 package lucytypes
 
+import "strings"
+
 type Source uint8
 
 const (
@@ -42,16 +44,17 @@ func (s Source) Title() string {
 }
 
 var stringToSourceMap = map[string]Source{
+	"auto":       AutoSource,
+	"":           AutoSource,
 	"curseforge": CurseForge,
 	"modrinth":   Modrinth,
 	"github":     GitHub,
 	"mcdr":       McdrCatalogue,
-	"auto":       AutoSource,
-	"":           AutoSource,
 	"unknown":    UnknownSource,
 }
 
 func StringToSource(s string) Source {
+	s = strings.ToLower(s)
 	if v, ok := stringToSourceMap[s]; ok {
 		return v
 	}
