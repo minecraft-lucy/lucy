@@ -19,8 +19,9 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/term"
 	"strings"
+
+	"golang.org/x/term"
 )
 
 func init() {

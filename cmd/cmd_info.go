@@ -19,8 +19,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"lucy/remote/sources"
 	"slices"
+
+	"lucy/remote/sources"
 
 	"lucy/logger"
 	"lucy/lucyerrors"

@@ -1,8 +1,9 @@
 package modrinth
 
 import (
-	"lucy/lucytypes"
 	"time"
+
+	"lucy/lucytypes"
 )
 
 // projectResponse

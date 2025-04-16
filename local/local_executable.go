@@ -21,12 +21,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"lucy/prompt"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"lucy/prompt"
 
 	"github.com/pelletier/go-toml"
 
