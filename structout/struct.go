@@ -186,27 +186,33 @@ func (f *FieldDynamicColumnLabels) Output() {
 	}
 
 	for i, label := range f.Labels {
+		lastInRow := (i+1)%columns == 0
+		lastAmongAll := i == len(f.Labels)-1
 		value(label)
-		if i == len(f.Labels)-1 && f.ShowTotal {
-			if (i+1)%columns == 0 {
+
+		if f.MaxLines != 0 && lines == f.MaxLines && lastInRow {
+			newLine()
+			tab()
+			if f.ShowTotal {
+				annot("(" + strconv.Itoa(len(f.Labels)) + "in total, " + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+			} else {
+				annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+			}
+			break
+		}
+
+		if lastAmongAll && f.ShowTotal {
+			if lastInRow {
 				newLine()
 			}
 			tab()
 			annot("(" + strconv.Itoa(len(f.Labels)) + " total)")
+			break
 		}
-		if (i+1)%columns == 0 {
+
+		if lastInRow {
 			newLine()
 			lines++
-			if f.MaxLines != 0 && lines > f.MaxLines {
-				tab()
-				if f.ShowTotal {
-					annot("(" + strconv.Itoa(len(f.Labels)) + "in total, " + strconv.Itoa(len(f.Labels)-i-1) + " more)")
-				} else {
-					annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more)")
-				}
-				newLine()
-				break
-			}
 		}
 		tab()
 	}
