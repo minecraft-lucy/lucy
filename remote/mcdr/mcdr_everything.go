@@ -16,9 +16,11 @@ import (
 // Everything in this context is an extremely long json file of plugins info
 // used by the official mcdr catalogue website.
 
+var getEverything = tools.MemoizeE(fetchEverything)
+
 const EverythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
 
-func getEverything() (everything *everything, err error) {
+func fetchEverything() (everything *everything, err error) {
 	if exist, err := checkEverythingCache(); err != nil && exist {
 		return getEverythingCache()
 	}
