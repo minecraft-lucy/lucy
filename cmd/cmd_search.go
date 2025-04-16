@@ -157,6 +157,14 @@ func appendToSearchOutput(
 		results = append(results, r.String())
 	}
 
+	if len(out.Fields) != 0 {
+		out.Fields = append(
+			out.Fields, &structout.FieldSeparator{
+				Length: 0,
+				Dim:    false,
+			},
+		)
+	}
 	out.Fields = append(
 		out.Fields,
 		&structout.FieldAnnotation{

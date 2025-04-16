@@ -36,29 +36,29 @@ var keyValueWriter = tabwriter.NewWriter(
 )
 
 func key(title string) {
-	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta(title)))
+	_, _ = fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta(title)))
 }
 
 func value(value string) {
-	fmt.Fprintf(keyValueWriter, "%s", value)
+	_, _ = fmt.Fprintf(keyValueWriter, "%s", value)
 }
 
 func inlineAnnot(annotation string) {
-	fmt.Fprintf(keyValueWriter, "\t%s", tools.Dim(annotation))
+	_, _ = fmt.Fprintf(keyValueWriter, "\t%s", tools.Dim(annotation))
 }
 
 func annot(value string) {
-	fmt.Fprintf(keyValueWriter, "%s", tools.Dim(value))
+	_, _ = fmt.Fprintf(keyValueWriter, "%s", tools.Dim(value))
 }
 
 func newLine() {
-	fmt.Fprintf(keyValueWriter, "\n")
+	_, _ = fmt.Fprintf(keyValueWriter, "\n")
 }
 
 func tab() {
-	fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta("")))
+	_, _ = fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta("")))
 }
 
 func flush() {
-	keyValueWriter.Flush()
+	_ = keyValueWriter.Flush()
 }
