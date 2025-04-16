@@ -17,7 +17,10 @@ limitations under the License.
 // Package util is a general package for network and file system operations.
 package util
 
-import "os"
+import (
+	"os"
+	"path"
+)
 
 const (
 	ProgramPath  = ".lucy"
@@ -25,7 +28,7 @@ const (
 	DownloadPath = ProgramPath + "/downloads"
 )
 
-var CachePath = os.TempDir() + "/lucy"
+var CacheDir = path.Join(os.TempDir(), "lucy")
 
 type DownloadTask struct {
 	From string // url

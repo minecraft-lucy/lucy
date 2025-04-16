@@ -17,62 +17,65 @@ limitations under the License.
 package mcdr
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"path"
-
-	"github.com/google/go-github/v50/github"
-	"lucy/datatypes"
 	"lucy/lucytypes"
-	"lucy/syntax"
+	"lucy/remote"
 )
 
-func SearchMcdrPluginCatalogue(search lucytypes.ProjectName) (
-	pluginInfo *datatypes.McdrPluginInfo,
+type self struct{}
+
+var Mcdr self
+
+func (s self) Search(
+	query string,
+	options lucytypes.SearchOptions,
+) (res lucytypes.SearchResults, err error) {
+	res = lucytypes.SearchResults{}
+	res.Source = lucytypes.McdrCatalogue
+	everything, err := getEverything()
+	if err != nil {
+		return res, err
+	}
+	match(everything, query)
+	res.Results = sortBy(everything, options.IndexBy)
+	return res, nil
+}
+
+func (s self) Fetch(id lucytypes.PackageId) (
+	remote remote.RawPackageRemote,
 	err error,
 ) {
-	plugins := getMcdrPluginCatalogue()
-
-	for _, plugin := range plugins {
-		p := syntax.Parse(*plugin.Name)
-		if p.Name == search {
-			return getMcdrPluginInfo(*plugin.Path), nil
-		}
-	}
-
-	return nil, fmt.Errorf("plugin not found")
+	// TODO implement me
+	panic("implement me")
 }
 
-func getMcdrPluginCatalogue() []*github.RepositoryContent {
-	ctx := context.Background()
-	client := github.NewClient(nil)
-
-	_, directoryContent, _, _ := client.Repositories.GetContents(
-		ctx,
-		"MCDReforged",
-		"PluginCatalogue",
-		"plugins",
-		nil,
-	)
-
-	return directoryContent
+func (s self) Information(name lucytypes.ProjectName) (
+	info remote.RawProjectInformation,
+	err error,
+) {
+	// TODO implement me
+	panic("implement me")
 }
 
-func getMcdrPluginInfo(pluginPath string) (pluginInfo *datatypes.McdrPluginInfo) {
-	ctx := context.Background()
-	client := github.NewClient(nil)
+func (s self) Dependencies(id lucytypes.PackageId) (
+	deps remote.RawPackageDependencies,
+	err error,
+) {
+	// TODO implement me
+	panic("implement me")
+}
 
-	fileContent, _, _, _ := client.Repositories.GetContents(
-		ctx,
-		"MCDReforged",
-		"PluginCatalogue",
-		path.Join(pluginPath, "plugin_info.json"),
-		nil,
-	)
-	pluginInfo = &datatypes.McdrPluginInfo{}
-	content, _ := fileContent.GetContent()
-	_ = json.Unmarshal([]byte(content), pluginInfo)
+func (s self) Support(name lucytypes.ProjectName) (
+	supports remote.RawProjectSupport,
+	err error,
+) {
+	// TODO implement me
+	panic("implement me")
+}
 
-	return
+func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
+	parsed lucytypes.PackageId,
+	err error,
+) {
+	// TODO implement me
+	panic("implement me")
 }

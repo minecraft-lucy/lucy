@@ -53,7 +53,7 @@ func Fetch(
 		return fetch, nil
 	case lucytypes.CurseForge:
 		fallthrough
-	case lucytypes.McdrWebsite:
+	case lucytypes.McdrCatalogue:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
@@ -70,7 +70,7 @@ func Dependencies(
 		fallthrough
 	case lucytypes.CurseForge:
 		fallthrough
-	case lucytypes.McdrWebsite:
+	case lucytypes.McdrCatalogue:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
@@ -86,7 +86,7 @@ func Support(source lucytypes.Source, name lucytypes.ProjectName) (
 		return modrinth.Support(name)
 	case lucytypes.CurseForge:
 		fallthrough
-	case lucytypes.McdrWebsite:
+	case lucytypes.McdrCatalogue:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
@@ -107,7 +107,7 @@ func Information(
 		return info, nil
 	case lucytypes.CurseForge:
 		fallthrough
-	case lucytypes.McdrWebsite:
+	case lucytypes.McdrCatalogue:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)

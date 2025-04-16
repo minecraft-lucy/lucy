@@ -45,22 +45,26 @@ func PackageName(s string) lucytypes.ProjectName {
 // sanitize tolerates some common interchangeability between characters. This
 // includes underscores, chinese full stops, and backslashes. It also converts
 // uppercase characters to lowercase.
-func sanitize(s string) (clean string) {
-	clean = ""
+func sanitize(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+
 	for _, char := range s {
-		if char == '_' {
-			clean += string('-')
-		} else if char == '\\' {
-			clean += string('/')
-		} else if char == '。' {
-			clean += string('.')
-		} else if char >= 'A' && char <= 'Z' {
-			clean += strings.ToLower(string(char))
-		} else {
-			clean += string(char)
+		switch {
+		case char == '_':
+			b.WriteByte('-')
+		case char == '\\':
+			b.WriteByte('/')
+		case char == '。':
+			b.WriteByte('.')
+		case 'A' <= char && char <= 'Z':
+			b.WriteRune(char + 'a' - 'A')
+		default:
+			b.WriteRune(char)
 		}
 	}
-	return
+
+	return b.String()
 }
 
 var (

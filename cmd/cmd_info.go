@@ -65,10 +65,13 @@ var actionInfo cli.ActionFunc = func(
 			out = infoOutput(p, lucytypes.Modrinth)
 			break
 		}
-		p.Information, err = remote.Information(lucytypes.McdrWebsite, id.Name)
-		p.Remote, err = remote.Fetch(lucytypes.McdrWebsite, id)
+		p.Information, err = remote.Information(
+			lucytypes.McdrCatalogue,
+			id.Name,
+		)
+		p.Remote, err = remote.Fetch(lucytypes.McdrCatalogue, id)
 		if err == nil {
-			out = infoOutput(p, lucytypes.McdrWebsite)
+			out = infoOutput(p, lucytypes.McdrCatalogue)
 			break
 		}
 		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
@@ -86,12 +89,15 @@ var actionInfo cli.ActionFunc = func(
 		}
 		out = infoOutput(p, lucytypes.Modrinth)
 	case lucytypes.Mcdr:
-		p.Information, err = remote.Information(lucytypes.McdrWebsite, id.Name)
+		p.Information, err = remote.Information(
+			lucytypes.McdrCatalogue,
+			id.Name,
+		)
 		if err != nil {
 			logger.Warn(err)
 			break
 		}
-		out = infoOutput(p, lucytypes.McdrWebsite)
+		out = infoOutput(p, lucytypes.McdrCatalogue)
 	}
 	if err != nil {
 		logger.Warn(err)
