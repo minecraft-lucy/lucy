@@ -31,10 +31,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net/http"
-	"strconv"
-
 	"lucy/remote"
+	"net/http"
 
 	"lucy/logger"
 	"lucy/lucytypes"
@@ -52,9 +50,7 @@ var Self self
 func (s self) Search(
 	query string,
 	options lucytypes.SearchOptions,
-) (res lucytypes.SearchResults, err error) {
-	res = lucytypes.SearchResults{}
-
+) (res remote.RawSearchResults, err error) {
 	var facets []facetItems
 	switch options.Platform {
 	case lucytypes.Forge:
@@ -83,20 +79,17 @@ func (s self) Search(
 	logger.Debug("searching via modrinth api: " + searchUrl)
 	httpRes, err := http.Get(searchUrl)
 	if err != nil {
-		return res, ErrInvalidAPIResponse
+		return nil, ErrInvalidAPIResponse
 	}
 	data, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
 	defer tools.CloseReader(httpRes.Body, logger.Warn)
-	modrinthRes := searchResultResponse{}
-	err = json.Unmarshal(data, &modrinthRes)
+	res = &searchResultResponse{}
+	err = json.Unmarshal(data, res)
 	if err != nil {
-		return res, err
-	}
-	if modrinthRes.TotalHits > 100 {
-		logger.InfoNow(strconv.Itoa(modrinthRes.TotalHits) + " results found on modrinth, only showing first 100")
+		return nil, err
 	}
 	return res, nil
 }

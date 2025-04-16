@@ -14,9 +14,9 @@ import (
 // the whole catalogue in a single file, we need to filter the results by
 // query.
 //
-// This is in-place.
+// This has a side effect to getEverything()
 func match(
-query string,
+	query string,
 ) (err error) {
 	everything, err := getEverything()
 	if err != nil {
@@ -38,8 +38,11 @@ query string,
 	return nil
 }
 
+// sortBy is a helper function to sort the plugins by the given index.
+//
+// Side effects on getEverything() will disturb this function.
 func sortBy(
-index lucytypes.SearchIndex,
+	index lucytypes.SearchIndex,
 ) (res []lucytypes.ProjectName, err error) {
 	everything, err := getEverything()
 	if err != nil {

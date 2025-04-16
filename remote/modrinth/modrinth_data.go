@@ -181,6 +181,20 @@ type searchResultResponse struct {
 	TotalHits int `json:"total_hits"`
 }
 
+func (s *searchResultResponse) ToSearchResults() lucytypes.SearchResults {
+	res := lucytypes.SearchResults{
+		Source:  lucytypes.Modrinth,
+		Results: make([]lucytypes.ProjectName, 0, s.TotalHits),
+	}
+
+	// The hits should already be sorted by whatever index passed in.
+	for _, hit := range s.Hits {
+		res.Results = append(res.Results, lucytypes.ProjectName(hit.Slug))
+	}
+
+	return res
+}
+
 // versionResponse
 //
 // Docs

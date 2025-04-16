@@ -4,7 +4,7 @@ import "lucy/lucytypes"
 
 type SourceHandler interface {
 	Search(query string, options lucytypes.SearchOptions) (
-		res lucytypes.SearchResults,
+		res RawSearchResults,
 		err error,
 	)
 	Fetch(id lucytypes.PackageId) (
