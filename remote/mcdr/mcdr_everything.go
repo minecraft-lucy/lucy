@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 )
 
 // Everything in this context is an extremely long json file of plugins info
@@ -21,6 +22,7 @@ import (
 var getEverything = tools.MemoizeE(fetchEverything)
 
 const everythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
+const cacheExpiration = 24 * time.Hour
 
 func fetchEverything() (everything *everything, err error) {
 	if exist, err := checkEverythingCache(); err != nil && exist {
@@ -93,9 +95,24 @@ func checkEverythingCache() (bool, error) {
 		return false, nil
 	} else if err != nil {
 		return false, err
-	} else {
-		return true, nil
 	}
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		return false, err
+	}
+	gz, err := io.ReadAll(file)
+	if err != nil {
+		return false, err
+	}
+	everything, err := readEverythingGz(gz)
+	if err != nil {
+		return false, err
+	}
+	if time.Since(time.Unix(int64(everything.Timestamp), 0)) > cacheExpiration {
+		return false, nil
+	}
+	return true, nil
 }
 
 func getEverythingCache() (*everything, error) {
