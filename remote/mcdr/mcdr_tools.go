@@ -15,7 +15,7 @@ const matchThreshold = 0.266667
 //
 // This is in-place.
 func match(
-query string,
+	query string,
 ) (err error) {
 	everything, err := getEverything()
 	if err != nil {
@@ -33,7 +33,7 @@ query string,
 }
 
 func sortBy(
-index lucytypes.SearchIndex,
+	index lucytypes.SearchIndex,
 ) (res []lucytypes.ProjectName, err error) {
 	everything, err := getEverything()
 	if err != nil {

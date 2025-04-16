@@ -25,7 +25,6 @@ package remote
 import (
 	"errors"
 	"fmt"
-	pmodrinth "lucy/remote/internal/modrinth"
 
 	"lucy/lucytypes"
 )
@@ -36,136 +35,73 @@ var (
 	ErrCannotInferSource   = errors.New("cannot infer source")
 )
 
-var (
-	modrinth = pmodrinth.Modrinth
-)
+// IoC via dependency injection
 
 func Fetch(
-	source lucytypes.Source,
+	source SourceHandler,
 	id lucytypes.PackageId,
-) (remote *lucytypes.PackageRemote, err error) {
-	switch source {
-	case lucytypes.Modrinth:
-		fetch, err := modrinth.Fetch(id)
-		if err != nil {
-			return nil, err
-		}
-		return fetch, nil
-	case lucytypes.CurseForge:
-		fallthrough
-	case lucytypes.McdrCatalogue:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
+) (remote lucytypes.PackageRemote, err error) {
+	raw, err := source.Fetch(id)
+	if err != nil {
+		return lucytypes.PackageRemote{}, err
 	}
+	remote = raw.ToPackageRemote()
+	return remote, nil
 }
 
 func Dependencies(
-	source lucytypes.Source,
+	source SourceHandler,
 	id lucytypes.PackageId,
 ) (deps *lucytypes.PackageDependencies, err error) {
-	// TODO: Implement dependency fetching
-	switch source {
-	case lucytypes.Modrinth:
-		fallthrough
-	case lucytypes.CurseForge:
-		fallthrough
-	case lucytypes.McdrCatalogue:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
-	}
+	// TODO: Implement
+	return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 }
 
 func Support(source lucytypes.Source, name lucytypes.ProjectName) (
 	supports *lucytypes.ProjectSupport,
 	err error,
 ) {
-	switch source {
-	case lucytypes.Modrinth:
-		return modrinth.Support(name)
-	case lucytypes.CurseForge:
-		fallthrough
-	case lucytypes.McdrCatalogue:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
-
-	}
+	// TODO: Implement
+	panic("not implemented")
 }
 
 func Information(
-	source lucytypes.Source,
+	source SourceHandler,
 	name lucytypes.ProjectName,
-) (info *lucytypes.ProjectInformation, err error) {
-	switch source {
-	case lucytypes.Modrinth:
-		info, err = modrinth.Information(name)
-		if err != nil {
-			return nil, err
-		}
-		return info, nil
-	case lucytypes.CurseForge:
-		fallthrough
-	case lucytypes.McdrCatalogue:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
+) (info lucytypes.ProjectInformation, err error) {
+	raw, err := source.Information(name)
+	if err != nil {
+		return lucytypes.ProjectInformation{}, err
 	}
+	info = raw.ToProjectInformation()
+	return info, nil
 }
 
-var ENoResults = errors.New("no results found")
+var ErrorNoResults = errors.New("no results found")
 
 func Search(
-	source lucytypes.Source,
-	name lucytypes.ProjectName,
+	source SourceHandler,
+	query lucytypes.ProjectName,
 	option lucytypes.SearchOptions,
 ) (res lucytypes.SearchResults, err error) {
-	switch source {
-	case lucytypes.Modrinth:
-		rawRes, err := modrinth.Search(
-			name,
-			option.ShowClientPackage,
-			option.IndexBy.ToModrinth(),
-			option.Platform,
-		)
-		if err != nil {
-			return res, err
-		}
-		if rawRes.TotalHits == 0 {
-			return res, fmt.Errorf("%w on %s", ENoResults, source)
-		}
-		for _, hit := range rawRes.Hits {
-			res.Results = append(res.Results, lucytypes.ProjectName(hit.Slug))
-		}
-		return res, nil
-	default:
-		res = lucytypes.SearchResults{
-			Source:  lucytypes.UnknownSource,
-			Results: nil,
-		}
-		return res, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
+	res, err = source.Search(string(query), option)
+	if err != nil {
+		return lucytypes.SearchResults{}, err
 	}
+	if len(res.Results) == 0 {
+		return lucytypes.SearchResults{}, ErrorNoResults
+	}
+	return res, nil
 }
 
 // InferVersion replaces inferable version constants with their inferred versions
 // through sources. You should call this function before parsing the version to
 // SemanticVersion.
 //
-// TODO: Implement InferVersion for all RawVersion constants.
+// TODO: Remove, infer version should not be exposed. All inference will be done in the SourceHandlers
 func InferVersion(
-	source lucytypes.Source,
+	source SourceHandler,
 	id lucytypes.PackageId,
 ) (infer lucytypes.PackageId) {
-	switch id.Version {
-	case lucytypes.AllVersion, lucytypes.LatestVersion:
-		// API call
-	case lucytypes.LatestCompatibleVersion:
-		// API call
-	case lucytypes.NoVersion, lucytypes.UnknownVersion:
-		// Do nothing
-	default:
-		// Do nothing
-	}
 	return id
 }

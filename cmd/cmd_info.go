@@ -19,6 +19,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"lucy/remote/sources"
 	"slices"
 
 	"lucy/logger"
@@ -59,48 +60,56 @@ var actionInfo cli.ActionFunc = func(
 
 	switch id.Platform {
 	case lucytypes.AllPlatform:
-		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
-		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
-		if err == nil {
+		for _, source := range sources.All {
+			info, err := remote.Information(source, id.Name)
+			if err != nil {
+				continue
+			}
+			p.Information = &info
+
+			remote, err := remote.Fetch(source, id)
+			if err != nil {
+				continue
+			}
+			p.Remote = &remote
 			out = infoOutput(p, lucytypes.Modrinth)
 			break
 		}
-		p.Information, err = remote.Information(
-			lucytypes.McdrCatalogue,
-			id.Name,
-		)
-		p.Remote, err = remote.Fetch(lucytypes.McdrCatalogue, id)
-		if err == nil {
-			out = infoOutput(p, lucytypes.McdrCatalogue)
-			break
-		}
-		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
-		logger.ErrorNow(err)
-		return err
+
 	case lucytypes.Fabric, lucytypes.Forge:
-		p.Information, err = remote.Information(lucytypes.Modrinth, id.Name)
+		info, err := remote.Information(sources.Modrinth, id.Name)
 		if err != nil {
 			logger.ErrorNow(err)
 		}
-		p.Remote, err = remote.Fetch(lucytypes.Modrinth, id)
+		p.Information = &info
+
+		remote, err := remote.Fetch(sources.Modrinth, id)
+		p.Remote = &remote
 		if err != nil {
 			logger.ErrorNow(err)
 			return err
 		}
 		out = infoOutput(p, lucytypes.Modrinth)
 	case lucytypes.Mcdr:
-		p.Information, err = remote.Information(
-			lucytypes.McdrCatalogue,
+		info, err := remote.Information(
+			sources.Mcdr,
 			id.Name,
 		)
 		if err != nil {
 			logger.Warn(err)
 			break
 		}
+		p.Information = &info
 		out = infoOutput(p, lucytypes.McdrCatalogue)
 	}
+
 	if err != nil {
 		logger.Warn(err)
+		return err
+	}
+	if out == nil {
+		err = fmt.Errorf("%w: %s", lucyerrors.ENotFound, id.StringFull())
+		logger.ErrorNow(err)
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {
