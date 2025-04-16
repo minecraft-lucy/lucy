@@ -1,9 +1,10 @@
 package mcdr
 
 import (
+	"time"
+
 	"lucy/lucytypes"
 	"lucy/tools"
-	"time"
 )
 
 type everything struct {
@@ -31,16 +32,15 @@ type author struct {
 
 type plugin struct {
 	Meta struct {
-		SchemaVersion int      `json:"schema_version"`
-		Id            string   `json:"id"`
-		Name          string   `json:"name"`
-		Version       string   `json:"version"`
-		Link          string   `json:"link"`
-		Authors       []string `json:"authors"`
-		Dependencies  struct {
-		} `json:"dependencies"`
-		Requirements []interface{} `json:"requirements"`
-		Description  struct {
+		SchemaVersion int           `json:"schema_version"`
+		Id            string        `json:"id"`
+		Name          string        `json:"name"`
+		Version       string        `json:"version"`
+		Link          string        `json:"link"`
+		Authors       []string      `json:"authors"`
+		Dependencies  struct{}      `json:"dependencies"`
+		Requirements  []interface{} `json:"requirements"`
+		Description   struct {
 			EnUs string `json:"en_us"`
 			ZhCn string `json:"zh_cn"`
 		} `json:"description"`
@@ -85,16 +85,15 @@ type plugin struct {
 				HashSha256         string    `json:"hash_sha256"`
 			} `json:"asset"`
 			Meta struct {
-				SchemaVersion int      `json:"schema_version"`
-				Id            string   `json:"id"`
-				Name          string   `json:"name"`
-				Version       string   `json:"version"`
-				Link          string   `json:"link"`
-				Authors       []string `json:"authors"`
-				Dependencies  struct {
-				} `json:"dependencies"`
-				Requirements []interface{} `json:"requirements"`
-				Description  struct {
+				SchemaVersion int           `json:"schema_version"`
+				Id            string        `json:"id"`
+				Name          string        `json:"name"`
+				Version       string        `json:"version"`
+				Link          string        `json:"link"`
+				Authors       []string      `json:"authors"`
+				Dependencies  struct{}      `json:"dependencies"`
+				Requirements  []interface{} `json:"requirements"`
+				Description   struct {
 					EnUs string `json:"en_us"`
 					ZhCn string `json:"zh_cn"`
 				} `json:"description"`

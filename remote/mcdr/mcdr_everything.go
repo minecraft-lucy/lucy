@@ -5,12 +5,13 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"lucy/logger"
-	"lucy/tools"
-	"lucy/util"
 	"net/http"
 	"os"
 	"path"
+
+	"lucy/logger"
+	"lucy/tools"
+	"lucy/util"
 )
 
 // Everything in this context is an extremely long json file of plugins info
@@ -69,7 +70,7 @@ func cacheEverythingGz(gz []byte) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(filepath, gz, 0644)
+	err = os.WriteFile(filepath, gz, 0o644)
 	if err != nil {
 		return err
 	}

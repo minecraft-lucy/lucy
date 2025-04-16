@@ -1,9 +1,10 @@
 package dependency
 
 import (
-	"lucy/lucytypes"
 	"strconv"
 	"strings"
+
+	"lucy/lucytypes"
 )
 
 // Parse is the main function to parse a RawVersion into a SemanticVersion.

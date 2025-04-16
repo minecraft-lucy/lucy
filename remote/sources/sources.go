@@ -12,8 +12,10 @@ var All = []remote.SourceHandler{
 	mcdr.Self,
 }
 
-var Modrinth = modrinth.Self
-var Mcdr = mcdr.Self
+var (
+	Modrinth = modrinth.Self
+	Mcdr     = mcdr.Self
+)
 
 var Map = map[lucytypes.Source]remote.SourceHandler{
 	lucytypes.Modrinth:      modrinth.Self,
