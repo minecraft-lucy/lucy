@@ -49,15 +49,29 @@ func Ternary[T any](v bool, a T, b T) T {
 // Memoize is only used for functions that do not take any arguments and return
 // a value (typically a struct) that can be treated as a constant.
 func Memoize[T any](f func() T) func() T {
-	var result T
+	var res T
 	var once sync.Once
 	return func() T {
 		once.Do(
 			func() {
-				result = f()
+				res = f()
 			},
 		)
-		return result
+		return res
+	}
+}
+
+func MemoizeE[T any](f func() (T, error)) func() (T, error) {
+	var res T
+	var err error
+	var once sync.Once
+	return func() (T, error) {
+		once.Do(
+			func() {
+				res, err = f()
+			},
+		)
+		return res, err
 	}
 }
 
@@ -143,8 +157,8 @@ type KeyValue[T, Ti any] struct {
 }
 
 func SortAndExtract[T, Ti any](
-arr []KeyValue[T, Ti],
-cmp func(a, b KeyValue[T, Ti]) int,
+	arr []KeyValue[T, Ti],
+	cmp func(a, b KeyValue[T, Ti]) int,
 ) (res []T) {
 	slices.SortFunc(arr, cmp)
 	for _, item := range arr {

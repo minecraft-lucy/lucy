@@ -2,6 +2,7 @@ package mcdr
 
 import (
 	"lucy/lucytypes"
+	"lucy/tools"
 	"time"
 )
 
@@ -119,4 +120,56 @@ type plugin struct {
 			Url    string `json:"url"`
 		} `json:"license"`
 	} `json:"repository"`
+}
+
+func (p plugin) ToProjectInformation() lucytypes.ProjectInformation {
+	info := lucytypes.ProjectInformation{
+		Title:       p.Meta.Name,
+		Brief:       p.Plugin.Introduction.EnUs,
+		Description: p.Meta.Description.EnUs,
+		Author:      make([]lucytypes.PackageMember, 0, len(p.Plugin.Authors)),
+		Urls:        make([]lucytypes.PackageUrl, 0),
+		License:     p.Repository.License.Name,
+	}
+
+	// authors
+	for _, authorName := range p.Meta.Authors {
+		name := tools.Ternary(
+			getAuthor(authorName) == nil,
+			authorName,
+			getAuthor(authorName).Name,
+		)
+		url := tools.Ternary(
+			getAuthor(authorName) == nil,
+			"",
+			getAuthor(authorName).Link,
+		)
+		info.Author = append(
+			info.Author, lucytypes.PackageMember{
+				Name:  name,
+				Role:  "Author",
+				Url:   url,
+				Email: "",
+			},
+		)
+	}
+
+	// urls
+	info.Urls = append(
+		info.Urls, lucytypes.PackageUrl{
+			Name: "GitHub",
+			Type: lucytypes.SourceUrl,
+			Url:  p.Repository.Url,
+		},
+	)
+
+	info.Urls = append(
+		info.Urls, lucytypes.PackageUrl{
+			Name: "Latest Release",
+			Type: lucytypes.FileUrl,
+			Url:  p.Release.Releases[0].Asset.BrowserDownloadUrl,
+		},
+	)
+
+	return info
 }
