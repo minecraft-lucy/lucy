@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package output is a key-value based commandline output framework.
+// Package structout is a key-value based commandline output framework.
 //
 // The core of this package it the lucytypes.OutputData struct. It is an array
 // of different types of fields that defines different types of output formats.
@@ -64,6 +64,15 @@ func Separator(len int, dim bool) {
 		value(sep)
 	}
 	newLine()
+}
+
+type FieldSeparator struct {
+	Length int
+	Dim    bool
+}
+
+func (f *FieldSeparator) Output() {
+	Separator(f.Length, f.Dim)
 }
 
 type FieldAnnotation struct {
@@ -217,7 +226,6 @@ func (f *FieldDynamicColumnLabels) Output() {
 		tab()
 	}
 
-	newLine()
 	// After output, we call flush() to reset the indent size.
 	flush()
 }
@@ -317,5 +325,6 @@ func Flush(data *Data) {
 			field.Output()
 		}
 	}
+	newLine()
 	flush()
 }
