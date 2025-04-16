@@ -42,6 +42,8 @@ import (
 
 type self struct{}
 
+var Self self
+
 // Search
 //
 // For Modrinth search API, see:
@@ -133,8 +135,6 @@ func (s self) Support(name lucytypes.ProjectName) (
 	}
 	return project, nil
 }
-
-var Modrinth self
 
 var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
 

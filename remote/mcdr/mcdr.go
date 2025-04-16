@@ -23,7 +23,7 @@ import (
 
 type self struct{}
 
-var Mcdr self
+var Self self
 
 func (s self) Search(
 	query string,

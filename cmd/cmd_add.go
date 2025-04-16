@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"lucy/remote"
+	"lucy/remote/sources"
 	"lucy/tools"
 
 	"github.com/urfave/cli/v3"
@@ -88,9 +89,14 @@ var actionAdd cli.ActionFunc = func(
 		return nil
 	}
 
-	inferredId := remote.InferVersion(lucytypes.Modrinth, id)
+	inferredId := remote.InferVersion(sources.Modrinth, id)
 	p := inferredId.NewPackage()
-	p.Remote, _ = remote.Fetch(lucytypes.Modrinth, p.Id)
+	remote, err := remote.Fetch(sources.Modrinth, p.Id)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	p.Remote = &remote
 	downloadFile, err := util.DownloadFile(
 		// Not sure how to deal with multiple files
 		// As the motivation for publishers to provide multiple files is unclear

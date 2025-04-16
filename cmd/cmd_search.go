@@ -21,6 +21,7 @@ import (
 	"errors"
 	"lucy/lucytypes"
 	"lucy/remote"
+	"lucy/remote/sources"
 	"strconv"
 
 	"github.com/urfave/cli/v3"
@@ -74,7 +75,7 @@ var actionSearch cli.ActionFunc = func(
 	indexBy := lucytypes.SearchIndex(cmd.String("index"))
 
 	res, err := remote.Search(
-		lucytypes.StringToSource(flagSourceName),
+		sources.Map[lucytypes.StringToSource(flagSourceName)],
 		p.Name,
 		lucytypes.SearchOptions{
 			ShowClientPackage: showClientPackage,
