@@ -51,7 +51,11 @@ func (s self) Information(name lucytypes.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
-	return getPlugin(string(name)), nil
+	p := getPlugin(string(name))
+	if p == nil {
+		return nil, remote.ErrorNotFound
+	}
+	return p, nil
 }
 
 func (s self) Dependencies(id lucytypes.PackageId) (

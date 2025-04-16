@@ -3,12 +3,12 @@ package lucytypes
 type Source uint8
 
 const (
-	CurseForge Source = iota
+	AutoSource Source = iota
+	CurseForge
 	Modrinth
 	GitHub
 	McdrCatalogue
 	UnknownSource
-	Auto
 )
 
 func (s Source) String() string {
@@ -46,8 +46,8 @@ var stringToSourceMap = map[string]Source{
 	"modrinth":   Modrinth,
 	"github":     GitHub,
 	"mcdr":       McdrCatalogue,
-	"auto":       Auto,
-	"":           Auto,
+	"auto":       AutoSource,
+	"":           AutoSource,
 	"unknown":    UnknownSource,
 }
 

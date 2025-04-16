@@ -33,6 +33,7 @@ var (
 	ErrSourceNotSupported  = errors.New("source not supported")
 	ErrCannotInferPlatform = errors.New("cannot infer platform")
 	ErrCannotInferSource   = errors.New("cannot infer source")
+	ErrorNotFound          = errors.New("not such package")
 )
 
 // IoC via dependency injection

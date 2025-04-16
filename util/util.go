@@ -18,19 +18,41 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
+	"lucy/logger"
 	"os"
 	"path"
 )
 
+func init() {
+	if err := os.MkdirAll(CacheDir, os.ModePerm); err != nil {
+		DoCache = false
+		logger.Warn(
+			fmt.Errorf(
+				"failed to create cache directory, disabling caching: %w",
+				err,
+			),
+		)
+	}
+	DoCache = true
+}
+
 const (
+	ProgramName  = "lucy"
 	ProgramPath  = ".lucy"
 	ConfigFile   = ProgramPath + "/config.json"
 	DownloadPath = ProgramPath + "/downloads"
 )
 
-var CacheDir = path.Join(os.TempDir(), "lucy")
+var CacheDir = path.Join(os.TempDir(), ProgramName)
 
-type DownloadTask struct {
-	From string // url
-	To   string // path
+var DoCache bool
+
+// TODO: implement download task
+
+// DownloadTask return a function that downloads a file from url to path.
+func DownloadTask(from string, to string) func() error {
+	return func() error {
+		return nil
+	}
 }
