@@ -43,19 +43,17 @@ var flagLongOutput = &cli.BoolFlag{
 	Aliases: []string{"l"},
 }
 
-func flagSource(absent lucytypes.Source) *cli.StringFlag {
-	return &cli.StringFlag{
-		Name:    flagSourceName,
-		Aliases: []string{"s"},
-		Usage:   "To fetch info from `SOURCE`",
-		Value:   absent.String(),
-		Validator: func(s string) error {
-			if lucytypes.StringToSource(s) == lucytypes.UnknownSource {
-				return errors.New("unknown source " + s)
-			}
-			return nil
-		},
-	}
+var flagSource = &cli.StringFlag{
+	Name:    flagSourceName,
+	Aliases: []string{"s"},
+	Usage:   "To fetch info from `SOURCE`",
+	Value:   "",
+	Validator: func(s string) error {
+		if lucytypes.StringToSource(s) == lucytypes.UnknownSource {
+			return errors.New("unknown source " + s)
+		}
+		return nil
+	},
 }
 
 var flagNoStyle = &cli.BoolFlag{

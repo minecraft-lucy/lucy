@@ -19,7 +19,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"strconv"
 
 	"lucy/lucytypes"
@@ -37,7 +37,6 @@ var subcmdSearch = &cli.Command{
 	Name:  "search",
 	Usage: "Search for mods and plugins",
 	Flags: []cli.Flag{
-		flagSource(lucytypes.AutoSource),
 		&cli.StringFlag{
 			Name:    "index",
 			Aliases: []string{"i"},
@@ -59,6 +58,7 @@ var subcmdSearch = &cli.Command{
 		flagJsonOutput,
 		flagLongOutput,
 		flagNoStyle,
+		flagSource,
 	},
 	Action: tools.Decorate(
 		actionSearch,
@@ -66,6 +66,10 @@ var subcmdSearch = &cli.Command{
 		helpOnNoInputDecorator,
 	),
 }
+
+var errorUnknownSource = errors.New("unknown specified source")
+var errorUnsupportedSource = errors.New("unsupported source")
+var errorInvalidPlatform = errors.New("invalid platform")
 
 var actionSearch cli.ActionFunc = func(
 	_ context.Context,
@@ -79,57 +83,97 @@ var actionSearch cli.ActionFunc = func(
 		ShowClientPackage: showClientPackage,
 		IndexBy:           indexBy,
 	}
-	source := cmd.String("source")
+	sourceStr := cmd.String("source")
+	source := lucytypes.StringToSource(sourceStr)
 
+	var out = &structout.Data{}
 	var res = lucytypes.SearchResults{}
 	var err error
-	switch source {
-	case lucytypes.AutoSource.String():
+
+	if source == lucytypes.AutoSource {
 		switch p.Platform {
 		case lucytypes.AllPlatform:
-			res, err = remote.Search(sources.Modrinth, p.Name, options)
+			for _, sourceHandler := range sources.All {
+				res, err = remote.Search(sourceHandler, p.Name, options)
+				appendToSearchOutput(out, cmd.Bool("long"), res)
+			}
 		case lucytypes.Forge, lucytypes.Fabric, lucytypes.Neoforge:
 			res, err = remote.Search(sources.Modrinth, p.Name, options)
+			appendToSearchOutput(out, cmd.Bool("long"), res)
 		case lucytypes.Mcdr:
 			res, err = remote.Search(sources.Mcdr, p.Name, options)
+			appendToSearchOutput(out, cmd.Bool("long"), res)
 		case lucytypes.UnknownPlatform:
-			log.Fatal("unknown platform")
+			logger.Fatal(
+				fmt.Errorf(
+					"%w: %s",
+					errorInvalidPlatform,
+					p.Platform,
+				),
+			)
 		}
-	default:
+	} else {
+		if source == lucytypes.UnknownSource {
+			logger.Fatal(
+				fmt.Errorf(
+					"%w: %s",
+					errorUnknownSource,
+					sourceStr,
+				),
+			)
+		}
+		sourceHandler, ok := sources.Map[source]
+		if !ok {
+			logger.Fatal(
+				fmt.Errorf(
+					"%w: %s",
+					errorUnsupportedSource,
+					source.Title(),
+				),
+			)
+		}
 		res, err = remote.Search(
-			sources.Map[lucytypes.StringToSource(cmd.String("source"))],
+			sourceHandler,
 			p.Name,
 			options,
 		)
-
 	}
-	if err != nil {
+
+	if err != nil && !errors.Is(err, remote.ErrorNoResults) {
 		logger.Fatal(err)
 	}
-	structout.Flush(generateSearchOutput(res, cmd.Bool("long")))
+
+	structout.Flush(out)
 	return nil
 }
 
-func generateSearchOutput(
-	res lucytypes.SearchResults,
+func appendToSearchOutput(
+	out *structout.Data,
 	showAll bool,
-) *structout.Data {
+	res lucytypes.SearchResults,
+) {
 	var results []string
 	for _, r := range res.Results {
 		results = append(results, r.String())
 	}
 
-	return &structout.Data{
-		Fields: []structout.Field{
-			&structout.FieldShortText{
-				Title: "#  ",
-				Text:  strconv.Itoa(len(res.Results)),
-			},
-			&structout.FieldDynamicColumnLabels{
-				Title:    ">>>",
-				Labels:   results,
-				MaxLines: tools.Ternary(showAll, 0, tools.TermHeight()-6),
-			},
+	out.Fields = append(
+		out.Fields,
+		&structout.FieldAnnotation{
+			Annotation: "Results from " + res.Source.Title(),
 		},
-	}
+		&structout.FieldShortText{
+			Title: "#  ",
+			Text:  strconv.Itoa(len(res.Results)),
+		},
+		&structout.FieldDynamicColumnLabels{
+			Title:  ">>>",
+			Labels: results,
+			MaxLines: tools.Ternary(
+				showAll,
+				0,
+				tools.TermHeight()-6,
+			),
+		},
+	)
 }

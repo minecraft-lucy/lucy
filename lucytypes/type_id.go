@@ -150,3 +150,7 @@ func (p PackageId) StringFull() string {
 func (p PackageId) StringNameVersion() string {
 	return string(p.Name) + "@" + p.Version.String()
 }
+
+func (p PackageId) StringPlatformName() string {
+	return string(p.Platform) + "/" + string(p.Name)
+}
