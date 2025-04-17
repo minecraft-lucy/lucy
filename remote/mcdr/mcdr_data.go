@@ -7,18 +7,22 @@ import (
 	"lucy/tools"
 )
 
-type indexedEverything struct {
-	Everything *everything
+type queriedEverything struct {
+	Everything everything
+	Query      string
 	IndexBy    lucytypes.SearchIndex
 }
 
-func (e indexedEverything) ToSearchResults() lucytypes.SearchResults {
-	res := lucytypes.SearchResults{Source: lucytypes.McdrCatalogue}
-	var err error
-	res.Results, err = sortBy(e.IndexBy)
+func (e *queriedEverything) ToSearchResults() lucytypes.SearchResults {
+	res := lucytypes.SearchResults{
+		Source:  lucytypes.McdrCatalogue,
+		Results: nil,
+	}
+	projectNames, err := search(e)
 	if err != nil {
 		return lucytypes.SearchResults{}
 	}
+	res.Results = projectNames
 	return res
 }
 

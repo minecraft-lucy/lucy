@@ -2,6 +2,7 @@ package mcdr
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"lucy/lucytypes"
@@ -10,116 +11,100 @@ import (
 	"github.com/sahilm/fuzzy"
 )
 
+func search(
+obj *queriedEverything,
+) ([]lucytypes.ProjectName, error) {
+	matches, err := match(&obj.Everything, obj.Query)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]lucytypes.ProjectName, 0, len(matches))
+	for _, match := range matches {
+		res = append(res, lucytypes.ProjectName(match.Str))
+	}
+	err = sortBy(res, obj.IndexBy)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // match is a helper function to for self.Search, as the MCDR API just gives
 // the whole catalogue in a single file, we need to filter the results by
 // query.
-//
-// This has a side effect to getEverything()
 func match(
-	query string,
-) (err error) {
-	everything, err := getEverything()
-	if err != nil {
-		return err
-	}
+everything *everything,
+query string,
+) (matches fuzzy.Matches, err error) {
 	var ids = make([]string, 0, len(everything.Plugins))
 	for id := range everything.Plugins {
 		ids = append(ids, id)
 	}
-
-	matches := fuzzy.Find(query, ids)
-
-	var matchedPlugins = make(map[string]plugin, len(matches))
-	for _, match := range matches {
-		matchedPlugins[match.Str] = everything.Plugins[match.Str]
-	}
-	everything.Plugins = matchedPlugins
-
-	return nil
+	matches = fuzzy.Find(query, ids)
+	return matches, nil
 }
 
 // sortBy is a helper function to sort the plugins by the given index.
 //
-// Side effects on getEverything() will disturb this function.
+// This is in-place sorting, so the original slice is modified.
 func sortBy(
-	index lucytypes.SearchIndex,
-) (res []lucytypes.ProjectName, err error) {
-	everything, err := getEverything()
-	if err != nil {
-		return nil, err
-	}
+res []lucytypes.ProjectName,
+index lucytypes.SearchIndex,
+) (err error) {
 	switch index {
 	case lucytypes.ByRelevance:
-		arr := make(
-			[]tools.KeyValue[lucytypes.ProjectName, float64],
-			0,
-			len(everything.Plugins),
-		)
-		for _, plugin := range everything.Plugins {
-			id := lucytypes.ToProjectName(plugin.Meta.Id)
-			relevance := tools.NormalizedLevenshteinDistance(id.String(), "")
-			arr = append(
-				arr,
-				tools.KeyValue[lucytypes.ProjectName, float64]{
-					Item: id, Index: relevance,
-				},
-			)
-		}
-		return tools.SortAndExtract(
-			arr,
-			func(a, b tools.KeyValue[lucytypes.ProjectName, float64]) int {
-				if a.Index == b.Index {
-					return 0
-				}
-				if a.Index > b.Index {
-					return -1
-				}
-				return 1
-			},
-		), nil
+		// Do nothing to res. Since if res is processed by match(), it is
+		// already in relevance order.
+		return nil
 	case lucytypes.ByDownloads:
-		arr := make(
-			[]tools.KeyValue[lucytypes.ProjectName, int],
-			0,
-			len(everything.Plugins),
+		iarr := make(
+			[]tools.KeyValue[lucytypes.ProjectName, int], 0, len(res),
 		)
-		for _, plugin := range everything.Plugins {
-			id := lucytypes.ToProjectName(plugin.Meta.Id)
+		for _, name := range res {
 			download := 0
+			plugin := getPlugin(projectNameToMcdrId(name))
+			if plugin == nil {
+				continue
+			}
 			for _, release := range plugin.Release.Releases {
 				download += release.Asset.DownloadCount
 			}
-			arr = append(
-				arr,
+			iarr = append(
+				iarr,
 				tools.KeyValue[lucytypes.ProjectName, int]{
-					Item: id, Index: download,
+					Item: name, Index: download,
 				},
 			)
 		}
-		return tools.SortAndExtract(
-			arr,
+		res = tools.SortAndExtract(
+			iarr,
 			func(a, b tools.KeyValue[lucytypes.ProjectName, int]) int {
 				return b.Index - a.Index
 			},
-		), nil
-	case lucytypes.ByNewest:
-		arr := make(
-			[]tools.KeyValue[lucytypes.ProjectName, time.Time],
-			0,
-			len(everything.Plugins),
 		)
-		for _, plugin := range everything.Plugins {
-			id := lucytypes.ToProjectName(plugin.Meta.Id)
-			timestamp := plugin.Release.Releases[0].CreatedAt
-			arr = append(
-				arr,
+		return nil
+	case lucytypes.ByNewest:
+		iarr := make(
+			[]tools.KeyValue[lucytypes.ProjectName, time.Time], 0, len(res),
+		)
+		for _, name := range res {
+			plugin := getPlugin(projectNameToMcdrId(name))
+			if plugin == nil {
+				continue
+			}
+			timestamp := time.Unix(0, 0)
+			if len(plugin.Release.Releases) > 0 {
+				timestamp = plugin.Release.Releases[0].CreatedAt
+			}
+			iarr = append(
+				iarr,
 				tools.KeyValue[lucytypes.ProjectName, time.Time]{
-					Item: id, Index: timestamp,
+					Item: name, Index: timestamp,
 				},
 			)
 		}
-		return tools.SortAndExtract(
-			arr,
+		res = tools.SortAndExtract(
+			iarr,
 			func(a, b tools.KeyValue[lucytypes.ProjectName, time.Time]) int {
 				if a.Index.Equal(b.Index) {
 					return 0
@@ -129,8 +114,15 @@ func sortBy(
 				}
 				return 1
 			},
-		), nil
+		)
+		return nil
 	}
 
-	return nil, fmt.Errorf("unknown index: %s", index)
+	return fmt.Errorf("unknown index: %s", index)
+}
+
+func projectNameToMcdrId(
+name lucytypes.ProjectName,
+) (id string) {
+	return strings.Replace(name.String(), "-", "_", -1)
 }
