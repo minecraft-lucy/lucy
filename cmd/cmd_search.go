@@ -20,11 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-
 	"lucy/lucytypes"
 	"lucy/remote"
 	"lucy/remote/sources"
+	"strconv"
 
 	"github.com/urfave/cli/v3"
 	"lucy/logger"
@@ -72,8 +71,8 @@ var errorUnsupportedSource = errors.New("unsupported source")
 var errorInvalidPlatform = errors.New("invalid platform")
 
 var actionSearch cli.ActionFunc = func(
-	_ context.Context,
-	cmd *cli.Command,
+_ context.Context,
+cmd *cli.Command,
 ) error {
 	p := syntax.Parse(cmd.Args().First())
 
@@ -148,9 +147,9 @@ var actionSearch cli.ActionFunc = func(
 }
 
 func appendToSearchOutput(
-	out *structout.Data,
-	showAll bool,
-	res lucytypes.SearchResults,
+out *structout.Data,
+showAll bool,
+res lucytypes.SearchResults,
 ) {
 	var results []string
 	for _, r := range res.Results {
@@ -165,11 +164,25 @@ func appendToSearchOutput(
 			},
 		)
 	}
+
 	out.Fields = append(
 		out.Fields,
 		&structout.FieldAnnotation{
 			Annotation: "Results from " + res.Source.Title(),
 		},
+	)
+
+	if res.Source == lucytypes.Modrinth && len(res.Results) == 100 {
+		out.Fields = append(
+			out.Fields,
+			&structout.FieldAnnotation{
+				Annotation: "* only showing the top 100",
+			},
+		)
+	}
+
+	out.Fields = append(
+		out.Fields,
 		&structout.FieldShortText{
 			Title: "#  ",
 			Text:  strconv.Itoa(len(res.Results)),
