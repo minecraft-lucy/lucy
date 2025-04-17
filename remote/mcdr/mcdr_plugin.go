@@ -1,8 +1,9 @@
 package mcdr
 
 import (
-	"lucy/remote"
 	"strings"
+
+	"lucy/remote"
 )
 
 // getPlugin is able to tolerate the interchange of "-" and "_"

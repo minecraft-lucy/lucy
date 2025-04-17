@@ -19,9 +19,10 @@ package util
 
 import (
 	"fmt"
-	"lucy/logger"
 	"os"
 	"path"
+
+	"lucy/logger"
 )
 
 func init() {

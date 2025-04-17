@@ -36,7 +36,7 @@ func match(
 	everything *everything,
 	query string,
 ) (matches fuzzy.Matches, err error) {
-	var ids = make([]string, 0, len(everything.Plugins))
+	ids := make([]string, 0, len(everything.Plugins))
 	for id := range everything.Plugins {
 		ids = append(ids, id)
 	}
