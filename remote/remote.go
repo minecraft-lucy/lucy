@@ -39,8 +39,8 @@ var (
 // IoC via dependency injection
 
 func Fetch(
-source SourceHandler,
-id lucytypes.PackageId,
+	source SourceHandler,
+	id lucytypes.PackageId,
 ) (remote lucytypes.PackageRemote, err error) {
 	raw, err := source.Fetch(id)
 	if err != nil {
@@ -51,24 +51,24 @@ id lucytypes.PackageId,
 }
 
 func Dependencies(
-source SourceHandler,
-id lucytypes.PackageId,
+	source SourceHandler,
+	id lucytypes.PackageId,
 ) (deps *lucytypes.PackageDependencies, err error) {
 	// TODO: Implement
 	return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
 }
 
 func Support(source lucytypes.Source, name lucytypes.ProjectName) (
-supports *lucytypes.ProjectSupport,
-err error,
+	supports *lucytypes.ProjectSupport,
+	err error,
 ) {
 	// TODO: Implement
 	panic("not implemented")
 }
 
 func Information(
-source SourceHandler,
-name lucytypes.ProjectName,
+	source SourceHandler,
+	name lucytypes.ProjectName,
 ) (info lucytypes.ProjectInformation, err error) {
 	raw, err := source.Information(name)
 	if err != nil {
@@ -81,9 +81,9 @@ name lucytypes.ProjectName,
 var ErrorNoResults = errors.New("no results found")
 
 func Search(
-source SourceHandler,
-query lucytypes.ProjectName,
-option lucytypes.SearchOptions,
+	source SourceHandler,
+	query lucytypes.ProjectName,
+	option lucytypes.SearchOptions,
 ) (res lucytypes.SearchResults, err error) {
 	raw, err := source.Search(string(query), option)
 	if err != nil {
@@ -102,8 +102,8 @@ option lucytypes.SearchOptions,
 //
 // TODO: Remove, infer version should not be exposed. All inference will be done in the SourceHandlers
 func InferVersion(
-source SourceHandler,
-id lucytypes.PackageId,
+	source SourceHandler,
+	id lucytypes.PackageId,
 ) (infer lucytypes.PackageId) {
 	return id
 }

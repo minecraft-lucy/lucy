@@ -31,16 +31,19 @@ func (s self) Search(
 	options lucytypes.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
-		return nil, fmt.Errorf("unsupported platform: %s", options.Platform)
+		return nil, fmt.Errorf(
+			"unsupported platform for source mcdr: %s",
+			options.Platform,
+		)
 	}
 	everything, err := getEverything()
-	res = &indexedEverything{
-		Everything: everything,
-		IndexBy:    options.IndexBy,
-	}
-	err = match(query) // this changes getEverything()
 	if err != nil {
 		return nil, err
+	}
+	res = &queriedEverything{
+		Everything: *everything,
+		IndexBy:    options.IndexBy,
+		Query:      query,
 	}
 	return res, nil
 }
