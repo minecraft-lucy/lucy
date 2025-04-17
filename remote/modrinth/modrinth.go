@@ -31,15 +31,19 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"lucy/lucytypes"
 	"lucy/remote"
 	"net/http"
 
 	"lucy/logger"
-	"lucy/lucytypes"
 	"lucy/tools"
 )
 
 type self struct{}
+
+func (s self) Name() lucytypes.Source {
+	return lucytypes.Modrinth
+}
 
 var Self self
 

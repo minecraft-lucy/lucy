@@ -96,30 +96,46 @@ func CloseReader(reader io.ReadCloser, failAction func(error)) {
 }
 
 const (
-	NetworkTestTimeout = 5 // seconds
-	NetworkTestRetries = 3
+	networkTestTimeout = 5 // seconds
+	networkTestRetries = 3
 )
 
-// NetworkTest is a simple the network connection test. You can use this before
+// factoryNetworkTest is a simple the network connection test. You can use this before
 // any operation that strictly requires a network connection.
 //
 // A nil value means the connection is successful.
-func NetworkTest() (err error) {
-	retry := NetworkTestRetries
-	client := http.Client{
-		Timeout: NetworkTestTimeout * time.Second,
-	}
-Retry:
-	_, err = client.Get("https://example.com")
-	if err != nil {
-		retry--
-		if retry > 0 {
-			goto Retry
+func factoryNetworkTest(url string, retry int, timeout int) func() (err error) {
+	return func() (err error) {
+		retry := networkTestRetries
+		client := http.Client{Timeout: networkTestTimeout * time.Second}
+	Retry:
+		_, err = client.Get(url)
+		if err != nil {
+			retry--
+			if retry > 0 {
+				goto Retry
+			}
+			return err
 		}
-		return err
+		return nil
 	}
-	return nil
 }
+
+var GoogleTest = factoryNetworkTest(
+	"https://www.google.com",
+	networkTestRetries,
+	networkTestRetries,
+)
+var GithubTest = factoryNetworkTest(
+	"https://github.com",
+	networkTestRetries,
+	networkTestRetries,
+)
+var RegularTest = factoryNetworkTest(
+	"https://www.example.com",
+	networkTestRetries,
+	networkTestRetries,
+)
 
 func MarkdownToPlainText(md string) string {
 	parser := blackfriday.New(blackfriday.WithExtensions(blackfriday.CommonExtensions))

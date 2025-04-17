@@ -27,6 +27,7 @@ type SourceHandler interface {
 		parsed lucytypes.PackageId,
 		err error,
 	)
+	Name() lucytypes.Source
 }
 
 type (
