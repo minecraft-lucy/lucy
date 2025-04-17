@@ -49,8 +49,8 @@ var subcmdInfo = &cli.Command{
 }
 
 var actionInfo cli.ActionFunc = func(
-	ctx context.Context,
-	cmd *cli.Command,
+ctx context.Context,
+cmd *cli.Command,
 ) error {
 	id := syntax.Parse(cmd.Args().First())
 	p := id.NewPackage()
@@ -72,7 +72,7 @@ var actionInfo cli.ActionFunc = func(
 				continue
 			}
 			p.Remote = &remote
-			out = infoOutput(p, lucytypes.Modrinth)
+			out = infoOutput(p)
 			break
 		}
 
@@ -89,7 +89,7 @@ var actionInfo cli.ActionFunc = func(
 			logger.ErrorNow(err)
 			return err
 		}
-		out = infoOutput(p, lucytypes.Modrinth)
+		out = infoOutput(p)
 	case lucytypes.Mcdr:
 		info, err := remote.Information(
 			sources.Mcdr,
@@ -105,7 +105,7 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 		p.Information, p.Remote = &info, &remote
-		out = infoOutput(p, lucytypes.McdrCatalogue)
+		out = infoOutput(p)
 	}
 
 	if err != nil {
@@ -129,11 +129,11 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
+func infoOutput(p *lucytypes.Package) *structout.Data {
 	o := &structout.Data{
 		Fields: []structout.Field{
 			&structout.FieldAnnotation{
-				Annotation: "(from " + s.Title() + ")",
+				Annotation: "(from " + p.Remote.Source.Title() + ")",
 			},
 			&structout.FieldShortText{
 				Title: "Name",
@@ -143,10 +143,29 @@ func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
 				Title: "Description",
 				Text:  p.Information.Brief,
 			},
-			&structout.FieldShortText{
-				Title: "Information",
-				Text:  p.Information.Description,
-			},
+			tools.Ternary[structout.Field](
+				p.Information.MarkdownDescription,
+				&structout.FieldMarkdown{
+					Title:         "Information",
+					Text:          p.Information.Description,
+					Padding:       true,
+					LineWrap:      true,
+					MaxColumns:    tools.TermWidth() * 8 / 10,
+					MaxLines:      tools.TermHeight() * 3 / 2,
+					UseAlternate:  true,
+					AlternateText: tools.Underline(p.Information.DescriptionUrl),
+				},
+				&structout.FieldLongText{
+					Title:         "Information",
+					Text:          p.Information.Description,
+					Padding:       true,
+					LineWrap:      true,
+					MaxColumns:    tools.TermWidth() * 8 / 10,
+					MaxLines:      tools.TermHeight() * 3 / 2,
+					UseAlternate:  true,
+					AlternateText: tools.Underline(p.Information.DescriptionUrl),
+				},
+			),
 		},
 	}
 
@@ -198,8 +217,8 @@ func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
 	// TODO: Put current server version on the top
 	// TODO: Hide snapshot versions, except if the current server is using it
 	if p.Supports != nil &&
-		p.Supports.Platforms != nil &&
-		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
+	p.Supports.Platforms != nil &&
+	!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
 		f := &structout.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},

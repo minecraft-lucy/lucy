@@ -83,12 +83,14 @@ type PackageDependencies struct {
 // ProjectInformation is a struct that contains informational data about the
 // package. It is typically used in `lucy info`.
 type ProjectInformation struct {
-	Title       string
-	Brief       string
-	Description string
-	Author      []PackageMember
-	Urls        []PackageUrl
-	License     string
+	Title               string
+	Brief               string
+	Description         string
+	DescriptionUrl      string
+	MarkdownDescription bool
+	Author              []PackageMember
+	Urls                []PackageUrl
+	License             string
 }
 
 type (
