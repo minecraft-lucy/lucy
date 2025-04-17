@@ -96,10 +96,15 @@ var actionInfo cli.ActionFunc = func(
 			id.Name,
 		)
 		if err != nil {
-			logger.Warn(err)
+			logger.WarnNow(err)
 			break
 		}
-		p.Information = &info
+		remote, err := remote.Fetch(sources.Mcdr, id)
+		if err != nil {
+			logger.WarnNow(err)
+			break
+		}
+		p.Information, p.Remote = &info, &remote
 		out = infoOutput(p, lucytypes.McdrCatalogue)
 	}
 
@@ -108,7 +113,7 @@ var actionInfo cli.ActionFunc = func(
 		return err
 	}
 	if out == nil {
-		err = fmt.Errorf("%w: %s", remote.ErrorNotFound, id.StringFull())
+		err = fmt.Errorf("%w: %s", remote.ErrorNoPackage, id.StringFull())
 		logger.ErrorNow(err)
 		return err
 	}
@@ -138,6 +143,10 @@ func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
 				Title: "Description",
 				Text:  p.Information.Brief,
 			},
+			&structout.FieldShortText{
+				Title: "Information",
+				Text:  p.Information.Description,
+			},
 		},
 	}
 
@@ -145,8 +154,27 @@ func infoOutput(p *lucytypes.Package, s lucytypes.Source) *structout.Data {
 	var authorLinks []string
 	for _, author := range p.Information.Author {
 		authorNames = append(authorNames, author.Name)
-		// TODO: Improve author info annotation format
 		authorLinks = append(authorLinks, author.Url)
+	}
+
+	o.Fields = append(
+		o.Fields,
+		&structout.FieldMultiAnnotatedShortText{
+			Title:     "Authors",
+			Texts:     authorNames,
+			Annots:    authorLinks,
+			ShowTotal: false,
+		},
+	)
+
+	if p.Information != nil {
+		o.Fields = append(
+			o.Fields,
+			&structout.FieldShortText{
+				Title: "License",
+				Text:  p.Information.License,
+			},
+		)
 	}
 
 	for _, url := range p.Information.Urls {

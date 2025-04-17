@@ -137,7 +137,7 @@ func serverInfoToStatus(
 				status.Fields,
 				tools.Ternary[structout.Field](
 					longOutput,
-					&structout.FieldMultiShortTextWithAnnot{
+					&structout.FieldMultiAnnotatedShortText{
 						Title:     "Mods",
 						Texts:     modNames,
 						Annots:    modPaths,
@@ -153,7 +153,7 @@ func serverInfoToStatus(
 			)
 		} else {
 			status.Fields = append(
-				status.Fields, &structout.FieldMultiShortTextWithAnnot{
+				status.Fields, &structout.FieldMultiAnnotatedShortText{
 					Title:     "Mods",
 					Texts:     []string{tools.Dim("(None)")},
 					Annots:    nil,
@@ -181,7 +181,7 @@ func serverInfoToStatus(
 			)
 		}
 		status.Fields = append(
-			status.Fields, &structout.FieldMultiShortTextWithAnnot{
+			status.Fields, &structout.FieldMultiAnnotatedShortText{
 				Title:     "MCDR Plugins",
 				Texts:     pluginNames,
 				Annots:    pluginPaths,

@@ -31,8 +31,9 @@ func (s self) Search(
 	options lucytypes.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
-		return nil, fmt.Errorf(
-			"unsupported platform for source mcdr: %s",
+		return nil, remote.FormatError(
+			remote.ErrorUnsupportedPlatform,
+			lucytypes.McdrCatalogue,
 			options.Platform,
 		)
 	}
@@ -49,11 +50,31 @@ func (s self) Search(
 }
 
 func (s self) Fetch(id lucytypes.PackageId) (
-	remote remote.RawPackageRemote,
+	rem remote.RawPackageRemote,
 	err error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	if id.Platform != lucytypes.Mcdr && id.Platform != lucytypes.AllPlatform {
+		return nil, remote.ErrorUnsupportedPlatform
+	}
+	p := getPlugin(string(id.Name))
+	if p == nil {
+		return nil, fmt.Errorf("%w: %s", remote.ErrorNoPackage, id)
+	}
+
+	version := id.Version
+	if version.NeedsInfer() {
+		parsed, err := s.ParseAmbiguousVersion(id)
+		if err != nil {
+			return nil, err
+		}
+		version = parsed.Version
+	}
+	release, err := getRelease(p, version.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
 }
 
 func (s self) Information(name lucytypes.ProjectName) (
@@ -62,7 +83,7 @@ func (s self) Information(name lucytypes.ProjectName) (
 ) {
 	p := getPlugin(string(name))
 	if p == nil {
-		return nil, remote.ErrorNotFound
+		return nil, fmt.Errorf("%w: %s", remote.ErrorNoPackage, name)
 	}
 	return p, nil
 }
@@ -87,6 +108,22 @@ func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
 	parsed lucytypes.PackageId,
 	err error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	switch id.Version {
+	case lucytypes.AllVersion, lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion:
+		p := getPlugin(id.Name.String())
+		if p == nil {
+			return id, remote.FormatError(
+				remote.ErrorCannotInferVersion,
+				id.Name,
+				id.Version,
+			)
+		}
+		id.Version = lucytypes.RawVersion(p.Release.LatestVersion)
+		return id, nil
+	}
+	return id, remote.FormatError(
+		remote.ErrorCannotInferVersion,
+		id.Name,
+		id.Version,
+	)
 }

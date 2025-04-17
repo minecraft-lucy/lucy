@@ -1,7 +1,11 @@
 package mcdr
 
-import "strings"
+import (
+	"lucy/remote"
+	"strings"
+)
 
+// getPlugin is able to tolerate the interchange of "-" and "_"
 func getPlugin(id string) *plugin {
 	everything, err := getEverything()
 	if err != nil {
@@ -28,4 +32,17 @@ func getAuthor(name string) *author {
 		return nil
 	}
 	return &a
+}
+
+func getRelease(plugin *plugin, version string) (release *release, err error) {
+	for _, release := range plugin.Release.Releases {
+		if release.Meta.Version == version {
+			return &release, nil
+		}
+	}
+	return nil, remote.FormatError(
+		remote.ErrorNoVersion,
+		plugin.Meta.Name,
+		version,
+	)
 }

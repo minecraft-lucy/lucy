@@ -73,42 +73,11 @@ type plugin struct {
 		} `json:"introduction_urls"`
 	} `json:"plugin"`
 	Release struct {
-		SchemaVersion      int    `json:"schema_version"`
-		Id                 string `json:"id"`
-		LatestVersion      string `json:"latest_version"`
-		LatestVersionIndex int    `json:"latest_version_index"`
-		Releases           []struct {
-			Url         string    `json:"url"`
-			Name        string    `json:"name"`
-			TagName     string    `json:"tag_name"`
-			CreatedAt   time.Time `json:"created_at"`
-			Description string    `json:"description"`
-			Prerelease  bool      `json:"prerelease"`
-			Asset       struct {
-				Id                 int       `json:"id"`
-				Name               string    `json:"name"`
-				Size               int       `json:"size"`
-				DownloadCount      int       `json:"download_count"`
-				CreatedAt          time.Time `json:"created_at"`
-				BrowserDownloadUrl string    `json:"browser_download_url"`
-				HashMd5            string    `json:"hash_md5"`
-				HashSha256         string    `json:"hash_sha256"`
-			} `json:"asset"`
-			Meta struct {
-				SchemaVersion int           `json:"schema_version"`
-				Id            string        `json:"id"`
-				Name          string        `json:"name"`
-				Version       string        `json:"version"`
-				Link          string        `json:"link"`
-				Authors       []string      `json:"authors"`
-				Dependencies  struct{}      `json:"dependencies"`
-				Requirements  []interface{} `json:"requirements"`
-				Description   struct {
-					EnUs string `json:"en_us"`
-					ZhCn string `json:"zh_cn"`
-				} `json:"description"`
-			} `json:"meta"`
-		} `json:"releases"`
+		SchemaVersion      int       `json:"schema_version"`
+		Id                 string    `json:"id"`
+		LatestVersion      string    `json:"latest_version"`
+		LatestVersionIndex int       `json:"latest_version_index"`
+		Releases           []release `json:"releases"`
 	} `json:"release"`
 	Repository struct {
 		Url             string `json:"url"`
@@ -133,12 +102,25 @@ type plugin struct {
 
 func (p plugin) ToProjectInformation() lucytypes.ProjectInformation {
 	info := lucytypes.ProjectInformation{
-		Title:       p.Meta.Name,
-		Brief:       p.Plugin.Introduction.EnUs,
-		Description: p.Meta.Description.EnUs,
-		Author:      make([]lucytypes.PackageMember, 0, len(p.Plugin.Authors)),
-		Urls:        make([]lucytypes.PackageUrl, 0),
-		License:     p.Repository.License.Name,
+		Title:   p.Meta.Name,
+		Author:  make([]lucytypes.PackageMember, 0, len(p.Plugin.Authors)),
+		Urls:    make([]lucytypes.PackageUrl, 0),
+		License: p.Repository.License.Name,
+	}
+
+	intro := p.Meta.Description.EnUs
+	if len(intro) > 1000 {
+		intro = p.Plugin.IntroductionUrls.EnUs
+	}
+	readme := p.Repository.Readme
+	if len(readme) > 1000 {
+		readme = p.Repository.Url
+	}
+	if intro == readme {
+		info.Brief = intro
+	} else {
+		info.Brief = intro
+		info.Description = readme
 	}
 
 	// authors
@@ -181,4 +163,45 @@ func (p plugin) ToProjectInformation() lucytypes.ProjectInformation {
 	)
 
 	return info
+}
+
+type release struct {
+	Url         string    `json:"url"`
+	Name        string    `json:"name"`
+	TagName     string    `json:"tag_name"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description"`
+	Prerelease  bool      `json:"prerelease"`
+	Asset       struct {
+		Id                 int       `json:"id"`
+		Name               string    `json:"name"`
+		Size               int       `json:"size"`
+		DownloadCount      int       `json:"download_count"`
+		CreatedAt          time.Time `json:"created_at"`
+		BrowserDownloadUrl string    `json:"browser_download_url"`
+		HashMd5            string    `json:"hash_md5"`
+		HashSha256         string    `json:"hash_sha256"`
+	} `json:"asset"`
+	Meta struct {
+		SchemaVersion int           `json:"schema_version"`
+		Id            string        `json:"id"`
+		Name          string        `json:"name"`
+		Version       string        `json:"version"`
+		Link          string        `json:"link"`
+		Authors       []string      `json:"authors"`
+		Dependencies  struct{}      `json:"dependencies"`
+		Requirements  []interface{} `json:"requirements"`
+		Description   struct {
+			EnUs string `json:"en_us"`
+			ZhCn string `json:"zh_cn"`
+		} `json:"description"`
+	} `json:"meta"`
+}
+
+func (r release) ToPackageRemote() lucytypes.PackageRemote {
+	return lucytypes.PackageRemote{
+		Source:   lucytypes.McdrCatalogue,
+		FileUrl:  r.Asset.BrowserDownloadUrl,
+		Filename: r.Asset.Name,
+	}
 }

@@ -8,10 +8,10 @@ package lucytypes
 type RawVersion string
 
 func (v RawVersion) String() string {
-	if v == AllVersion {
+	if v == AllVersion || v == "" {
 		return "any"
 	}
-	if v == NoVersion || v == "" {
+	if v == NoVersion {
 		return "none"
 	}
 	if v == UnknownVersion {
@@ -24,6 +24,14 @@ func (v RawVersion) String() string {
 		return "compatible"
 	}
 	return string(v)
+}
+
+func (v RawVersion) NeedsInfer() bool {
+	if v == AllVersion || v == NoVersion || v == UnknownVersion ||
+		v == LatestVersion || v == LatestCompatibleVersion {
+		return true
+	}
+	return false
 }
 
 var (
