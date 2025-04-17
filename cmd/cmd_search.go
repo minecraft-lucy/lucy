@@ -71,8 +71,8 @@ var errorUnsupportedSource = errors.New("unsupported source")
 var errorInvalidPlatform = errors.New("invalid platform")
 
 var actionSearch cli.ActionFunc = func(
-_ context.Context,
-cmd *cli.Command,
+	_ context.Context,
+	cmd *cli.Command,
 ) error {
 	p := syntax.Parse(cmd.Args().First())
 
@@ -147,9 +147,9 @@ cmd *cli.Command,
 }
 
 func appendToSearchOutput(
-out *structout.Data,
-showAll bool,
-res lucytypes.SearchResults,
+	out *structout.Data,
+	showAll bool,
+	res lucytypes.SearchResults,
 ) {
 	var results []string
 	for _, r := range res.Results {

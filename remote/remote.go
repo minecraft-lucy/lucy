@@ -23,17 +23,9 @@ limitations under the License.
 package remote
 
 import (
-	"errors"
 	"fmt"
 
 	"lucy/lucytypes"
-)
-
-var (
-	ErrSourceNotSupported  = errors.New("source not supported")
-	ErrCannotInferPlatform = errors.New("cannot infer platform")
-	ErrCannotInferSource   = errors.New("cannot infer source")
-	ErrorNotFound          = errors.New("not such package")
 )
 
 // IoC via dependency injection
@@ -55,7 +47,7 @@ func Dependencies(
 	id lucytypes.PackageId,
 ) (deps *lucytypes.PackageDependencies, err error) {
 	// TODO: Implement
-	return nil, fmt.Errorf("%w: %s", ErrSourceNotSupported, source)
+	return nil, fmt.Errorf("%w: %s", ErrorSourceNotSupported, source)
 }
 
 func Support(source lucytypes.Source, name lucytypes.ProjectName) (
@@ -77,8 +69,6 @@ func Information(
 	info = raw.ToProjectInformation()
 	return info, nil
 }
-
-var ErrorNoResults = errors.New("no results found")
 
 func Search(
 	source SourceHandler,
