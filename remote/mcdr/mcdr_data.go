@@ -109,15 +109,11 @@ func (p plugin) ToProjectInformation() lucytypes.ProjectInformation {
 	}
 
 	intro := p.Meta.Description.EnUs
-	if len(intro) > 1000 {
-		intro = p.Plugin.IntroductionUrls.EnUs
-	}
 	readme := p.Repository.Readme
-	if len(readme) > 1000 {
-		readme = p.Repository.Url
-	}
+	info.MarkdownDescription = true
+	info.DescriptionUrl = p.Repository.Url
 	if intro == readme {
-		info.Brief = intro
+		info.Description = readme
 	} else {
 		info.Brief = intro
 		info.Description = readme

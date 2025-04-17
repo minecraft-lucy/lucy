@@ -25,6 +25,7 @@ limitations under the License.
 package structout
 
 import (
+	"github.com/muesli/reflow/wrap"
 	"strconv"
 	"strings"
 
@@ -44,15 +45,15 @@ func SourceInfo(source string) {
 	newLine()
 }
 
-// Separator prints a separator line. A length of 0 will print a line of 66%
+// separator prints a separator line. A length of 0 will print a line of 66%
 // terminal width.
 //
-// Separator also adjusts itself so it does not exceed the terminal width.
+// separator also adjusts itself so it does not exceed the terminal width.
 //
 // Use dim to control whether the separator is dimmed.
-func Separator(len int, dim bool) {
+func separator(len int, dim bool) {
 	if len == 0 {
-		len = tools.TermWidth() * 2 / 3
+		len = tools.TermWidth() * 3 / 4
 	} else if len > tools.TermWidth() {
 		len = tools.TermWidth()
 	}
@@ -72,7 +73,7 @@ type FieldSeparator struct {
 }
 
 func (f *FieldSeparator) Output() {
-	Separator(f.Length, f.Dim)
+	separator(f.Length, f.Dim)
 }
 
 type FieldAnnotation struct {
@@ -93,6 +94,61 @@ func (f *FieldShortText) Output() {
 	key(f.Title)
 	value(f.Text)
 	newLine()
+}
+
+type FieldMarkdown FieldLongText
+
+func (f *FieldMarkdown) Output() {
+	f.Text = tools.MarkdownToPlainText(f.Text)
+	long := FieldLongText(*f)
+	long.Output()
+}
+
+type FieldLongText struct {
+	Title string
+	Text  string
+
+	Padding bool // Padding is turned off if alternative text is used
+
+	LineWrap   bool
+	MaxColumns int
+
+	MaxLines      int
+	UseAlternate  bool
+	AlternateText string
+}
+
+func (f *FieldLongText) Output() {
+	if f.LineWrap {
+		f.Text = wrap.String(f.Text, f.MaxColumns)
+	}
+	separatedText := strings.Split(f.Text, "\n")
+	if f.MaxLines != 0 && len(separatedText) > f.MaxLines {
+		if f.UseAlternate {
+			if f.AlternateText == "" {
+				return
+			}
+			o := FieldShortText{
+				Title: f.Title,
+				Text:  f.Text,
+			}
+			o.Output()
+			return
+		}
+		separatedText = separatedText[:f.MaxLines]
+	}
+
+	key(f.Title)
+	annot("(" + strconv.Itoa(len(separatedText)) + " lines)")
+	newLine()
+	if f.Padding {
+		separator(5, false)
+		newLine()
+	}
+	for _, line := range separatedText {
+		value(line)
+		newLine()
+	}
 }
 
 type FieldAnnotatedShortText struct {
@@ -231,16 +287,16 @@ func (f *FieldDynamicColumnLabels) Output() {
 	flush()
 }
 
-// FieldMultiShortTextWithAnnot accepts 2 arrays, Texts and Annots. len(Texts) determines
+// FieldMultiAnnotatedShortText accepts 2 arrays, Texts and Annots. len(Texts) determines
 // the length of the output. Any content in Annots after len(Texts) will be omitted.
-type FieldMultiShortTextWithAnnot struct {
+type FieldMultiAnnotatedShortText struct {
 	Title     string
 	Texts     []string
 	Annots    []string
 	ShowTotal bool
 }
 
-func (f *FieldMultiShortTextWithAnnot) Output() {
+func (f *FieldMultiAnnotatedShortText) Output() {
 	if len(f.Texts) == 0 {
 		return
 	}
