@@ -94,13 +94,29 @@ var actionSearch cli.ActionFunc = func(
 		case lucytypes.AllPlatform:
 			for _, sourceHandler := range sources.All {
 				res, err = remote.Search(sourceHandler, p.Name, options)
+				if err != nil {
+					logger.WarnNow(
+						fmt.Errorf(
+							"search on %s failed: %w",
+							sourceHandler.Name().Title(),
+							err,
+						),
+					)
+					continue
+				}
 				appendToSearchOutput(out, cmd.Bool("long"), res)
 			}
 		case lucytypes.Forge, lucytypes.Fabric, lucytypes.Neoforge:
 			res, err = remote.Search(sources.Modrinth, p.Name, options)
+			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
+				logger.Fatal(err)
+			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
 		case lucytypes.Mcdr:
 			res, err = remote.Search(sources.Mcdr, p.Name, options)
+			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
+				logger.Fatal(err)
+			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
 		case lucytypes.UnknownPlatform:
 			logger.Fatal(
@@ -136,10 +152,13 @@ var actionSearch cli.ActionFunc = func(
 			p.Name,
 			options,
 		)
+		if err != nil && !errors.Is(err, remote.ErrorNoResults) {
+			logger.Fatal(err)
+		}
 	}
 
-	if err != nil && !errors.Is(err, remote.ErrorNoResults) {
-		logger.Fatal(err)
+	if errors.Is(err, remote.ErrorNoResults) {
+		logger.InfoNow("no results found")
 	}
 
 	structout.Flush(out)
