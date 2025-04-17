@@ -216,10 +216,11 @@ func (f *FieldDynamicColumnLabels) Output() {
 			}
 			tab()
 			annot("(" + strconv.Itoa(len(f.Labels)) + " total)")
+			newLine()
 			break
 		}
 
-		if lastInRow {
+		if lastInRow || lastAmongAll {
 			newLine()
 			lines++
 		}
