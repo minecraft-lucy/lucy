@@ -17,8 +17,9 @@ limitations under the License.
 package logger
 
 import (
-	"github.com/emirpasic/gods/lists/singlylinkedlist"
 	"os"
+
+	"github.com/emirpasic/gods/lists/singlylinkedlist"
 )
 
 var (

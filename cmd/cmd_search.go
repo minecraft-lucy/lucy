@@ -20,10 +20,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+
 	"lucy/lucytypes"
 	"lucy/remote"
 	"lucy/remote/sources"
-	"strconv"
 
 	"github.com/urfave/cli/v3"
 	"lucy/logger"
@@ -66,9 +67,11 @@ var subcmdSearch = &cli.Command{
 	),
 }
 
-var errorUnknownSource = errors.New("unknown specified source")
-var errorUnsupportedSource = errors.New("unsupported source")
-var errorInvalidPlatform = errors.New("invalid platform")
+var (
+	errorUnknownSource     = errors.New("unknown specified source")
+	errorUnsupportedSource = errors.New("unsupported source")
+	errorInvalidPlatform   = errors.New("invalid platform")
+)
 
 var actionSearch cli.ActionFunc = func(
 	_ context.Context,
@@ -85,8 +88,8 @@ var actionSearch cli.ActionFunc = func(
 	sourceStr := cmd.String("source")
 	source := lucytypes.StringToSource(sourceStr)
 
-	var out = &structout.Data{}
-	var res = lucytypes.SearchResults{}
+	out := &structout.Data{}
+	res := lucytypes.SearchResults{}
 	var err error
 
 	if source == lucytypes.AutoSource {

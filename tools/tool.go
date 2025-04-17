@@ -126,11 +126,13 @@ var GoogleTest = factoryNetworkTest(
 	networkTestRetries,
 	networkTestRetries,
 )
+
 var GithubTest = factoryNetworkTest(
 	"https://github.com",
 	networkTestRetries,
 	networkTestRetries,
 )
+
 var RegularTest = factoryNetworkTest(
 	"https://www.example.com",
 	networkTestRetries,

@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"lucy/logger"
-	"lucy/tools"
-	"lucy/util"
 	"net/http"
 	"os"
 	"path"
 	"time"
+
+	"lucy/logger"
+	"lucy/tools"
+	"lucy/util"
 )
 
 // Everything in this context is an extremely long json file of plugins info
@@ -21,8 +22,10 @@ import (
 
 var getEverything = tools.MemoizeE(fetchEverything)
 
-const everythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
-const cacheExpiration = 24 * time.Hour
+const (
+	everythingAPIEndpoint = "https://raw.githubusercontent.com/MCDReforged/PluginCatalogue/meta/everything.json.gz"
+	cacheExpiration       = 24 * time.Hour
+)
 
 func fetchEverything() (everything *everything, err error) {
 	if exist, err := checkEverythingCache(); err != nil && exist {

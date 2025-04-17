@@ -25,9 +25,10 @@ limitations under the License.
 package structout
 
 import (
-	"github.com/muesli/reflow/wrap"
 	"strconv"
 	"strings"
+
+	"github.com/muesli/reflow/wrap"
 
 	"lucy/tools"
 )

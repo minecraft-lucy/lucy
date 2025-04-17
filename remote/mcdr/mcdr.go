@@ -18,6 +18,7 @@ package mcdr
 
 import (
 	"fmt"
+
 	"lucy/lucytypes"
 	"lucy/remote"
 )
@@ -31,8 +32,8 @@ func (s self) Name() lucytypes.Source {
 var Self self
 
 func (s self) Search(
-query string,
-options lucytypes.SearchOptions,
+	query string,
+	options lucytypes.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
 		return nil, remote.FormatError(
@@ -54,8 +55,8 @@ options lucytypes.SearchOptions,
 }
 
 func (s self) Fetch(id lucytypes.PackageId) (
-rem remote.RawPackageRemote,
-err error,
+	rem remote.RawPackageRemote,
+	err error,
 ) {
 	if id.Platform != lucytypes.Mcdr && id.Platform != lucytypes.AllPlatform {
 		return nil, remote.ErrorUnsupportedPlatform
@@ -82,8 +83,8 @@ err error,
 }
 
 func (s self) Information(name lucytypes.ProjectName) (
-info remote.RawProjectInformation,
-err error,
+	info remote.RawProjectInformation,
+	err error,
 ) {
 	p := getPlugin(string(name))
 	if p == nil {
@@ -93,24 +94,24 @@ err error,
 }
 
 func (s self) Dependencies(id lucytypes.PackageId) (
-deps remote.RawPackageDependencies,
-err error,
+	deps remote.RawPackageDependencies,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Support(name lucytypes.ProjectName) (
-supports remote.RawProjectSupport,
-err error,
+	supports remote.RawProjectSupport,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
-parsed lucytypes.PackageId,
-err error,
+	parsed lucytypes.PackageId,
+	err error,
 ) {
 	switch id.Version {
 	case lucytypes.AllVersion, lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion:
