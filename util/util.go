@@ -17,37 +17,12 @@ limitations under the License.
 // Package util is a general package for network and file system operations.
 package util
 
-import (
-	"fmt"
-	"os"
-	"path"
-
-	"lucy/logger"
-)
-
-func init() {
-	if err := os.MkdirAll(CacheDir, os.ModePerm); err != nil {
-		DoCache = false
-		logger.Warn(
-			fmt.Errorf(
-				"failed to create cache directory, disabling caching: %w",
-				err,
-			),
-		)
-	}
-	DoCache = true
-}
-
 const (
 	ProgramName  = "lucy"
 	ProgramPath  = ".lucy"
 	ConfigFile   = ProgramPath + "/config.json"
 	DownloadPath = ProgramPath + "/downloads"
 )
-
-var CacheDir = path.Join(os.TempDir(), ProgramName)
-
-var DoCache bool
 
 // TODO: implement download task
 
