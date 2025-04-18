@@ -17,18 +17,10 @@ limitations under the License.
 package util
 
 import (
-	"io"
 	"os"
-	"path"
 )
 
 func MoveFile(src *os.File, dest string) (err error) {
 	err = os.Rename(src.Name(), dest)
 	return
-}
-
-func Cache(f *os.File) {
-	filename := path.Base(f.Name())
-	cacheFile, _ := os.Create(path.Join(CacheDir, filename))
-	_, _ = io.Copy(cacheFile, f)
 }
