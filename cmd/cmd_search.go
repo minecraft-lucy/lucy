@@ -62,8 +62,8 @@ var subcmdSearch = &cli.Command{
 	},
 	Action: tools.Decorate(
 		actionSearch,
-		globalFlagsDecorator,
-		helpOnNoInputDecorator,
+		decoratorGlobalFlags,
+		decoratorHelpAndExitOnNoInput,
 	),
 }
 

@@ -37,8 +37,8 @@ var Cli = &cli.Command{
 	Usage: "The Minecraft server-side package manager",
 	Action: tools.Decorate(
 		actionEmpty,
-		globalFlagsDecorator,
-		helpOnNoInputDecorator,
+		decoratorGlobalFlags,
+		decoratorHelpAndExitOnNoInput,
 	),
 	Flags: []cli.Flag{
 		&cli.BoolFlag{

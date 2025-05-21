@@ -32,7 +32,7 @@ var subcmdStatus = &cli.Command{
 	Usage: "Display basic information of the current server",
 	Action: tools.Decorate(
 		actionStatus,
-		globalFlagsDecorator,
+		decoratorGlobalFlags,
 	),
 	Flags: []cli.Flag{
 		flagJsonOutput,

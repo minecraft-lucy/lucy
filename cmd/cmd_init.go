@@ -25,7 +25,7 @@ import (
 var subcmdInit = &cli.Command{
 	Name:   "init",
 	Usage:  "Initialize Lucy on current directory",
-	Action: actionEmpty, // tools.Decorate(actionInit, globalFlagsDecorator),
+	Action: actionEmpty, // tools.Decorate(actionInit, decorator),
 }
 
 var actionInit cli.ActionFunc = func(
