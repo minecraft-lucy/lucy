@@ -21,8 +21,9 @@ import (
 
 	"lucy/tools"
 
-	"github.com/urfave/cli/v3"
 	"lucy/logger"
+
+	"github.com/urfave/cli/v3"
 )
 
 // globalFlagsDecorator is a high-order function that appends global flag actions
@@ -53,7 +54,7 @@ func globalFlagsDecorator(f cli.ActionFunc) cli.ActionFunc {
 func helpOnNoInputDecorator(f cli.ActionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
 		if cmd.Args().Len() == 0 && len(cmd.LocalFlagNames()) == 0 {
-			cli.ShowAppHelpAndExit(cmd, 0)
+			cli.ShowCommandHelpAndExit(ctx, cmd, cmd.Name, 0)
 		}
 		return f(ctx, cmd)
 	}
@@ -63,7 +64,7 @@ func helpOnErrorDecorator(f cli.ActionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
 		err := f(ctx, cmd)
 		if err != nil {
-			cli.ShowAppHelpAndExit(cmd, 1)
+			cli.ShowCommandHelpAndExit(ctx, cmd, cmd.Name, 0)
 		}
 		return err
 	}
