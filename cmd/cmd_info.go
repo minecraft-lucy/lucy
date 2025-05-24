@@ -118,7 +118,7 @@ var actionInfo cli.ActionFunc = func(
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {
-		tools.PrintJson(p)
+		tools.PrintAsJson(p)
 		return nil
 	}
 	structout.Flush(out)

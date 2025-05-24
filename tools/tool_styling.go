@@ -99,8 +99,8 @@ var styleFactory = func(i int) func(any) string {
 	}
 }
 
-// PrintJson is usually used for debugging purposes
-func PrintJson(v interface{}) {
+// PrintAsJson is usually used for debugging purposes
+func PrintAsJson(v interface{}) {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		fmt.Println(err)
