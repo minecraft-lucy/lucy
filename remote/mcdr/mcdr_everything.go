@@ -23,9 +23,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"lucy/fscache"
 	"lucy/logger"
 	"lucy/tools"
-	"lucy/util"
 	"net/http"
 )
 
@@ -41,7 +41,7 @@ const (
 )
 
 func fetchEverything() (everything *everything, err error) {
-	if hit, file, err := util.GetCache(gzFilename); hit && err == nil {
+	if hit, file, err := fscache.Network.Get(everythingAPIEndpoint); hit && err == nil {
 		data, err := io.ReadAll(file)
 		if err == nil {
 			everything, err = readEverythingGz(data)
@@ -63,9 +63,8 @@ func fetchEverything() (everything *everything, err error) {
 		return nil, err
 	}
 
-	err = util.Cache(gzFilename, gz)
+	err = fscache.Network.Add(gz, gzFilename, everythingAPIEndpoint, 0)
 	if err != nil {
-		_ = util.DeleteCache(gzFilename)
 		logger.Warn(err)
 	}
 	return readEverythingGz(gz)

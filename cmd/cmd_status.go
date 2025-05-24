@@ -46,7 +46,7 @@ var actionStatus cli.ActionFunc = func(
 ) error {
 	serverInfo := local.GetServerInfo()
 	if cmd.Bool("json") {
-		tools.PrintJson(serverInfo)
+		tools.PrintAsJson(serverInfo)
 	} else {
 		structout.Flush(serverInfoToStatus(&serverInfo, cmd.Bool("long")))
 	}

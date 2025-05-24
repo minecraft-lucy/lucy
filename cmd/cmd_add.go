@@ -19,18 +19,16 @@ package cmd
 import (
 	"context"
 	"errors"
-
-	"lucy/remote"
+	"fmt"
 	"lucy/remote/sources"
 	"lucy/tools"
+	"lucy/util"
 
 	"github.com/urfave/cli/v3"
 	"lucy/local"
 	"lucy/logger"
-	"lucy/lucyerrors"
 	"lucy/lucytypes"
 	"lucy/syntax"
-	"lucy/util"
 )
 
 var subcmdAdd = &cli.Command{
@@ -52,70 +50,48 @@ var subcmdAdd = &cli.Command{
 	),
 }
 
-// actionAdd
-// The strategy is:
-//
-//   - Most up to date
-//   - Compatible with the server version
-//   - Release version
-//
-// TODO: Version specification
 var actionAdd cli.ActionFunc = func(
 	ctx context.Context,
 	cmd *cli.Command,
 ) error {
-	// TODO: Platform specification
-	// TODO: Platform compatibility check
-	// TODO: Error handling
-
 	id := syntax.Parse(cmd.Args().First())
 	serverInfo := local.GetServerInfo()
-
 	if !serverInfo.HasLucy {
 		return errors.New("lucy is not installed, run `lucy init` before downloading mods")
 	}
 
 	if serverInfo.Executable == local.UnknownExecutable {
-		// Case where the server is not detected
 		return errors.New("no executable found, `lucy add` requires a server in current directory")
-	} else if id.Platform == lucytypes.Mcdr && serverInfo.Mcdr == nil {
-		// Case where MCDR is not installed but the user wants to download MCDR plugins
-		// TODO: Deal with this
-		logger.Error(errors.New("no mcdr found, while mcdr plugins requested"))
-		return nil
-	} else if id.Platform != lucytypes.AllPlatform && id.Platform != serverInfo.Executable.Platform {
-		// Case where the platform of the mod is different from the server
-		// TODO: Deal with this
+	}
+	if id.Platform != lucytypes.AllPlatform && id.Platform != serverInfo.Executable.Platform {
 		logger.Error(errors.New("platform mismatch"))
 		return nil
 	}
 
-	inferredId := remote.InferVersion(sources.Modrinth, id)
-	p := inferredId.NewPackage()
-	remote, err := remote.Fetch(sources.Modrinth, p.Id)
-	if err != nil {
-		logger.Error(err)
-		return nil
-	}
-	p.Remote = &remote
-	downloadFile, err := util.DownloadFile(
-		// Not sure how to deal with multiple files
-		// As the motivation for publishers to provide multiple files is unclear
-		// TODO: Maybe add a prompt to let the user choose
-		p.Remote.FileUrl,
-		"mod",
-		p.Remote.Filename,
-	)
-	if err != nil {
-		if errors.Is(err, lucyerrors.NoLucyError) {
-			logger.Warn(err)
-		} else {
-			logger.Error(errors.New("failed at downloading: " + err.Error()))
-			return nil
+	// var handler remote.SourceHandler
+	var dir string
+	switch id.Platform {
+	case lucytypes.AllPlatform:
+		logger.InfoNow("no platform specified, attempting to infer")
+	case lucytypes.Mcdr:
+		if serverInfo.Mcdr == nil {
+			return errors.New("mcdr not found, please install mcdr first")
 		}
+		dir = serverInfo.Mcdr.PluginPaths[0]
+	case lucytypes.Forge, lucytypes.Fabric:
+		dir = serverInfo.ModPath
+	default:
+		return errors.New("unsupported platform")
 	}
 
-	_ = util.MoveFile(downloadFile, serverInfo.ModPath)
-
+	raw, err := sources.Mcdr.Fetch(id)
+	if err != nil {
+		return err
+	}
+	remote := raw.ToPackageRemote()
+	_, _, err = util.DownloadFile(remote.FileUrl, dir)
+	if err != nil {
+		logger.ErrorNow(fmt.Errorf("download failed: %w", err))
+	}
 	return nil
 }

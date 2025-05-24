@@ -45,6 +45,9 @@ var queue = singlylinkedlist.New()
 
 func factoryQueuedLog(level logLevel) func(content error) {
 	return func(content error) {
+		if content == nil {
+			return
+		}
 		queue.Add(&logItem{Level: level, Content: content})
 	}
 }
