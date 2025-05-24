@@ -3,9 +3,27 @@
 version: "3"
 
 tasks:
-  build:
+  cleanup:
+    cmds:
+      - rm -rf dist
+  build-release:
+    desc: Build the release for Windows, Linux, and macOS
+    deps: [cleanup]
     cmds:
       - GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-linux-amd64
       - GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-windows-amd64.exe
       - GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-darwin-amd64
       - GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -tags release -o dist/lucy-darwin-arm64
+    sources: [ ./**/*.go, ./**/go.mod, ./**/go.sum ]
+    generates: [ dist/lucy-darwin-arm64-debug ]
+  build-debug:
+    desc: Build a binary for debugging
+    deps: [cleanup]
+    cmds:
+      - GOOS=darwin GOARCH=arm64 go build -tags debug -o dist/lucy-darwin-arm64-debug
+    sources: [./**/*.go, ./**/go.mod, ./**/go.sum]
+    generates: [dist/lucy-darwin-arm64-debug]
+  run:
+    deps: [build-debug]
+    cmds:
+      - ./dist/lucy-darwin-arm64-debug

@@ -39,3 +39,6 @@ test_*
 
 # Documents
 documents
+
+# Taskfile
+.task
