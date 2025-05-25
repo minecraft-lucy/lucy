@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"lucy/cmd"
@@ -31,6 +30,6 @@ func main() {
 		logger.WriteAll()
 	}()
 	if err := cmd.Cli.Run(context.Background(), os.Args); err != nil {
-		log.Println(err)
+		logger.ErrorNow(err)
 	}
 }

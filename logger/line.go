@@ -36,6 +36,9 @@ func UseConsoleOutput() {
 }
 
 func WriteAll() {
+	if toConsole {
+		println("The following is written to " + LogFile.Name() + ":")
+	}
 	for queue.Empty() == false {
 		pop()
 	}
