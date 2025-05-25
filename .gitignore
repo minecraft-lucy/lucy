@@ -31,8 +31,9 @@ go.work.sum
 # System files
 .DS_Store
 
-# Binary output
+# Compiled files
 dist
+release
 
 # Testing server
 test_*

@@ -10,10 +10,10 @@ tasks:
     desc: Build the release for Windows, Linux, and macOS
     deps: [cleanup]
     cmds:
-      - GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-linux-amd64
-      - GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-windows-amd64.exe
-      - GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -tags release -o dist/lucy-darwin-amd64
-      - GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -tags release -o dist/lucy-darwin-arm64
+      - GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -tags release -o release/lucy-linux-amd64
+      - GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -tags release -o release/lucy-windows-amd64.exe
+      - GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -tags release -o release/lucy-darwin-amd64
+      - GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -tags release -o release/lucy-darwin-arm64
     sources: [ ./**/*.go, ./**/go.mod, ./**/go.sum ]
     generates: [ dist/lucy-darwin-arm64-debug ]
   build-debug:
