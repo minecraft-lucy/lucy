@@ -46,7 +46,8 @@ var subcmdAdd = &cli.Command{
 	Action: tools.Decorate(
 		actionAdd,
 		decoratorGlobalFlags,
-		decoratorHelpAndExitOnNoInput,
+		decoratorHelpAndExitOnNoArg,
+		decoratorLogAndExitOnError,
 	),
 }
 
