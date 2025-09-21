@@ -70,9 +70,10 @@ cmd *cli.Command,
 	serverInfo := local.GetServerInfo()
 
 	// ensure we are in a lucy-managed server
-	if !serverInfo.HasLucy {
-		return errors.New("lucy is not installed, run `lucy init` before downloading mods")
-	}
+	// TODO: Disabled for now, the part for building the program directory is not done
+	// if !serverInfo.HasLucy {
+	// 	return errors.New("lucy is not installed, run `lucy init` before downloading mods")
+	// }
 
 	if serverInfo.Executable == local.UnknownExecutable {
 		return errors.New("no executable found, `lucy add` requires a server in current directory")
@@ -113,11 +114,12 @@ cmd *cli.Command,
 	}
 
 	var rawRemote remote.RawPackageRemote
+	var source remote.SourceHandler
 	var err error
 
 	switch cmd.String("source") {
 	case "none":
-		for _, source := range sources.All {
+		for _, source = range sources.All {
 			rawRemote, err = source.Fetch(id)
 			if err != nil {
 				logger.WarnNow(err)
@@ -142,6 +144,13 @@ cmd *cli.Command,
 		r := rawRemote.ToPackageRemote()
 		p.Remote = &r
 	}
+
+	// let's try to get the correct dependency info first
+	rawDeps, err := source.Dependencies(id)
+	if err != nil {
+		logger.Debug(err)
+	}
+	tools.PrintAsJson(rawDeps)
 
 	// TODO: util.DownloadFile is a temporary solution
 	_, _, err = util.DownloadFile(p.Remote.FileUrl, dir)
