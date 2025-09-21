@@ -23,6 +23,7 @@ import (
 	"lucy/remote/modrinth"
 )
 
+// All is currently hardcoded, but in the future, this could be made customizable
 var All = []remote.SourceHandler{
 	modrinth.Self,
 	mcdr.Self,

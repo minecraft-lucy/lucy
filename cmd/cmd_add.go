@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"lucy/remote"
 	"lucy/remote/sources"
 	"lucy/tools"
 	"lucy/util"
@@ -41,6 +42,12 @@ var subcmdAdd = &cli.Command{
 			Usage:   "Ignore version, dependency, and platform warnings",
 			Value:   false,
 		},
+		&cli.StringFlag{
+			Name:    "source",
+			Aliases: []string{"s"},
+			Usage:   "Specify the source to download from (modrinth, mcdr)",
+			Value:   "none",
+		},
 		flagNoStyle,
 	},
 	Action: tools.Decorate(
@@ -52,11 +59,17 @@ var subcmdAdd = &cli.Command{
 }
 
 var actionAdd cli.ActionFunc = func(
-	ctx context.Context,
-	cmd *cli.Command,
+ctx context.Context,
+cmd *cli.Command,
 ) error {
+
+	// get id from args
 	id := syntax.Parse(cmd.Args().First())
+
+	// probe server info
 	serverInfo := local.GetServerInfo()
+
+	// ensure we are in a lucy-managed server
 	if !serverInfo.HasLucy {
 		return errors.New("lucy is not installed, run `lucy init` before downloading mods")
 	}
@@ -64,12 +77,17 @@ var actionAdd cli.ActionFunc = func(
 	if serverInfo.Executable == local.UnknownExecutable {
 		return errors.New("no executable found, `lucy add` requires a server in current directory")
 	}
+
+	// check if the specified platform matches the server platform
 	if id.Platform != lucytypes.AllPlatform && id.Platform != serverInfo.Executable.Platform {
 		logger.Error(errors.New("platform mismatch"))
 		return nil
 	}
 
-	// var handler remote.SourceHandler
+	// Get the appropriate directory to download file to.
+	// This is a temporary solution. Installation is not supposed to be this simple.
+	// The installer should be designed as an injectable interface to allow non-standard
+	// installation methods.
 	var dir string
 	switch id.Platform {
 	case lucytypes.AllPlatform:
@@ -85,12 +103,48 @@ var actionAdd cli.ActionFunc = func(
 		return errors.New("unsupported platform")
 	}
 
-	raw, err := sources.Mcdr.Fetch(id)
-	if err != nil {
-		return err
+	p := lucytypes.Package{
+		Id:           id,
+		Dependencies: nil,
+		Local:        nil,
+		Remote:       nil,
+		Supports:     nil,
+		Information:  nil,
 	}
-	remote := raw.ToPackageRemote()
-	_, _, err = util.DownloadFile(remote.FileUrl, dir)
+
+	var rawRemote remote.RawPackageRemote
+	var err error
+
+	switch cmd.String("source") {
+	case "none":
+		for _, source := range sources.All {
+			rawRemote, err = source.Fetch(id)
+			if err != nil {
+				logger.WarnNow(err)
+				err = nil // prevent error got printed twice in the last iteration
+				continue
+			}
+			if rawRemote != nil {
+				break
+			}
+		}
+	case sources.Mcdr.Name().String():
+		rawRemote, err = sources.Mcdr.Fetch(id)
+	case sources.Modrinth.Name().String():
+		rawRemote, err = sources.Modrinth.Fetch(id)
+	default:
+		return fmt.Errorf("unknown source: %s", cmd.String("source"))
+	}
+	if err != nil {
+		logger.WarnNow(err)
+	}
+	if rawRemote != nil {
+		r := rawRemote.ToPackageRemote()
+		p.Remote = &r
+	}
+
+	// TODO: util.DownloadFile is a temporary solution
+	_, _, err = util.DownloadFile(p.Remote.FileUrl, dir)
 	if err != nil {
 		logger.ErrorNow(fmt.Errorf("download failed: %w", err))
 	}
