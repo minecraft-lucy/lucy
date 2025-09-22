@@ -17,8 +17,6 @@ limitations under the License.
 package mcdr
 
 import (
-	"fmt"
-
 	"lucy/lucytypes"
 	"lucy/remote"
 )
@@ -36,7 +34,7 @@ func (s self) Search(
 	options lucytypes.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
-		return nil, remote.FormatError(
+		return nil, remote.FormatRemoteError(
 			remote.ErrorUnsupportedPlatform,
 			lucytypes.McdrCatalogue,
 			options.Platform,
@@ -61,9 +59,9 @@ func (s self) Fetch(id lucytypes.PackageId) (
 	if id.Platform != lucytypes.Mcdr && id.Platform != lucytypes.AllPlatform {
 		return nil, remote.ErrorUnsupportedPlatform
 	}
-	p := getPlugin(string(id.Name))
-	if p == nil {
-		return nil, fmt.Errorf("%w: %s", remote.ErrorNoPackage, id)
+	p, err := getPlugin(string(id.Name))
+	if err != nil {
+		return nil, err
 	}
 
 	version := id.Version
@@ -86,19 +84,29 @@ func (s self) Information(name lucytypes.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
-	p := getPlugin(string(name))
-	if p == nil {
-		return nil, fmt.Errorf("%w: %s", remote.ErrorNoPackage, name)
+	p, err := getPlugin(string(name))
+	if err != nil {
+		return nil, err
 	}
 	return p, nil
 }
 
+// TODO: Create a special case for MCDR dependency: mcdr/mcdr == mcdr/mcdreforged
+// remember the rule that the platform is a special package under itself.
+
 func (s self) Dependencies(id lucytypes.PackageId) (
-	deps remote.RawPackageDependencies,
-	err error,
+	remote.RawPackageDependencies,
+	error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	p, err := getPlugin(id.Name.ToPEP8())
+	if err != nil {
+		return nil, err
+	}
+	r, err := getRelease(p, id.Version.String())
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (s self) Support(name lucytypes.ProjectName) (
@@ -115,18 +123,14 @@ func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
 ) {
 	switch id.Version {
 	case lucytypes.AllVersion, lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion:
-		p := getPlugin(id.Name.String())
-		if p == nil {
-			return id, remote.FormatError(
-				remote.ErrorCannotInferVersion,
-				id.Name,
-				id.Version,
-			)
+		p, err := getPlugin(id.Name.String())
+		if err != nil {
+			return id, err
 		}
 		id.Version = lucytypes.RawVersion(p.Release.LatestVersion)
 		return id, nil
 	}
-	return id, remote.FormatError(
+	return id, remote.FormatRemoteError(
 		remote.ErrorCannotInferVersion,
 		id.Name,
 		id.Version,

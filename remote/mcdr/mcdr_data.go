@@ -17,6 +17,9 @@ limitations under the License.
 package mcdr
 
 import (
+	"lucy/dependency"
+	"lucy/syntax"
+	"strings"
 	"time"
 
 	"lucy/lucytypes"
@@ -58,14 +61,14 @@ type author struct {
 
 type plugin struct {
 	Meta struct {
-		SchemaVersion int           `json:"schema_version"`
-		Id            string        `json:"id"`
-		Name          string        `json:"name"`
-		Version       string        `json:"version"`
-		Link          string        `json:"link"`
-		Authors       []string      `json:"authors"`
-		Dependencies  struct{}      `json:"dependencies"`
-		Requirements  []interface{} `json:"requirements"`
+		SchemaVersion int               `json:"schema_version"`
+		Id            string            `json:"id"`
+		Name          string            `json:"name"`
+		Version       string            `json:"version"`
+		Link          string            `json:"link"`
+		Authors       []string          `json:"authors"`
+		Dependencies  map[string]string `json:"dependencies"` // These are the plugin dependencies
+		Requirements  []string          `json:"requirements"` // These are the python package requirements
 		Description   struct {
 			EnUs string `json:"en_us"`
 			ZhCn string `json:"zh_cn"`
@@ -114,6 +117,65 @@ type plugin struct {
 			Url    string `json:"url"`
 		} `json:"license"`
 	} `json:"repository"`
+}
+
+func (r release) ToPackageDependencies() lucytypes.PackageDependencies {
+	deps := lucytypes.PackageDependencies{}
+	for packageName, requiredVersion := range r.Meta.Dependencies {
+		deps.Dependencies = append(
+			deps.Dependencies, lucytypes.Dependency{
+				Id:     syntax.Parse("mcdr/" + packageName),
+				Bounds: parseRequiredVersion(requiredVersion),
+			},
+		)
+	}
+	return deps
+}
+
+func parseRequiredVersion(s string) (reqs []lucytypes.DependencyExpression) {
+	split := strings.Split(s, ",")
+	for _, expr := range split {
+		expr = strings.TrimSpace(expr)
+
+		if expr == "*" {
+			// No specific requirement
+			continue
+		}
+
+		version := strings.TrimLeft(expr, "<>=!^~")
+		req := lucytypes.DependencyExpression{
+			Value: dependency.Parse(
+				lucytypes.RawVersion(version),
+				lucytypes.Semver,
+			),
+		}
+
+		// Currently, I did not see the x.x.x or *.*.* pattern in MCDR's plugin
+		// requirements, so I will not implement it for now.
+		if strings.HasPrefix(expr, "=") {
+			req.Operator = lucytypes.OpEq
+		} else if strings.HasPrefix(expr, "~") ||
+		strings.HasPrefix(expr, "~=") {
+			req.Operator = lucytypes.OpWeakEq
+		} else if strings.HasPrefix(expr, "<=") {
+			req.Operator = lucytypes.OpLe
+		} else if strings.HasPrefix(expr, "<") {
+			req.Operator = lucytypes.OpLt
+		} else if strings.HasPrefix(expr, ">=") {
+			req.Operator = lucytypes.OpGeq
+		} else if strings.HasPrefix(expr, ">") {
+			req.Operator = lucytypes.OpGt
+		} else if strings.HasPrefix(expr, "!=") {
+			req.Operator = lucytypes.OpNeq
+		} else if strings.HasPrefix(expr, "^") {
+			req.Operator = lucytypes.OpWeakGt
+		} else {
+			req.Operator = lucytypes.OpEq
+		}
+
+		reqs = append(reqs, req)
+	}
+	return
 }
 
 func (p plugin) ToProjectInformation() lucytypes.ProjectInformation {
@@ -195,14 +257,14 @@ type release struct {
 		HashSha256         string    `json:"hash_sha256"`
 	} `json:"asset"`
 	Meta struct {
-		SchemaVersion int           `json:"schema_version"`
-		Id            string        `json:"id"`
-		Name          string        `json:"name"`
-		Version       string        `json:"version"`
-		Link          string        `json:"link"`
-		Authors       []string      `json:"authors"`
-		Dependencies  struct{}      `json:"dependencies"`
-		Requirements  []interface{} `json:"requirements"`
+		SchemaVersion int               `json:"schema_version"`
+		Id            string            `json:"id"`
+		Name          string            `json:"name"`
+		Version       string            `json:"version"`
+		Link          string            `json:"link"`
+		Authors       []string          `json:"authors"`
+		Dependencies  map[string]string `json:"dependencies"`
+		Requirements  []string          `json:"requirements"`
 		Description   struct {
 			EnUs string `json:"en_us"`
 			ZhCn string `json:"zh_cn"`

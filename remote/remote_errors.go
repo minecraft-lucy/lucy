@@ -32,8 +32,8 @@ var (
 	ErrorUnsupportedPlatform = errors.New("unsupported platform")
 )
 
-// FormatError 格式化错误信息
-func FormatError(err error, args ...interface{}) error {
+// FormatRemoteError is ONLY for errors related with remote operations
+func FormatRemoteError(err error, args ...interface{}) error {
 	switch len(args) {
 	case 0:
 		return err

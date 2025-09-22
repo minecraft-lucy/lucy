@@ -106,12 +106,16 @@ func ToProjectName(s string) ProjectName {
 
 // Title Replaces underlines or hyphens with spaces, then capitalize the first
 // letter.
-func (p ProjectName) Title() string {
-	return tools.Capitalize(strings.ReplaceAll(string(p), "-", " "))
+func (n ProjectName) Title() string {
+	return tools.Capitalize(strings.ReplaceAll(string(n), "-", " "))
 }
 
-func (p ProjectName) String() string {
-	return string(p)
+func (n ProjectName) String() string {
+	return string(n)
+}
+
+func (n ProjectName) ToPEP8() string {
+	return strings.ReplaceAll(string(n), "-", "_")
 }
 
 type PackageId struct {

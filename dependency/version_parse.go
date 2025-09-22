@@ -36,13 +36,13 @@ import (
 // Eq and Neq comparisons.
 func Parse(
 	raw lucytypes.RawVersion,
-	label lucytypes.VersionScheme,
+	scheme lucytypes.VersionScheme,
 ) lucytypes.ComparableVersion {
 	switch raw {
 	case lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion, lucytypes.NoVersion, lucytypes.AllVersion, lucytypes.UnknownVersion:
 		return lucytypes.InvalidVersion
 	}
-	switch label {
+	switch scheme {
 	case lucytypes.Semver:
 		return parseSemver(string(raw))
 	case lucytypes.MinecraftRelease:

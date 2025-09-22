@@ -80,11 +80,11 @@ func serverInfoToStatus(
 		},
 	)
 
-	if data.Executable.Platform != lucytypes.Minecraft {
+	if data.Executable.LoaderPlatform != lucytypes.Minecraft {
 		status.Fields = append(
 			status.Fields, &structout.FieldAnnotatedShortText{
 				Title:      "Modding",
-				Text:       data.Executable.Platform.Title(),
+				Text:       data.Executable.LoaderPlatform.Title(),
 				Annotation: data.Executable.LoaderVersion.String(),
 				NoTab:      true,
 			},
@@ -118,7 +118,7 @@ func serverInfoToStatus(
 	}
 
 	// Modding related fields only shown when modding platform detected
-	if data.Executable.Platform != lucytypes.Minecraft {
+	if data.Executable.LoaderPlatform != lucytypes.Minecraft {
 		if len(data.Mods) > 0 {
 			modNames := make([]string, 0, len(data.Mods))
 			modPaths := make([]string, 0, len(modNames))

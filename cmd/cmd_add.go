@@ -59,8 +59,8 @@ var subcmdAdd = &cli.Command{
 }
 
 var actionAdd cli.ActionFunc = func(
-ctx context.Context,
-cmd *cli.Command,
+	ctx context.Context,
+	cmd *cli.Command,
 ) error {
 
 	// get id from args
@@ -80,9 +80,17 @@ cmd *cli.Command,
 	}
 
 	// check if the specified platform matches the server platform
-	if id.Platform != lucytypes.AllPlatform && id.Platform != serverInfo.Executable.Platform {
-		logger.Error(errors.New("platform mismatch"))
-		return nil
+	if id.Platform != lucytypes.AllPlatform {
+		if id.Platform == lucytypes.Mcdr {
+			// for mcdr, we only need to check if it's mcdr-managed
+			if serverInfo.Mcdr == nil {
+				logger.Error(errors.New("mcdr not found"))
+				return nil
+			}
+		} else if id.Platform != serverInfo.Executable.LoaderPlatform {
+			logger.Error(errors.New("platform mismatch"))
+			return nil
+		}
 	}
 
 	// Get the appropriate directory to download file to.
@@ -94,9 +102,6 @@ cmd *cli.Command,
 	case lucytypes.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
 	case lucytypes.Mcdr:
-		if serverInfo.Mcdr == nil {
-			return errors.New("mcdr not found, please install mcdr first")
-		}
 		dir = serverInfo.Mcdr.PluginPaths[0]
 	case lucytypes.Forge, lucytypes.Fabric:
 		dir = serverInfo.ModPath
@@ -113,44 +118,55 @@ cmd *cli.Command,
 		Information:  nil,
 	}
 
-	var rawRemote remote.RawPackageRemote
+	var remoteData remote.RawPackageRemote
 	var source remote.SourceHandler
 	var err error
 
 	switch cmd.String("source") {
 	case "none":
 		for _, source = range sources.All {
-			rawRemote, err = source.Fetch(id)
+			remoteData, err = source.Fetch(id)
 			if err != nil {
-				logger.WarnNow(err)
+				logger.InfoNow(err)
 				err = nil // prevent error got printed twice in the last iteration
 				continue
 			}
-			if rawRemote != nil {
+			if remoteData != nil {
+				// found the package, exit loop
 				break
 			}
 		}
 	case sources.Mcdr.Name().String():
-		rawRemote, err = sources.Mcdr.Fetch(id)
+		if id.Platform != lucytypes.Mcdr && id.Platform != lucytypes.AllPlatform {
+			return fmt.Errorf("source 'mcdr' only supports mcdr platform")
+		}
+		remoteData, err = sources.Mcdr.Fetch(id)
 	case sources.Modrinth.Name().String():
-		rawRemote, err = sources.Modrinth.Fetch(id)
+		if id.Platform == lucytypes.Mcdr {
+			return fmt.Errorf("source 'modrinth' does not support mcdr platform")
+		}
+		remoteData, err = sources.Modrinth.Fetch(id)
 	default:
 		return fmt.Errorf("unknown source: %s", cmd.String("source"))
 	}
 	if err != nil {
 		logger.WarnNow(err)
 	}
-	if rawRemote != nil {
-		r := rawRemote.ToPackageRemote()
+	if remoteData != nil {
+		r := remoteData.ToPackageRemote()
 		p.Remote = &r
 	}
 
 	// let's try to get the correct dependency info first
-	rawDeps, err := source.Dependencies(id)
-	if err != nil {
-		logger.Debug(err)
+	// for sources like modrinth, the dependency info from remote is not reliable
+	if id.Platform == lucytypes.Mcdr {
+		depsData, err := source.Dependencies(id)
+		if err != nil {
+			logger.Debug(err)
+		}
+		tools.PrintAsJson(depsData.ToPackageDependencies())
+		return nil
 	}
-	tools.PrintAsJson(rawDeps)
 
 	// TODO: util.DownloadFile is a temporary solution
 	_, _, err = util.DownloadFile(p.Remote.FileUrl, dir)

@@ -17,26 +17,19 @@ limitations under the License.
 package mcdr
 
 import (
-	"strings"
-
 	"lucy/remote"
 )
 
-// getPlugin is able to tolerate the interchange of "-" and "_"
-func getPlugin(id string) *plugin {
+func getPlugin(id string) (*plugin, error) {
 	everything, err := getEverything()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	p, ok := everything.Plugins[id]
 	if !ok {
-		id = strings.Replace(id, "-", "_", -1)
-		p, ok = everything.Plugins[id]
-		if !ok {
-			return nil
-		}
+		return nil, remote.FormatRemoteError(remote.ErrorNoPackage, id)
 	}
-	return &p
+	return &p, nil
 }
 
 func getAuthor(name string) *author {
@@ -52,12 +45,29 @@ func getAuthor(name string) *author {
 }
 
 func getRelease(plugin *plugin, version string) (release *release, err error) {
+	if plugin == nil {
+		return nil, remote.FormatRemoteError(remote.ErrorNoPackage)
+	}
+
+	// treat "" (empty), "any", and "latest" as the latest version
+	if version == "" || version == "any" || version == "latest" {
+		if len(plugin.Release.Releases) == 0 {
+			return nil, remote.FormatRemoteError(
+				remote.ErrorNoVersion,
+				plugin.Meta.Name,
+				version,
+			)
+		}
+		return &plugin.Release.Releases[0], nil
+	}
+
+	// search for the specific version
 	for _, release := range plugin.Release.Releases {
 		if release.Meta.Version == version {
 			return &release, nil
 		}
 	}
-	return nil, remote.FormatError(
+	return nil, remote.FormatRemoteError(
 		remote.ErrorNoVersion,
 		plugin.Meta.Name,
 		version,

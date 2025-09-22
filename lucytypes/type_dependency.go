@@ -46,7 +46,7 @@ func (v RawVersion) String() string {
 
 func (v RawVersion) NeedsInfer() bool {
 	if v == AllVersion || v == NoVersion || v == UnknownVersion ||
-		v == LatestVersion || v == LatestCompatibleVersion {
+	v == LatestVersion || v == LatestCompatibleVersion {
 		return true
 	}
 	return false
@@ -72,14 +72,6 @@ func (p1 ComparableVersion) Eq(p2 ComparableVersion) bool {
 	return p1.Major == p2.Major && p1.Minor == p2.Minor && p1.Patch == p2.Patch
 }
 
-// Neq checks whether p1 is not equal to p2.
-func (p1 ComparableVersion) Neq(p2 ComparableVersion) bool {
-	if !p1.schemeMatch(p2) {
-		return false
-	}
-	return !p1.Eq(p2)
-}
-
 // StrictEq checks whether p1 is strictly equal to p2. This includes
 // the prerelease tag.
 func (p1 ComparableVersion) StrictEq(p2 ComparableVersion) bool {
@@ -91,6 +83,24 @@ func (p1 ComparableVersion) StrictEq(p2 ComparableVersion) bool {
 		return false
 	}
 	return p1.Eq(p2)
+}
+
+func (p1 ComparableVersion) WeakEq(p2 ComparableVersion) bool {
+	if p1.Minor == 0 && p1.Patch == 0 {
+		// if a minor is not specified, only compare major
+		return p1.Major == p2.Major
+	} else {
+		// if a minor is specified, only ignore patch
+		return p1.Major == p2.Major && p1.Minor == p2.Minor
+	}
+}
+
+// Neq checks whether p1 is not equal to p2.
+func (p1 ComparableVersion) Neq(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+	return !p1.Eq(p2)
 }
 
 // Lt checks whether p1 is less than p2.
@@ -244,8 +254,8 @@ func (v ComparableVersion) Validate() bool {
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
 		return v.Major != 0 &&
-			v.Minor != 0 && v.Minor <= maxWeek &&
-			v.Patch >= minInWeekIndex && v.Patch <= maxInWeekIndex
+		v.Minor != 0 && v.Minor <= maxWeek &&
+		v.Patch >= minInWeekIndex && v.Patch <= maxInWeekIndex
 	case MinecraftRelease:
 		return v.Major != 0 && v.Minor != 0
 	case Invalid:
@@ -263,49 +273,49 @@ const (
 )
 
 type Dependency struct {
-	Id           PackageId
-	Requirements []Requirement
+	Id     PackageId
+	Bounds []DependencyExpression
 }
 
-type Requirement struct {
+type DependencyExpression struct {
 	Value    ComparableVersion
 	Operator VersionOperator
 }
 
 func (d Dependency) Satisfy(
-	id PackageId,
-	v ComparableVersion,
+id PackageId,
+v ComparableVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false
 	}
-	for _, req := range d.Requirements {
+	for _, req := range d.Bounds {
 		switch req.Operator {
-		case Equal:
+		case OpEq:
 			if !v.Eq(req.Value) {
 				return false
 			}
-		case NotEqual:
+		case OpNeq:
 			if !v.Neq(req.Value) {
 				return false
 			}
-		case GreaterThan:
+		case OpGt:
 			if !v.Gt(req.Value) {
 				return false
 			}
-		case WeakGreaterThan:
+		case OpWeakGt:
 			if !v.WeakGt(req.Value) {
 				return false
 			}
-		case GreaterThanOrEqual:
+		case OpGeq:
 			if !v.Gte(req.Value) {
 				return false
 			}
-		case LessThan:
+		case OpLt:
 			if !v.Lt(req.Value) {
 				return false
 			}
-		case LessThanOrEqual:
+		case OpLe:
 			if !v.Lte(req.Value) {
 				return false
 			}
@@ -318,11 +328,58 @@ func (d Dependency) Satisfy(
 type VersionOperator uint8
 
 const (
-	Equal VersionOperator = iota
-	NotEqual
-	GreaterThan
-	WeakGreaterThan // for ^ operator in semver
-	GreaterThanOrEqual
-	LessThan
-	LessThanOrEqual
+	OpEq     VersionOperator = iota
+	OpWeakEq                 // for ~ operator in semver
+	OpNeq
+	OpGt
+	OpWeakGt // for ^ operator in semver
+	OpGeq
+	OpLt
+	OpLe
 )
+
+func (op VersionOperator) String() string {
+	switch op {
+	case OpEq:
+		return "equal"
+	case OpWeakEq:
+		return "weak equal"
+	case OpNeq:
+		return "not equal"
+	case OpGt:
+		return "greater than"
+	case OpWeakGt:
+		return "weak greater than"
+	case OpGeq:
+		return "greater than or equal"
+	case OpLt:
+		return "less than"
+	case OpLe:
+		return "less than or equal"
+	default:
+		return "unknown"
+	}
+}
+
+func (op VersionOperator) ToSign() string {
+	switch op {
+	case OpEq:
+		return "="
+	case OpWeakEq:
+		return "~"
+	case OpNeq:
+		return "!="
+	case OpGt:
+		return ">"
+	case OpWeakGt:
+		return "^"
+	case OpGeq:
+		return ">="
+	case OpLt:
+		return "<"
+	case OpLe:
+		return "<="
+	default:
+		return "unknown"
+	}
+}

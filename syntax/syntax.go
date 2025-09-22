@@ -133,7 +133,7 @@ func parseOperatorSlash(s string) (
 		if lucytypes.Platform(n).Valid() {
 			// Remember, all platforms are also valid packages under themselves.
 			// This literal is for users to specify the platform itself. See the
-			// docs for syntaxtypes.Platform for more information.
+			// docs for syntaxtypes.LoaderPlatform for more information.
 			pl = lucytypes.Platform(n)
 			n = lucytypes.ProjectName(pl)
 		}

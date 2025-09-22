@@ -18,7 +18,6 @@ package mcdr
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"lucy/lucytypes"
@@ -28,7 +27,7 @@ import (
 )
 
 func search(
-obj *queriedEverything,
+	obj *queriedEverything,
 ) ([]lucytypes.ProjectName, error) {
 	matches, err := match(&obj.Everything, obj.Query)
 	if err != nil {
@@ -49,8 +48,8 @@ obj *queriedEverything,
 // the whole catalogue in a single file, we need to filter the results by
 // query.
 func match(
-everything *everything,
-query string,
+	everything *everything,
+	query string,
 ) (matches fuzzy.Matches, err error) {
 	ids := make([]string, 0, len(everything.Plugins))
 	for id := range everything.Plugins {
@@ -64,8 +63,8 @@ query string,
 //
 // This is in-place sorting, so the original slice is modified.
 func sortBy(
-res []lucytypes.ProjectName,
-index lucytypes.SearchIndex,
+	res []lucytypes.ProjectName,
+	index lucytypes.SearchIndex,
 ) (err error) {
 	switch index {
 	case lucytypes.ByRelevance:
@@ -78,11 +77,11 @@ index lucytypes.SearchIndex,
 		)
 		for _, name := range res {
 			download := 0
-			plugin := getPlugin(projectNameToMcdrId(name))
-			if plugin == nil {
+			p, _ := getPlugin(name.ToPEP8())
+			if p == nil {
 				continue
 			}
-			for _, release := range plugin.Release.Releases {
+			for _, release := range p.Release.Releases {
 				download += release.Asset.DownloadCount
 			}
 			iarr = append(
@@ -104,7 +103,7 @@ index lucytypes.SearchIndex,
 			[]tools.KeyValue[lucytypes.ProjectName, time.Time], 0, len(res),
 		)
 		for _, name := range res {
-			plugin := getPlugin(projectNameToMcdrId(name))
+			plugin, _ := getPlugin(name.ToPEP8())
 			if plugin == nil {
 				continue
 			}
@@ -135,10 +134,4 @@ index lucytypes.SearchIndex,
 	}
 
 	return fmt.Errorf("unknown index: %s", index)
-}
-
-func projectNameToMcdrId(
-name lucytypes.ProjectName,
-) (id string) {
-	return strings.Replace(name.String(), "-", "_", -1)
 }

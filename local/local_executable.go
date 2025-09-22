@@ -173,10 +173,10 @@ func findJarRecursive(dir string) (jarFiles []string) {
 }
 
 var UnknownExecutable = &lucytypes.ExecutableInfo{
-	Path:        "",
-	GameVersion: "unknown",
-	BootCommand: nil,
-	Platform:    lucytypes.UnknownPlatform,
+	Path:           "",
+	GameVersion:    "unknown",
+	BootCommand:    nil,
+	LoaderPlatform: lucytypes.UnknownPlatform,
 }
 
 const (
@@ -244,7 +244,7 @@ func analyzeExecutable(filePath string) (exec *lucytypes.ExecutableInfo) {
 
 func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
-	exec.Platform = lucytypes.Minecraft
+	exec.LoaderPlatform = lucytypes.Minecraft
 	reader, _ := versionJson.Open()
 	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
@@ -260,7 +260,7 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 
 func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
-	exec.Platform = lucytypes.Fabric
+	exec.LoaderPlatform = lucytypes.Fabric
 	r, _ := installProperties.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
@@ -296,7 +296,7 @@ func analyzeFabricLauncher(
 	manifest *zip.File,
 ) (exec *lucytypes.ExecutableInfo) {
 	exec = &lucytypes.ExecutableInfo{}
-	exec.Platform = lucytypes.Fabric
+	exec.LoaderPlatform = lucytypes.Fabric
 	r, _ := manifest.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
@@ -339,8 +339,8 @@ func analyzeForge(
 		if mod.ModID == "forge" {
 			dir := path.Dir(jar.Name())
 			exec := &lucytypes.ExecutableInfo{
-				Platform:    lucytypes.Forge,
-				BootCommand: nil,
+				LoaderPlatform: lucytypes.Forge,
+				BootCommand:    nil,
 			}
 			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
 			if err != nil {

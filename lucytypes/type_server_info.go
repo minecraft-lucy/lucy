@@ -34,11 +34,11 @@ type ServerInfo struct {
 }
 
 type ExecutableInfo struct {
-	Path          string
-	GameVersion   RawVersion
-	Platform      Platform
-	LoaderVersion RawVersion
-	BootCommand   *exec.Cmd
+	Path           string
+	GameVersion    RawVersion
+	LoaderPlatform Platform
+	LoaderVersion  RawVersion
+	BootCommand    *exec.Cmd
 }
 
 type Activity struct {
