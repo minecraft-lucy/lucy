@@ -88,7 +88,7 @@ func Search(
 
 // InferVersion replaces inferable version constants with their inferred versions
 // through sources. You should call this function before parsing the version to
-// SemanticVersion.
+// ComparableVersion.
 //
 // TODO: Remove, infer version should not be exposed. All inference will be done in the SourceHandlers
 func InferVersion(

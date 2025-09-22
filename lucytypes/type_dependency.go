@@ -16,11 +16,13 @@ limitations under the License.
 
 package lucytypes
 
+import "strings"
+
 // RawVersion is the version of a package. Here we expect mods and plugins
 // use semver (which they should). A known exception is Minecraft snapshots.
 //
 // There are several special constant values for RawVersion. You MUST call
-// remote.InferVersion() before parsing them to SemanticVersion.
+// remote.InferVersion() before parsing them to ComparableVersion.
 type RawVersion string
 
 func (v RawVersion) String() string {
@@ -58,84 +60,164 @@ var (
 	LatestCompatibleVersion RawVersion = "compatible"
 )
 
-func (p1 SemanticVersion) Eq(p2 SemanticVersion) bool {
-	// If the labels are different, the versions are not comparable.
-	if p1.Label != p2.Label {
+func (p1 ComparableVersion) schemeMatch(p2 ComparableVersion) bool {
+	return p1.Scheme == p2.Scheme
+}
+
+// Eq checks whether p1 is equal to p2.
+func (p1 ComparableVersion) Eq(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
 		return false
 	}
 	return p1.Major == p2.Major && p1.Minor == p2.Minor && p1.Patch == p2.Patch
 }
 
-func (p1 SemanticVersion) Neq(p2 SemanticVersion) bool {
+// Neq checks whether p1 is not equal to p2.
+func (p1 ComparableVersion) Neq(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
 	return !p1.Eq(p2)
 }
 
-func (p1 SemanticVersion) StrictEq(p2 SemanticVersion) bool {
+// StrictEq checks whether p1 is strictly equal to p2. This includes
+// the prerelease tag.
+func (p1 ComparableVersion) StrictEq(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
 	// Even in strict equality, we ignore the build.
-	if p1.Label != p2.Label {
+	if p1.Scheme != p2.Scheme {
 		return false
 	}
-	return p1.Major == p2.Major && p1.Minor == p2.Minor && p1.Patch == p2.Patch && p1.Prerelease == p2.Prerelease
+	return p1.Eq(p2)
 }
 
-func (p1 SemanticVersion) Lt(p2 SemanticVersion) bool {
+// Lt checks whether p1 is less than p2.
+func (p1 ComparableVersion) Lt(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+
 	if p1.Major < p2.Major {
 		return true
-	}
-	if p1.Major > p2.Major {
+	} else if p1.Major > p2.Major {
 		return false
 	}
 	if p1.Minor < p2.Minor {
 		return true
-	}
-	if p1.Minor > p2.Minor {
+	} else if p1.Minor > p2.Minor {
 		return false
 	}
-	return p1.Patch < p2.Patch
+	if p1.Patch < p2.Patch {
+		return true
+	}
+
+	// Usually a version with a prerelease tag is considered lower than
+	// the same version without a prerelease tag.
+	if p1.Prerelease == "" {
+		if p2.Prerelease != "" {
+			return true
+		}
+		return false
+	} else {
+		if p2.Prerelease != "" {
+			// lexicographical order
+			return strings.Compare(p1.Prerelease, p2.Prerelease) < 0
+		} else {
+			// p1 has a prerelease tag, p2 does not.
+			return false
+		}
+	}
 }
 
-func (p1 SemanticVersion) Gt(p2 SemanticVersion) bool {
+// Gt checks whether p1 is greater than p2.
+func (p1 ComparableVersion) Gt(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+
 	if p1.Major > p2.Major {
 		return true
-	}
-	if p1.Major < p2.Major {
+	} else if p1.Major < p2.Major {
 		return false
 	}
 	if p1.Minor > p2.Minor {
 		return true
-	}
-	if p1.Minor < p2.Minor {
+	} else if p1.Minor < p2.Minor {
 		return false
 	}
-	return p1.Patch > p2.Patch
+	if p1.Patch > p2.Patch {
+		return true
+	}
+
+	// Usually a version with a prerelease tag is considered lower than
+	// the same version without a prerelease tag.
+	if p1.Prerelease == "" {
+		if p2.Prerelease != "" {
+			return false
+		}
+		return false
+	} else {
+		if p2.Prerelease != "" {
+			// lexicographical order
+			return strings.Compare(p1.Prerelease, p2.Prerelease) > 0
+		} else {
+			// p1 has a prerelease tag, p2 does not.
+			return true
+		}
+	}
 }
 
-func (p1 SemanticVersion) Lte(p2 SemanticVersion) bool {
+// WeakGt is for being compatible with the '^' operator in semver. Like Gt,
+// it checks whether p1 is greater than p2. However, it does not allow
+// the major version to be different.
+func (p1 ComparableVersion) WeakGt(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+
+	if p1.Major != p2.Major {
+		return false
+	}
+	return p1.Gt(p2)
+}
+
+// Lte checks whether p1 is less than or equal to p2.
+func (p1 ComparableVersion) Lte(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+
 	return p1.Lt(p2) || p1.Eq(p2)
 }
 
-func (p1 SemanticVersion) Gte(p2 SemanticVersion) bool {
+// Gte checks whether p1 is greater than or equal to p2.
+func (p1 ComparableVersion) Gte(p2 ComparableVersion) bool {
+	if !p1.schemeMatch(p2) {
+		return false
+	}
+
 	return p1.Gt(p2) || p1.Eq(p2)
 }
 
-// SemanticVersion is not exactly semver. However, I cannot find a better name
-// for a structural version type. This will be mainly used in the construction of
-// the dependency graph.
+// ComparableVersion is a structural representation of a version (in numbers and
+// partial strings). Note that it do not include the package name.
 //
 // For Minecraft Snapshots, Major is the year, Minor is the week of the year,
 // and Patch is the rune at the end of the version string (to ascii code).
 //
-// In principle, you cannot compare two versions with different labels. This type
-// of comparison always returns false.
+// In principle, you cannot compare two versions with different schema. This
+// type of comparison always returns false.
 //
 // The StrictEq method is checks for Prerelease.
 //
-// Build is for display purposes only. It is not used in any conditional expressions.
+// Build is for recognition purposes only. It is not used in any conditional expressions.
 //
 // Patch is allowed to be zero for Minecraft releases, by this I mean the first
 // release of each Minor, such as 1.19.
-type SemanticVersion struct {
-	Label      VersionLabel
+type ComparableVersion struct {
+	Scheme     VersionScheme // The type of versioning scheme used.
 	Major      uint16
 	Minor      uint16
 	Patch      uint16
@@ -143,21 +225,21 @@ type SemanticVersion struct {
 	Build      string
 }
 
-type VersionLabel uint8
+type VersionScheme uint8
 
 const (
-	Semver VersionLabel = iota
+	Semver VersionScheme = iota
 	MinecraftSnapshot
 	MinecraftRelease
 	Invalid
 )
 
-var InvalidVersion = SemanticVersion{
-	Label: Invalid,
+var InvalidVersion = ComparableVersion{
+	Scheme: Invalid,
 }
 
-func (v SemanticVersion) Validate() bool {
-	switch v.Label {
+func (v ComparableVersion) Validate() bool {
+	switch v.Scheme {
 	case Semver:
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
@@ -180,37 +262,57 @@ const (
 	minInWeekIndex        = uint16('a')
 )
 
-// Dependency can describe a dependency relationship. You MUST NOT use the
-// Id's PackageId.Version field. Instead, you should use the Value and Operator.
 type Dependency struct {
-	Id       PackageId
-	Value    SemanticVersion
+	Id           PackageId
+	Requirements []Requirement
+}
+
+type Requirement struct {
+	Value    ComparableVersion
 	Operator VersionOperator
 }
 
 func (d Dependency) Satisfy(
 	id PackageId,
-	v SemanticVersion,
+	v ComparableVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false
 	}
-	switch d.Operator {
-	case Equal:
-		return v.Eq(d.Value)
-	case NotEqual:
-		return v.Neq(d.Value)
-	case GreaterThan:
-		return v.Gt(d.Value)
-	case GreaterThanOrEqual:
-		return v.Gte(d.Value)
-	case LessThan:
-		return v.Lt(d.Value)
-	case LessThanOrEqual:
-		return v.Lte(d.Value)
-	default:
-		return false
+	for _, req := range d.Requirements {
+		switch req.Operator {
+		case Equal:
+			if !v.Eq(req.Value) {
+				return false
+			}
+		case NotEqual:
+			if !v.Neq(req.Value) {
+				return false
+			}
+		case GreaterThan:
+			if !v.Gt(req.Value) {
+				return false
+			}
+		case WeakGreaterThan:
+			if !v.WeakGt(req.Value) {
+				return false
+			}
+		case GreaterThanOrEqual:
+			if !v.Gte(req.Value) {
+				return false
+			}
+		case LessThan:
+			if !v.Lt(req.Value) {
+				return false
+			}
+		case LessThanOrEqual:
+			if !v.Lte(req.Value) {
+				return false
+			}
+		}
 	}
+
+	return true
 }
 
 type VersionOperator uint8
@@ -219,6 +321,7 @@ const (
 	Equal VersionOperator = iota
 	NotEqual
 	GreaterThan
+	WeakGreaterThan // for ^ operator in semver
 	GreaterThanOrEqual
 	LessThan
 	LessThanOrEqual

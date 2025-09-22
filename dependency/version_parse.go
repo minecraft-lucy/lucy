@@ -23,7 +23,7 @@ import (
 	"lucy/lucytypes"
 )
 
-// Parse is the main function to parse a RawVersion into a SemanticVersion.
+// Parse is the main function to parse a RawVersion into a ComparableVersion.
 //
 // If the raw version is one of the special constants (which should be inferred
 // before passing to this function), it returns InvalidVersion.
@@ -36,8 +36,8 @@ import (
 // Eq and Neq comparisons.
 func Parse(
 	raw lucytypes.RawVersion,
-	label lucytypes.VersionLabel,
-) lucytypes.SemanticVersion {
+	label lucytypes.VersionScheme,
+) lucytypes.ComparableVersion {
 	switch raw {
 	case lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion, lucytypes.NoVersion, lucytypes.AllVersion, lucytypes.UnknownVersion:
 		return lucytypes.InvalidVersion
@@ -54,16 +54,16 @@ func Parse(
 	}
 }
 
-func parseSemver(s string) (v lucytypes.SemanticVersion) {
+func parseSemver(s string) (v lucytypes.ComparableVersion) {
 	return operatorPlus(s)
 }
 
 // These two are equivalent, for now.
-func parseMinecraftRelease(s string) (v lucytypes.SemanticVersion) {
+func parseMinecraftRelease(s string) (v lucytypes.ComparableVersion) {
 	return parseSemver(s)
 }
 
-func operatorPlus(s string) (v lucytypes.SemanticVersion) {
+func operatorPlus(s string) (v lucytypes.ComparableVersion) {
 	tokens := strings.Split(s, "+")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
@@ -78,7 +78,7 @@ func operatorPlus(s string) (v lucytypes.SemanticVersion) {
 	return v
 }
 
-func operatorDash(s string) (v lucytypes.SemanticVersion) {
+func operatorDash(s string) (v lucytypes.ComparableVersion) {
 	tokens := strings.Split(s, "-")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
@@ -93,7 +93,7 @@ func operatorDash(s string) (v lucytypes.SemanticVersion) {
 	return v
 }
 
-func operatorDot(s string) (v lucytypes.SemanticVersion) {
+func operatorDot(s string) (v lucytypes.ComparableVersion) {
 	tokens := strings.Split(s, ".")
 	if len(tokens) >= 2 {
 		major, err := strconv.Atoi(tokens[0])
@@ -117,11 +117,11 @@ func operatorDot(s string) (v lucytypes.SemanticVersion) {
 	return v
 }
 
-func parseMinecraftSnapshot(s string) lucytypes.SemanticVersion {
+func parseMinecraftSnapshot(s string) lucytypes.ComparableVersion {
 	return operatorInWeekIndex(s)
 }
 
-func operatorWeek(s string) (v lucytypes.SemanticVersion) {
+func operatorWeek(s string) (v lucytypes.ComparableVersion) {
 	tokens := strings.Split(s, "w")
 	if len(tokens) != 2 {
 		return lucytypes.InvalidVersion
@@ -139,7 +139,7 @@ func operatorWeek(s string) (v lucytypes.SemanticVersion) {
 	return v
 }
 
-func operatorInWeekIndex(s string) (v lucytypes.SemanticVersion) {
+func operatorInWeekIndex(s string) (v lucytypes.ComparableVersion) {
 	tokens := s[len(s)-1]
 	v = operatorWeek(s[:len(s)-1])
 	if v == lucytypes.InvalidVersion {
