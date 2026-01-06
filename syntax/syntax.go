@@ -72,14 +72,12 @@ var (
 	EPlatform = errors.New("invalid platform")
 )
 
-// Parse is exported to parse a string into a PackageId struct. This function
-// should only be used on user inputs. Therefore, It does NOT return an
-// error but instead invokes a fatal if the input is invalid.
-func Parse(s string) (p lucytypes.PackageId) {
+// Parse is exported to parse a string into a PackageId struct.
+func Parse(s string) (id lucytypes.PackageId) {
 	s = sanitize(s)
-	p = lucytypes.PackageId{}
+	id = lucytypes.PackageId{}
 	var err error
-	p.Platform, p.Name, p.Version, err = parseOperatorAt(s)
+	id.Platform, id.Name, id.Version, err = parseOperatorAt(s)
 	if err != nil {
 		if errors.Is(err, ESyntax) {
 			panic(err)
@@ -87,7 +85,7 @@ func Parse(s string) (p lucytypes.PackageId) {
 			logger.Fatal(err)
 		}
 	}
-	logger.Debug("parsed input as package: " + p.StringFull())
+	logger.Debug("parsed input as package: " + id.StringFull())
 	return
 }
 
