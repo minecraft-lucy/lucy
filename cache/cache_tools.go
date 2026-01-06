@@ -1,4 +1,4 @@
-package fscache
+package cache
 
 import (
 	"crypto/md5"

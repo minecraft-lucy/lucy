@@ -21,7 +21,7 @@ import (
 	"crypto/sha3"
 	"fmt"
 	"io"
-	"lucy/fscache"
+	"lucy/cache"
 	"lucy/logger"
 	"lucy/tools"
 	"mime"
@@ -40,14 +40,14 @@ const (
 
 // DownloadFileWithCache downloads a file from the given URL and saves it to the specified directory.
 //
-// It calls fscache.Network for cache retrieval and storage.
+// It calls cache.Network for cache retrieval and storage.
 func DownloadFileWithCache(
 	url string,
 	dir string,
 	expiration time.Duration,
 ) (file *os.File, hit bool, err error) {
-	if fscache.Network.Exist(url) {
-		_, cache, err := fscache.Network.Get(url)
+	if cache.Network.Exist(url) {
+		_, cache, err := cache.Network.Get(url)
 		if err != nil {
 			return nil, false, err
 		}
@@ -65,7 +65,7 @@ func DownloadFileWithCache(
 	if err != nil {
 		return nil, false, err
 	}
-	err = fscache.Network.Add(data, file.Name(), url, expiration)
+	err = cache.Network.Add(data, file.Name(), url, expiration)
 	if err != nil {
 		logger.Warn(fmt.Errorf("failed to add file to cache: %w", err))
 	}

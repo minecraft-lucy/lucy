@@ -1,4 +1,4 @@
-package fscache
+package cache
 
 import (
 	"fmt"
@@ -72,10 +72,10 @@ func newHandler(name string) (obj *handler) {
 //
 // If the cache already exists, it will be updated with the new data.
 func (h *handler) Add(
-	data []byte,
-	filename string,
-	k string,
-	expiration time.Duration,
+data []byte,
+filename string,
+k string,
+expiration time.Duration,
 ) (err error) {
 	if !h.on {
 		return nil

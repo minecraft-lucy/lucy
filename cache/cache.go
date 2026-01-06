@@ -1,4 +1,4 @@
-package fscache
+package cache
 
 var (
 	// Network is the cache handler instance for http requests. It is indexed
