@@ -16,53 +16,53 @@ limitations under the License.
 
 package remote
 
-import "lucy/lucytypes"
+import "lucy/lucytype"
 
 type SourceHandler interface {
-	Search(query string, options lucytypes.SearchOptions) (
+	Search(query string, options lucytype.SearchOptions) (
 		res RawSearchResults,
 		err error,
 	)
-	Fetch(id lucytypes.PackageId) (
+	Fetch(id lucytype.PackageId) (
 		remote RawPackageRemote,
 		err error,
 	)
-	Information(name lucytypes.ProjectName) (
+	Information(name lucytype.ProjectName) (
 		info RawProjectInformation,
 		err error,
 	)
-	Dependencies(id lucytypes.PackageId) (
+	Dependencies(id lucytype.PackageId) (
 		deps RawPackageDependencies,
 		err error,
 	)
-	Support(name lucytypes.ProjectName) (
+	Support(name lucytype.ProjectName) (
 		supports RawProjectSupport,
 		err error,
 	)
-	ParseAmbiguousVersion(id lucytypes.PackageId) (
-		parsed lucytypes.PackageId,
+	ParseAmbiguousVersion(id lucytype.PackageId) (
+		parsed lucytype.PackageId,
 		err error,
 	)
-	Name() lucytypes.Source
+	Name() lucytype.Source
 }
 
 type (
 	RawProjectSupport interface {
-		ToProjectSupport() lucytypes.ProjectSupport
+		ToProjectSupport() lucytype.ProjectSupport
 	}
 	RawProjectInformation interface {
-		ToProjectInformation() lucytypes.ProjectInformation
+		ToProjectInformation() lucytype.ProjectInformation
 	}
 	RawPackageRemote interface {
-		ToPackageRemote() lucytypes.PackageRemote
+		ToPackageRemote() lucytype.PackageRemote
 	}
 	RawPackageDependencies interface {
-		ToPackageDependencies() lucytypes.PackageDependencies
+		ToPackageDependencies() lucytype.PackageDependencies
 	}
 
 	// TODO: Consider make SortBy a method on the RawSearchResults interface
 
 	RawSearchResults interface {
-		ToSearchResults() lucytypes.SearchResults
+		ToSearchResults() lucytype.SearchResults
 	}
 )

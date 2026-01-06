@@ -14,27 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package sources
+package lucyerror
 
-import (
-	"lucy/lucytypes"
-	"lucy/remote"
-	"lucy/remote/mcdr"
-	"lucy/remote/modrinth"
-)
+import "errors"
 
-// All is currently hardcoded, but in the future, this could be made customizable
-var All = []remote.SourceHandler{
-	modrinth.Self,
-	mcdr.Self,
-}
+var NoLucyError = errors.New("lucy is not installed, run `lucy init` before downloading mods")
 
 var (
-	Modrinth = modrinth.Self
-	Mcdr     = mcdr.Self
+	InvalidPlatformError    = errors.New("invalid platform")
+	PackageSyntaxError      = errors.New("invalid package syntax")
+	EmptyPackageSyntaxError = errors.New("empty package string")
 )
-
-var Map = map[lucytypes.Source]remote.SourceHandler{
-	lucytypes.Modrinth:      modrinth.Self,
-	lucytypes.McdrCatalogue: mcdr.Self,
-}

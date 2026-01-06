@@ -16,27 +16,27 @@ limitations under the License.
 
 // Package remote is an adapter to its nested packages, which are responsible for
 // fetching, searching, and providing information about packages from different
-// sources. They are eventually unified into a single interface lucytypes.Package.
+// sources. They are eventually unified into a single interface lucytype.Package.
 //
-// lucytypes.Package itself utilizes a composite pattern, where its most fields,
+// lucytype.Package itself utilizes a composite pattern, where its most fields,
 // except the id, are optional and will be filled in as needed.
 package remote
 
 import (
 	"fmt"
 
-	"lucy/lucytypes"
+	"lucy/lucytype"
 )
 
 // IoC via dependency injection
 
 func Fetch(
 	source SourceHandler,
-	id lucytypes.PackageId,
-) (remote lucytypes.PackageRemote, err error) {
+	id lucytype.PackageId,
+) (remote lucytype.PackageRemote, err error) {
 	raw, err := source.Fetch(id)
 	if err != nil {
-		return lucytypes.PackageRemote{}, err
+		return lucytype.PackageRemote{}, err
 	}
 	remote = raw.ToPackageRemote()
 	return remote, nil
@@ -44,14 +44,14 @@ func Fetch(
 
 func Dependencies(
 	source SourceHandler,
-	id lucytypes.PackageId,
-) (deps *lucytypes.PackageDependencies, err error) {
+	id lucytype.PackageId,
+) (deps *lucytype.PackageDependencies, err error) {
 	// TODO: Implement
 	return nil, fmt.Errorf("%w: %s", ErrorSourceNotSupported, source)
 }
 
-func Support(source lucytypes.Source, name lucytypes.ProjectName) (
-	supports *lucytypes.ProjectSupport,
+func Support(source lucytype.Source, name lucytype.ProjectName) (
+	supports *lucytype.ProjectSupport,
 	err error,
 ) {
 	// TODO: Implement
@@ -60,11 +60,11 @@ func Support(source lucytypes.Source, name lucytypes.ProjectName) (
 
 func Information(
 	source SourceHandler,
-	name lucytypes.ProjectName,
-) (info lucytypes.ProjectInformation, err error) {
+	name lucytype.ProjectName,
+) (info lucytype.ProjectInformation, err error) {
 	raw, err := source.Information(name)
 	if err != nil {
-		return lucytypes.ProjectInformation{}, err
+		return lucytype.ProjectInformation{}, err
 	}
 	info = raw.ToProjectInformation()
 	return info, nil
@@ -72,9 +72,9 @@ func Information(
 
 func Search(
 	source SourceHandler,
-	query lucytypes.ProjectName,
-	option lucytypes.SearchOptions,
-) (res lucytypes.SearchResults, err error) {
+	query lucytype.ProjectName,
+	option lucytype.SearchOptions,
+) (res lucytype.SearchResults, err error) {
 	raw, err := source.Search(string(query), option)
 	if err != nil {
 		return res, err
@@ -93,7 +93,7 @@ func Search(
 // TODO: Remove, infer version should not be exposed. All inference will be done in the SourceHandlers
 func InferVersion(
 	source SourceHandler,
-	id lucytypes.PackageId,
-) (infer lucytypes.PackageId) {
+	id lucytype.PackageId,
+) (infer lucytype.PackageId) {
 	return id
 }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package datatypes
+package datatype
 
 // ForgeModIdentifierOld is for 1.12 and older forge mods. This is a json file.
 type ForgeModIdentifierOld []struct {

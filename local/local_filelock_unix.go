@@ -31,12 +31,12 @@ import (
 
 	"lucy/logger"
 
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/tools"
 )
 
 var checkServerFileLock = tools.Memoize(
-	func() *lucytypes.Activity {
+	func() *lucytype.Activity {
 		if getSavePath() == "" {
 			return nil
 		}
@@ -52,7 +52,7 @@ var checkServerFileLock = tools.Memoize(
 			return nil
 		}
 		if pid != 0 {
-			return &lucytypes.Activity{
+			return &lucytype.Activity{
 				Active: true,
 				Pid:    pid,
 			}
@@ -77,12 +77,12 @@ var checkServerFileLock = tools.Memoize(
 				fmt.Errorf("activity detected but cannot get pid: %w", err),
 			)
 			if err != nil {
-				return &lucytypes.Activity{
+				return &lucytype.Activity{
 					Active: true,
 					Pid:    0,
 				}
 			}
-			return &lucytypes.Activity{
+			return &lucytype.Activity{
 				Active: true,
 				Pid:    int(fl.Pid),
 			}
@@ -95,7 +95,7 @@ var checkServerFileLock = tools.Memoize(
 			logger.Warn(err)
 		}
 
-		return &lucytypes.Activity{
+		return &lucytype.Activity{
 			Active: false,
 			Pid:    0,
 		}

@@ -25,7 +25,7 @@ import (
 	"lucy/logger"
 
 	"lucy/local"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 )
 
 // TODO: Refactor to separate all API functions to accept an url. While the urls
@@ -38,12 +38,19 @@ var (
 	ENoMember  = errors.New("modrinth project memberResponse not found")
 )
 
-func listVersions(slug lucytypes.ProjectName) (
+// TODO: This has a chance of causing segmentation faults
+func listVersions(slug lucytype.ProjectName) (
 	versions []*versionResponse,
 	err error,
 ) {
-	res, _ := http.Get(versionsUrl(slug))
-	data, _ := io.ReadAll(res.Body)
+	res, err := http.Get(versionsUrl(slug))
+	if err != nil {
+		return nil, err
+	}
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	err = json.Unmarshal(data, &versions)
 	if err != nil {
 		return nil, ENoProject
@@ -53,15 +60,15 @@ func listVersions(slug lucytypes.ProjectName) (
 
 // getVersion is named as so because a Package in lucy is equivalent to a version
 // in Modrinth.
-func getVersion(id lucytypes.PackageId) (
+func getVersion(id lucytype.PackageId) (
 	v *versionResponse,
 	err error,
 ) {
 	versions, err := listVersions(id.Name)
 	if err != nil {
-		return nil, ENoVersion
+		return nil, err
 	}
-	if id.Version == lucytypes.LatestVersion {
+	if id.Version == lucytype.LatestVersion {
 		v, err = latestVersion(id.Name)
 		if err != nil {
 			return nil, err
@@ -69,7 +76,7 @@ func getVersion(id lucytypes.PackageId) (
 		return v, nil
 	}
 	for _, version := range versions {
-		if lucytypes.RawVersion(version.VersionNumber) == id.Version &&
+		if lucytype.RawVersion(version.VersionNumber) == id.Version &&
 			versionSupportsLoader(version, id.Platform) {
 			return version, nil
 		}
@@ -90,17 +97,17 @@ func getVersionById(id string) (v *versionResponse, err error) {
 
 func versionSupportsLoader(
 	version *versionResponse,
-	loader lucytypes.Platform,
+	loader lucytype.Platform,
 ) bool {
 	for _, l := range version.Loaders {
-		if lucytypes.Platform(l).Eq(loader) {
+		if lucytype.Platform(l).Eq(loader) {
 			return true
 		}
 	}
 	return false
 }
 
-func latestVersion(slug lucytypes.ProjectName) (
+func latestVersion(slug lucytype.ProjectName) (
 	v *versionResponse,
 	err error,
 ) {
@@ -123,7 +130,7 @@ func latestVersion(slug lucytypes.ProjectName) (
 	return v, nil
 }
 
-func LatestCompatibleVersion(slug lucytypes.ProjectName) (
+func LatestCompatibleVersion(slug lucytype.ProjectName) (
 	v *versionResponse,
 	err error,
 ) {

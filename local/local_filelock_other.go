@@ -18,8 +18,8 @@ limitations under the License.
 
 package local
 
-import "lucy/lucytypes"
+import "lucy/lucytype"
 
-func checkServerFileLock() *lucytypes.Activity {
+func checkServerFileLock() *lucytype.Activity {
 	return nil
 }

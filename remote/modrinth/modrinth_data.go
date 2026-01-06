@@ -19,7 +19,7 @@ package modrinth
 import (
 	"time"
 
-	"lucy/lucytypes"
+	"lucy/lucytype"
 )
 
 // projectResponse
@@ -76,43 +76,43 @@ type projectResponse struct {
 	MonetizationStatus string        `json:"monetization_status"`
 }
 
-func (p *projectResponse) ToProjectSupport() lucytypes.ProjectSupport {
-	supports := lucytypes.ProjectSupport{
-		MinecraftVersions: make([]lucytypes.RawVersion, 0),
-		Platforms:         make([]lucytypes.Platform, 0),
+func (p *projectResponse) ToProjectSupport() lucytype.ProjectSupport {
+	supports := lucytype.ProjectSupport{
+		MinecraftVersions: make([]lucytype.RawVersion, 0),
+		Platforms:         make([]lucytype.Platform, 0),
 	}
 
 	for _, version := range p.GameVersions {
 		supports.MinecraftVersions = append(
 			supports.MinecraftVersions,
-			lucytypes.RawVersion(version),
+			lucytype.RawVersion(version),
 		)
 	}
 
 	for _, platform := range p.Loaders {
 		supports.Platforms = append(
 			supports.Platforms,
-			lucytypes.Platform(platform),
+			lucytype.Platform(platform),
 		)
 	}
 	return supports
 }
 
-func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformation) {
-	info = lucytypes.ProjectInformation{
+func (p *projectResponse) ToProjectInformation() (info lucytype.ProjectInformation) {
+	info = lucytype.ProjectInformation{
 		Title:       p.Title,
 		Brief:       p.Description,
 		Description: p.Body,
 		License:     p.License.Name,
-		Urls:        make([]lucytypes.PackageUrl, 0),
+		Urls:        make([]lucytype.PackageUrl, 0),
 	}
 
 	// Urls
 	if p.DiscordUrl != "" {
 		info.Urls = append(
-			info.Urls, lucytypes.PackageUrl{
+			info.Urls, lucytype.PackageUrl{
 				Name: "Discord",
-				Type: lucytypes.ForumUrl,
+				Type: lucytype.ForumUrl,
 				Url:  p.DiscordUrl,
 			},
 		)
@@ -120,9 +120,9 @@ func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformat
 
 	if p.IssuesUrl != "" {
 		info.Urls = append(
-			info.Urls, lucytypes.PackageUrl{
+			info.Urls, lucytype.PackageUrl{
 				Name: "Issues",
-				Type: lucytypes.SourceUrl,
+				Type: lucytype.SourceUrl,
 				Url:  "",
 			},
 		)
@@ -130,9 +130,9 @@ func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformat
 
 	if p.SourceUrl != "" {
 		info.Urls = append(
-			info.Urls, lucytypes.PackageUrl{
+			info.Urls, lucytype.PackageUrl{
 				Name: "Source",
-				Type: lucytypes.SourceUrl,
+				Type: lucytype.SourceUrl,
 				Url:  p.SourceUrl,
 			},
 		)
@@ -140,9 +140,9 @@ func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformat
 
 	if p.WikiUrl != "" {
 		info.Urls = append(
-			info.Urls, lucytypes.PackageUrl{
+			info.Urls, lucytype.PackageUrl{
 				Name: "Wiki",
-				Type: lucytypes.WikiUrl,
+				Type: lucytype.WikiUrl,
 				Url:  p.WikiUrl,
 			},
 		)
@@ -150,9 +150,9 @@ func (p *projectResponse) ToProjectInformation() (info lucytypes.ProjectInformat
 
 	for _, donationUrl := range p.DonationUrls {
 		info.Urls = append(
-			info.Urls, lucytypes.PackageUrl{
+			info.Urls, lucytype.PackageUrl{
 				Name: donationUrl.Platform,
-				Type: lucytypes.DonationUrl,
+				Type: lucytype.DonationUrl,
 				Url:  donationUrl.Url,
 			},
 		)
@@ -197,15 +197,15 @@ type searchResultResponse struct {
 	TotalHits int `json:"total_hits"`
 }
 
-func (s *searchResultResponse) ToSearchResults() lucytypes.SearchResults {
-	res := lucytypes.SearchResults{
-		Source:  lucytypes.Modrinth,
-		Results: make([]lucytypes.ProjectName, 0, s.TotalHits),
+func (s *searchResultResponse) ToSearchResults() lucytype.SearchResults {
+	res := lucytype.SearchResults{
+		Source:  lucytype.Modrinth,
+		Results: make([]lucytype.ProjectName, 0, s.TotalHits),
 	}
 
 	// The hits should already be sorted by whatever index passed in.
 	for _, hit := range s.Hits {
-		res.Results = append(res.Results, lucytypes.ProjectName(hit.Slug))
+		res.Results = append(res.Results, lucytype.ProjectName(hit.Slug))
 	}
 
 	return res
@@ -238,9 +238,9 @@ type versionResponse struct {
 	Dependencies    []dependenciesResponse `json:"dependencies"`
 }
 
-func (v versionResponse) ToPackageRemote() lucytypes.PackageRemote {
-	remote := lucytypes.PackageRemote{
-		Source:   lucytypes.Modrinth,
+func (v versionResponse) ToPackageRemote() lucytype.PackageRemote {
+	remote := lucytype.PackageRemote{
+		Source:   lucytype.Modrinth,
 		FileUrl:  v.Files[0].Url,
 		Filename: v.Files[0].Filename,
 	}

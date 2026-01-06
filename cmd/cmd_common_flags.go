@@ -20,7 +20,7 @@ import (
 	"errors"
 
 	"github.com/urfave/cli/v3"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 )
 
 const (
@@ -49,7 +49,7 @@ var flagSource = &cli.StringFlag{
 	Usage:   "To fetch info from `SOURCE`",
 	Value:   "",
 	Validator: func(s string) error {
-		if lucytypes.StringToSource(s) == lucytypes.UnknownSource {
+		if lucytype.StringToSource(s) == lucytype.UnknownSource {
 			return errors.New("unknown source " + s)
 		}
 		return nil

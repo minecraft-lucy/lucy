@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"slices"
 
-	"lucy/remote/sources"
+	"lucy/remote/source"
 
 	"lucy/logger"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/remote"
 	"lucy/syntax"
 	"lucy/tools"
@@ -60,8 +60,8 @@ var actionInfo cli.ActionFunc = func(
 	var err error
 
 	switch id.Platform {
-	case lucytypes.AllPlatform:
-		for _, source := range sources.All {
+	case lucytype.AllPlatform:
+		for _, source := range source.All {
 			info, err := remote.Information(source, id.Name)
 			if err != nil {
 				continue
@@ -77,30 +77,30 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 
-	case lucytypes.Fabric, lucytypes.Forge:
-		info, err := remote.Information(sources.Modrinth, id.Name)
+	case lucytype.Fabric, lucytype.Forge:
+		info, err := remote.Information(source.Modrinth, id.Name)
 		if err != nil {
 			logger.ErrorNow(err)
 		}
 		p.Information = &info
 
-		remote, err := remote.Fetch(sources.Modrinth, id)
+		remote, err := remote.Fetch(source.Modrinth, id)
 		p.Remote = &remote
 		if err != nil {
 			logger.ErrorNow(err)
 			return err
 		}
 		out = infoOutput(p)
-	case lucytypes.Mcdr:
+	case lucytype.Mcdr:
 		info, err := remote.Information(
-			sources.Mcdr,
+			source.Mcdr,
 			id.Name,
 		)
 		if err != nil {
 			logger.WarnNow(err)
 			break
 		}
-		remote, err := remote.Fetch(sources.Mcdr, id)
+		remote, err := remote.Fetch(source.Mcdr, id)
 		if err != nil {
 			logger.WarnNow(err)
 			break
@@ -130,7 +130,7 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func infoOutput(p *lucytypes.Package) *tui.Data {
+func infoOutput(p *lucytype.Package) *tui.Data {
 	o := &tui.Data{
 		Fields: []tui.Field{
 			&tui.FieldAnnotation{
@@ -219,7 +219,7 @@ func infoOutput(p *lucytypes.Package) *tui.Data {
 	// TODO: Hide snapshot versions, except if the current server is using it
 	if p.Supports != nil &&
 		p.Supports.Platforms != nil &&
-		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
+		!slices.Contains(p.Supports.Platforms, lucytype.Mcdr) {
 		f := &tui.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},

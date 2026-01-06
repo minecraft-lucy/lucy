@@ -22,7 +22,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"lucy/local"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/tools"
 	"lucy/tui"
 )
@@ -54,7 +54,7 @@ var actionStatus cli.ActionFunc = func(
 }
 
 func serverInfoToStatus(
-	data *lucytypes.ServerInfo,
+	data *lucytype.ServerInfo,
 	longOutput bool,
 ) (status *tui.Data) {
 	if data.Executable == nil {
@@ -80,7 +80,7 @@ func serverInfoToStatus(
 		},
 	)
 
-	if data.Executable.LoaderPlatform != lucytypes.Minecraft {
+	if data.Executable.LoaderPlatform != lucytype.Minecraft {
 		status.Fields = append(
 			status.Fields, &tui.FieldAnnotatedShortText{
 				Title:      "Modding",
@@ -118,7 +118,7 @@ func serverInfoToStatus(
 	}
 
 	// Modding related fields only shown when modding platform detected
-	if data.Executable.LoaderPlatform != lucytypes.Minecraft {
+	if data.Executable.LoaderPlatform != lucytype.Minecraft {
 		if len(data.Mods) > 0 {
 			modNames := make([]string, 0, len(data.Mods))
 			modPaths := make([]string, 0, len(modNames))

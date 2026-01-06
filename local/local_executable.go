@@ -31,9 +31,9 @@ import (
 
 	"github.com/pelletier/go-toml"
 
-	"lucy/datatypes"
+	"lucy/datatype"
 	"lucy/logger"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/tools"
 )
 
@@ -41,8 +41,8 @@ import (
 // TODO: Research on forge installation
 
 var getExecutableInfo = tools.Memoize(
-	func() *lucytypes.ExecutableInfo {
-		var valid []*lucytypes.ExecutableInfo
+	func() *lucytype.ExecutableInfo {
+		var valid []*lucytype.ExecutableInfo
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
@@ -172,11 +172,11 @@ func findJarRecursive(dir string) (jarFiles []string) {
 	return
 }
 
-var UnknownExecutable = &lucytypes.ExecutableInfo{
+var UnknownExecutable = &lucytype.ExecutableInfo{
 	Path:           "",
 	GameVersion:    "unknown",
 	BootCommand:    nil,
-	LoaderPlatform: lucytypes.UnknownPlatform,
+	LoaderPlatform: lucytype.UnknownPlatform,
 }
 
 const (
@@ -189,7 +189,7 @@ const (
 
 // analyzeExecutable gives nil if the jar file is invalid. The constant UnknownExecutable
 // is not yet used in the codebase, however still reserved for future use.
-func analyzeExecutable(filePath string) (exec *lucytypes.ExecutableInfo) {
+func analyzeExecutable(filePath string) (exec *lucytype.ExecutableInfo) {
 	// exec is a nil before an analysis function is called
 	// Anything other than exec.Path is set in the analysis function
 	file, _ := os.Open(filePath)
@@ -242,15 +242,15 @@ func analyzeExecutable(filePath string) (exec *lucytypes.ExecutableInfo) {
 	return
 }
 
-func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
-	exec = &lucytypes.ExecutableInfo{}
-	exec.LoaderPlatform = lucytypes.Minecraft
+func analyzeVanilla(versionJson *zip.File) (exec *lucytype.ExecutableInfo) {
+	exec = &lucytype.ExecutableInfo{}
+	exec.LoaderPlatform = lucytype.Minecraft
 	reader, _ := versionJson.Open()
 	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = lucytypes.RawVersion(obj.Id)
+	exec.GameVersion = lucytype.RawVersion(obj.Id)
 	return
 }
 
@@ -258,21 +258,21 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytypes.ExecutableInfo) {
 // fabric-loader-version=0.16.9
 // game-version=1.21.4
 
-func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.ExecutableInfo) {
-	exec = &lucytypes.ExecutableInfo{}
-	exec.LoaderPlatform = lucytypes.Fabric
+func analyzeFabricSingle(installProperties *zip.File) (exec *lucytype.ExecutableInfo) {
+	exec = &lucytype.ExecutableInfo{}
+	exec.LoaderPlatform = lucytype.Fabric
 	r, _ := installProperties.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = lucytypes.RawVersion(
+	exec.GameVersion = lucytype.RawVersion(
 		strings.Split(strings.Split(s, "\n")[1], "=")[1],
 	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = lucytypes.RawVersion(
+	exec.LoaderVersion = lucytype.RawVersion(
 		strings.Split(strings.Split(s, "\n")[0], "=")[1],
 	)
 
@@ -294,9 +294,9 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytypes.Executabl
 
 func analyzeFabricLauncher(
 	manifest *zip.File,
-) (exec *lucytypes.ExecutableInfo) {
-	exec = &lucytypes.ExecutableInfo{}
-	exec.LoaderPlatform = lucytypes.Fabric
+) (exec *lucytype.ExecutableInfo) {
+	exec = &lucytype.ExecutableInfo{}
+	exec.LoaderPlatform = lucytype.Fabric
 	r, _ := manifest.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
@@ -310,12 +310,12 @@ func analyzeFabricLauncher(
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = lucytypes.RawVersion(
+			exec.GameVersion = lucytype.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = lucytypes.RawVersion(
+			exec.LoaderVersion = lucytype.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
@@ -326,11 +326,11 @@ func analyzeFabricLauncher(
 func analyzeForge(
 	jar *os.File,
 	file *zip.File,
-) (exec *lucytypes.ExecutableInfo) {
+) (exec *lucytype.ExecutableInfo) {
 	r, _ := file.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
-	p := &datatypes.ForgeModIdentifierNew{}
+	p := &datatype.ForgeModIdentifierNew{}
 	err := toml.Unmarshal(data, p)
 	if err != nil {
 		return nil
@@ -338,8 +338,8 @@ func analyzeForge(
 	for _, mod := range p.Mods {
 		if mod.ModID == "forge" {
 			dir := path.Dir(jar.Name())
-			exec := &lucytypes.ExecutableInfo{
-				LoaderPlatform: lucytypes.Forge,
+			exec := &lucytype.ExecutableInfo{
+				LoaderPlatform: lucytype.Forge,
 				BootCommand:    nil,
 			}
 			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
@@ -349,8 +349,8 @@ func analyzeForge(
 			}
 			if err != nil {
 				logger.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
-				exec.GameVersion = lucytypes.UnknownVersion
-				exec.LoaderVersion = lucytypes.UnknownVersion
+				exec.GameVersion = lucytype.UnknownVersion
+				exec.LoaderVersion = lucytype.UnknownVersion
 				return exec
 			} else if mod.Version == "${global.forgeVersion}" {
 				exec.LoaderVersion, exec.GameVersion = analyzeForgeArgFile(argFile)
@@ -365,8 +365,8 @@ func analyzeForge(
 }
 
 func analyzeForgeArgFile(file *os.File) (
-	forgeVersion lucytypes.RawVersion,
-	mcVersion lucytypes.RawVersion,
+	forgeVersion lucytype.RawVersion,
+	mcVersion lucytype.RawVersion,
 ) {
 	data, _ := io.ReadAll(file)
 	s := string(data)
@@ -375,18 +375,18 @@ func analyzeForgeArgFile(file *os.File) (
 		if strings.HasPrefix(line, "--fml.forgeVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				forgeVersion = lucytypes.RawVersion(split[1])
+				forgeVersion = lucytype.RawVersion(split[1])
 				continue
 			}
-			forgeVersion = lucytypes.UnknownVersion
+			forgeVersion = lucytype.UnknownVersion
 		}
 		if strings.HasPrefix(line, "--fml.mcVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				mcVersion = lucytypes.RawVersion(split[1])
+				mcVersion = lucytype.RawVersion(split[1])
 				continue
 			}
-			mcVersion = lucytypes.UnknownVersion
+			mcVersion = lucytype.UnknownVersion
 		}
 	}
 

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package lucytypes
+package lucytype
 
 type PackageUrlType uint8
 
@@ -101,13 +101,13 @@ type (
 		Email string
 	}
 
-	// PackageInstallation is an optional attribution to lucytypes.Package. It is
+	// PackageInstallation is an optional attribution to lucytype.Package. It is
 	// used for packages that are known to be installed in the local filesystem.
 	PackageInstallation struct {
 		Path string
 	}
 
-	// PackageRemote is an optional attribution to lucytypes.Package. It is used to
+	// PackageRemote is an optional attribution to lucytype.Package. It is used to
 	// represent package's presence in a remote source.
 	PackageRemote struct {
 		// This string should come from a remote.Source. It is here because structured

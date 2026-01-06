@@ -35,11 +35,11 @@ import (
 	"strings"
 
 	"lucy/logger"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 )
 
-func PackageName(s string) lucytypes.ProjectName {
-	return lucytypes.ProjectName(sanitize(s))
+func PackageName(s string) lucytype.ProjectName {
+	return lucytype.ProjectName(sanitize(s))
 }
 
 // sanitize tolerates some common interchangeability between characters. This
@@ -73,9 +73,9 @@ var (
 )
 
 // Parse is exported to parse a string into a PackageId struct.
-func Parse(s string) (id lucytypes.PackageId) {
+func Parse(s string) (id lucytype.PackageId) {
 	s = sanitize(s)
-	id = lucytypes.PackageId{}
+	id = lucytype.PackageId{}
 	var err error
 	id.Platform, id.Name, id.Version, err = parseOperatorAt(s)
 	if err != nil {
@@ -92,9 +92,9 @@ func Parse(s string) (id lucytypes.PackageId) {
 // parseOperatorAt is called first since '@' operator always occur after '/' (equivalent
 // to a lower priority).
 func parseOperatorAt(s string) (
-	pl lucytypes.Platform,
-	n lucytypes.ProjectName,
-	v lucytypes.RawVersion,
+	pl lucytype.Platform,
+	n lucytype.ProjectName,
+	v lucytype.RawVersion,
 	err error,
 ) {
 	split := strings.Split(s, "@")
@@ -105,10 +105,10 @@ func parseOperatorAt(s string) (
 	}
 
 	if len(split) == 1 {
-		v = lucytypes.AllVersion
+		v = lucytype.AllVersion
 	} else if len(split) == 2 {
-		v = lucytypes.RawVersion(split[1])
-		if v == lucytypes.NoVersion || v == lucytypes.AllVersion {
+		v = lucytype.RawVersion(split[1])
+		if v == lucytype.NoVersion || v == lucytype.AllVersion {
 			return "", "", "", ESyntax
 		}
 	} else {
@@ -119,28 +119,28 @@ func parseOperatorAt(s string) (
 }
 
 func parseOperatorSlash(s string) (
-	pl lucytypes.Platform,
-	n lucytypes.ProjectName,
+	pl lucytype.Platform,
+	n lucytype.ProjectName,
 	err error,
 ) {
 	split := strings.Split(s, "/")
 
 	if len(split) == 1 {
-		pl = lucytypes.AllPlatform
-		n = lucytypes.ProjectName(split[0])
-		if lucytypes.Platform(n).Valid() {
+		pl = lucytype.AllPlatform
+		n = lucytype.ProjectName(split[0])
+		if lucytype.Platform(n).Valid() {
 			// Remember, all platforms are also valid packages under themselves.
 			// This literal is for users to specify the platform itself. See the
 			// docs for syntaxtypes.LoaderPlatform for more information.
-			pl = lucytypes.Platform(n)
-			n = lucytypes.ProjectName(pl)
+			pl = lucytype.Platform(n)
+			n = lucytype.ProjectName(pl)
 		}
 	} else if len(split) == 2 {
-		pl = lucytypes.Platform(split[0])
+		pl = lucytype.Platform(split[0])
 		if !pl.Valid() {
 			return "", "", EPlatform
 		}
-		n = lucytypes.ProjectName(split[1])
+		n = lucytype.ProjectName(split[1])
 	} else {
 		return "", "", ESyntax
 	}

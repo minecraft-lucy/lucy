@@ -42,9 +42,9 @@ import (
 
 	"gopkg.in/ini.v1"
 
-	"lucy/datatypes"
+	"lucy/datatype"
 	"lucy/logger"
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/tools"
 )
 
@@ -58,10 +58,10 @@ var GetServerInfo = tools.Memoize(buildServerInfo)
 // and gathering data from various sources. It uses goroutines to perform these
 // tasks concurrently and a sync.Mutex to ensure thread-safe updates to the
 // serverInfo struct.
-func buildServerInfo() lucytypes.ServerInfo {
+func buildServerInfo() lucytype.ServerInfo {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	var serverInfo lucytypes.ServerInfo
+	var serverInfo lucytype.ServerInfo
 
 	// MCDR Stage
 	wg.Add(1)
@@ -70,7 +70,7 @@ func buildServerInfo() lucytypes.ServerInfo {
 		mcdrConfig := getMcdrConfig()
 		if mcdrConfig != nil {
 			mu.Lock()
-			serverInfo.Mcdr = &lucytypes.McdrInstallation{
+			serverInfo.Mcdr = &lucytype.McdrInstallation{
 				PluginPaths: mcdrConfig.PluginDirectories,
 			}
 			mu.Unlock()
@@ -179,7 +179,7 @@ func buildServerInfo() lucytypes.ServerInfo {
 
 var getServerModPath = tools.Memoize(
 	func() string {
-		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == lucytypes.Fabric || exec.LoaderPlatform == lucytypes.Forge) {
+		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == lucytype.Fabric || exec.LoaderPlatform == lucytype.Forge) {
 			return path.Join(getServerWorkPath(), "mods")
 		}
 		return ""
@@ -237,7 +237,7 @@ var checkHasLucy = tools.Memoize(
 )
 
 var getMods = tools.Memoize(
-	func() (mods []lucytypes.Package) {
+	func() (mods []lucytype.Package) {
 		path := getServerModPath()
 		jarPaths, err := findJar(path)
 		if err != nil {
@@ -280,7 +280,7 @@ const (
 // 1. Check for the identifier file
 // 2. Analyze informative files
 // 3. Fill in the Package struct
-func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
+func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 	stat, err := file.Stat()
 	if err != nil {
 		return nil
@@ -290,14 +290,14 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 		return nil
 	}
 
-	packages = []lucytypes.Package{}
+	packages = []lucytype.Package{}
 
 	for _, f := range zipReader.File {
 		// fabric check
 		if f.Name == fabricModIdentifierFile {
 			rr, err := f.Open()
 			data, err := io.ReadAll(rr)
-			modInfo := &datatypes.FabricModIdentifier{}
+			modInfo := &datatype.FabricModIdentifier{}
 			err = json.Unmarshal(data, modInfo)
 			if err != nil {
 				return nil
@@ -305,13 +305,13 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 
 			packages = append(
 				packages,
-				lucytypes.Package{
-					Id: lucytypes.PackageId{
-						Platform: lucytypes.Fabric,
+				lucytype.Package{
+					Id: lucytype.PackageId{
+						Platform: lucytype.Fabric,
 						Name:     syntax.PackageName(modInfo.Id),
-						Version:  lucytypes.RawVersion(modInfo.Version),
+						Version:  lucytype.RawVersion(modInfo.Version),
 					},
-					Local: &lucytypes.PackageInstallation{
+					Local: &lucytype.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -328,20 +328,20 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 			if err != nil {
 				return nil
 			}
-			modInfos := &datatypes.ForgeModIdentifierOld{}
+			modInfos := &datatype.ForgeModIdentifierOld{}
 			err = json.Unmarshal(data, modInfos)
 			if err != nil {
 				return nil
 			}
 
 			for _, modInfo := range *modInfos {
-				p := lucytypes.Package{
-					Id: lucytypes.PackageId{
-						Platform: lucytypes.Forge,
+				p := lucytype.Package{
+					Id: lucytype.PackageId{
+						Platform: lucytype.Forge,
 						Name:     syntax.PackageName(modInfo.ModId),
-						Version:  lucytypes.RawVersion(modInfo.Version),
+						Version:  lucytype.RawVersion(modInfo.Version),
 					},
-					Local: &lucytypes.PackageInstallation{
+					Local: &lucytype.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -362,7 +362,7 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 			if err != nil {
 				return nil
 			}
-			modInfo := &datatypes.ForgeModIdentifierNew{}
+			modInfo := &datatype.ForgeModIdentifierNew{}
 
 			err = toml.Unmarshal(data, modInfo)
 			if err != nil {
@@ -370,13 +370,13 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 			}
 
 			for _, mod := range modInfo.Mods {
-				p := lucytypes.Package{
-					Id: lucytypes.PackageId{
-						Platform: lucytypes.Forge,
-						Name:     lucytypes.ProjectName(mod.ModID),
-						Version:  lucytypes.RawVersion(mod.Version),
+				p := lucytype.Package{
+					Id: lucytype.PackageId{
+						Platform: lucytype.Forge,
+						Name:     lucytype.ProjectName(mod.ModID),
+						Version:  lucytype.RawVersion(mod.Version),
 					},
-					Local: &lucytypes.PackageInstallation{
+					Local: &lucytype.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -395,29 +395,29 @@ func analyzeModJar(file *os.File) (packages []lucytypes.Package) {
 	return nil
 }
 
-func getForgeVariableVersion(zip *zip.Reader) lucytypes.RawVersion {
+func getForgeVariableVersion(zip *zip.Reader) lucytype.RawVersion {
 	var r io.ReadCloser
 	var err error
 	for _, f := range zip.File {
 		if f.Name == javaManifest {
 			r, err = f.Open()
 			if err != nil {
-				return lucytypes.UnknownVersion
+				return lucytype.UnknownVersion
 			}
 		}
 	}
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return lucytypes.UnknownVersion
+		return lucytype.UnknownVersion
 	}
 	manifest := string(data)
 	const versionField = "Implementation-Version: "
 	i := strings.Index(manifest, versionField) + len(versionField)
 	if i == -1 {
-		return lucytypes.UnknownVersion
+		return lucytype.UnknownVersion
 	}
 	v := manifest[i:]
 	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
-	return lucytypes.RawVersion(v)
+	return lucytype.RawVersion(v)
 }
