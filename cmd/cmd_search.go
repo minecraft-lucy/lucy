@@ -28,9 +28,9 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"lucy/logger"
-	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
+	"lucy/tui"
 )
 
 var subcmdSearch = &cli.Command{
@@ -90,7 +90,7 @@ var actionSearch cli.ActionFunc = func(
 	sourceStr := cmd.String("source")
 	source := lucytypes.StringToSource(sourceStr)
 
-	out := &structout.Data{}
+	out := &tui.Data{}
 	res := lucytypes.SearchResults{}
 	var err error
 
@@ -166,12 +166,12 @@ var actionSearch cli.ActionFunc = func(
 		logger.InfoNow("no results found")
 	}
 
-	structout.Flush(out)
+	tui.Flush(out)
 	return nil
 }
 
 func appendToSearchOutput(
-	out *structout.Data,
+	out *tui.Data,
 	showAll bool,
 	res lucytypes.SearchResults,
 ) {
@@ -182,7 +182,7 @@ func appendToSearchOutput(
 
 	if len(out.Fields) != 0 {
 		out.Fields = append(
-			out.Fields, &structout.FieldSeparator{
+			out.Fields, &tui.FieldSeparator{
 				Length: 0,
 				Dim:    false,
 			},
@@ -191,7 +191,7 @@ func appendToSearchOutput(
 
 	out.Fields = append(
 		out.Fields,
-		&structout.FieldAnnotation{
+		&tui.FieldAnnotation{
 			Annotation: "Results from " + res.Source.Title(),
 		},
 	)
@@ -199,7 +199,7 @@ func appendToSearchOutput(
 	if res.Source == lucytypes.Modrinth && len(res.Results) == 100 {
 		out.Fields = append(
 			out.Fields,
-			&structout.FieldAnnotation{
+			&tui.FieldAnnotation{
 				Annotation: "* only showing the top 100",
 			},
 		)
@@ -207,11 +207,11 @@ func appendToSearchOutput(
 
 	out.Fields = append(
 		out.Fields,
-		&structout.FieldShortText{
+		&tui.FieldShortText{
 			Title: "#  ",
 			Text:  strconv.Itoa(len(res.Results)),
 		},
-		&structout.FieldDynamicColumnLabels{
+		&tui.FieldDynamicColumnLabels{
 			Title:  ">>>",
 			Labels: results,
 			MaxLines: tools.Ternary(

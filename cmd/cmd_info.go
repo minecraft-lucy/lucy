@@ -26,9 +26,9 @@ import (
 	"lucy/logger"
 	"lucy/lucytypes"
 	"lucy/remote"
-	"lucy/structout"
 	"lucy/syntax"
 	"lucy/tools"
+	"lucy/tui"
 
 	"github.com/urfave/cli/v3"
 )
@@ -56,7 +56,7 @@ var actionInfo cli.ActionFunc = func(
 	id := syntax.Parse(cmd.Args().First())
 	p := id.NewPackage()
 
-	var out *structout.Data
+	var out *tui.Data
 	var err error
 
 	switch id.Platform {
@@ -122,7 +122,7 @@ var actionInfo cli.ActionFunc = func(
 		tools.PrintAsJson(p)
 		return nil
 	}
-	structout.Flush(out)
+	tui.Flush(out)
 	return nil
 }
 
@@ -130,23 +130,23 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func infoOutput(p *lucytypes.Package) *structout.Data {
-	o := &structout.Data{
-		Fields: []structout.Field{
-			&structout.FieldAnnotation{
+func infoOutput(p *lucytypes.Package) *tui.Data {
+	o := &tui.Data{
+		Fields: []tui.Field{
+			&tui.FieldAnnotation{
 				Annotation: "(from " + p.Remote.Source.Title() + ")",
 			},
-			&structout.FieldShortText{
+			&tui.FieldShortText{
 				Title: "Name",
 				Text:  p.Information.Title,
 			},
-			&structout.FieldShortText{
+			&tui.FieldShortText{
 				Title: "Description",
 				Text:  p.Information.Brief,
 			},
-			tools.Ternary[structout.Field](
+			tools.Ternary[tui.Field](
 				p.Information.MarkdownDescription,
-				&structout.FieldMarkdown{
+				&tui.FieldMarkdown{
 					Title:         "Information",
 					Text:          p.Information.Description,
 					Padding:       true,
@@ -156,7 +156,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 					UseAlternate:  true,
 					AlternateText: tools.Underline(p.Information.DescriptionUrl),
 				},
-				&structout.FieldLongText{
+				&tui.FieldLongText{
 					Title:         "Information",
 					Text:          p.Information.Description,
 					Padding:       true,
@@ -179,7 +179,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 
 	o.Fields = append(
 		o.Fields,
-		&structout.FieldMultiAnnotatedShortText{
+		&tui.FieldMultiAnnotatedShortText{
 			Title:     "Authors",
 			Texts:     authorNames,
 			Annots:    authorLinks,
@@ -190,7 +190,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 	if p.Information != nil {
 		o.Fields = append(
 			o.Fields,
-			&structout.FieldShortText{
+			&tui.FieldShortText{
 				Title: "License",
 				Text:  p.Information.License,
 			},
@@ -199,7 +199,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 
 	for _, url := range p.Information.Urls {
 		o.Fields = append(
-			o.Fields, &structout.FieldShortText{
+			o.Fields, &tui.FieldShortText{
 				Title: url.Name,
 				Text:  tools.Underline(url.Url),
 			},
@@ -207,7 +207,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 	}
 
 	o.Fields = append(
-		o.Fields, &structout.FieldAnnotatedShortText{
+		o.Fields, &tui.FieldAnnotatedShortText{
 			Title:      "Download",
 			Text:       tools.Underline(p.Remote.FileUrl),
 			Annotation: p.Remote.Filename,
@@ -220,7 +220,7 @@ func infoOutput(p *lucytypes.Package) *structout.Data {
 	if p.Supports != nil &&
 		p.Supports.Platforms != nil &&
 		!slices.Contains(p.Supports.Platforms, lucytypes.Mcdr) {
-		f := &structout.FieldLabels{
+		f := &tui.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},
 			MaxWidth: 0,
