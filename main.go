@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// TODO: REPLACE ALL io.ReadAll WITH STREAMING METHODS
+
 package main
 
 import (
@@ -26,7 +28,6 @@ import (
 
 func main() {
 	defer func() {
-		logger.Debug("program finished with exit code 0")
 		logger.WriteAll()
 	}()
 	if err := cmd.Cli.Run(context.Background(), os.Args); err != nil {

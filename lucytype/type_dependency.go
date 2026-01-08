@@ -46,7 +46,7 @@ func (v RawVersion) String() string {
 
 func (v RawVersion) NeedsInfer() bool {
 	if v == AllVersion || v == NoVersion || v == UnknownVersion ||
-	v == LatestVersion || v == LatestCompatibleVersion {
+		v == LatestVersion || v == LatestCompatibleVersion {
 		return true
 	}
 	return false
@@ -214,6 +214,9 @@ func (p1 ComparableVersion) Gte(p2 ComparableVersion) bool {
 // ComparableVersion is a structural representation of a version (in numbers and
 // partial strings). Note that it do not include the package name.
 //
+// You can see it as a RawVersion that has been parsed, and with ambiguities
+// resolved.
+//
 // For Minecraft Snapshots, Major is the year, Minor is the week of the year,
 // and Patch is the rune at the end of the version string (to ascii code).
 //
@@ -254,8 +257,8 @@ func (v ComparableVersion) Validate() bool {
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
 		return v.Major != 0 &&
-		v.Minor != 0 && v.Minor <= maxWeek &&
-		v.Patch >= minInWeekIndex && v.Patch <= maxInWeekIndex
+			v.Minor != 0 && v.Minor <= maxWeek &&
+			v.Patch >= minInWeekIndex && v.Patch <= maxInWeekIndex
 	case MinecraftRelease:
 		return v.Major != 0 && v.Minor != 0
 	case Invalid:
@@ -283,8 +286,8 @@ type DependencyExpression struct {
 }
 
 func (d Dependency) Satisfy(
-id PackageId,
-v ComparableVersion,
+	id PackageId,
+	v ComparableVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false

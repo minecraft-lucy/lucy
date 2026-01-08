@@ -17,99 +17,65 @@ limitations under the License.
 package mcdr
 
 import (
-	"lucy/lucytypes"
+	"lucy/lucytype"
 	"lucy/remote"
 )
 
 type self struct{}
 
-func (s self) Name() lucytypes.Source {
-	return lucytypes.McdrCatalogue
+func (s self) Name() lucytype.Source {
+	return lucytype.McdrCatalogue
 }
 
 var Self self
 
-func (s self) Search(
-	query string,
-	options lucytypes.SearchOptions,
-) (res remote.RawSearchResults, err error) {
-	if options.Platform != lucytypes.Mcdr && options.Platform != lucytypes.AllPlatform {
-		return nil, remote.FormatRemoteError(
-			remote.ErrorUnsupportedPlatform,
-			lucytypes.McdrCatalogue,
-			options.Platform,
-		)
+// Just a trivial type to implement the SearchResults interface
+type mcdrSearchResult []string
+
+func (m mcdrSearchResult) ToSearchResults() lucytype.SearchResults {
+	var res lucytype.SearchResults
+	for _, id := range m {
+		res.Results = append(res.Results, lucytype.ProjectName(id))
 	}
-	everything, err := getEverything()
-	if err != nil {
-		return nil, err
-	}
-	res = &queriedEverything{
-		Everything: *everything,
-		IndexBy:    options.IndexBy,
-		Query:      query,
-	}
-	return res, nil
+	res.Source = lucytype.McdrCatalogue
+	return res
 }
 
-func (s self) Fetch(id lucytypes.PackageId) (
+// TODO: handle search options
+
+func (s self) Search(
+	query string,
+	options lucytype.SearchOptions,
+) (res remote.RawSearchResults, err error) {
+	res, err = searchPlugin(query)
+	return
+}
+
+func (s self) Fetch(id lucytype.PackageId) (
 	rem remote.RawPackageRemote,
 	err error,
 ) {
-	if id.Platform != lucytypes.Mcdr && id.Platform != lucytypes.AllPlatform {
-		return nil, remote.ErrorUnsupportedPlatform
-	}
-	p, err := getPlugin(string(id.Name))
-	if err != nil {
-		return nil, err
-	}
-
-	version := id.Version
-	if version.NeedsInfer() {
-		parsed, err := s.ParseAmbiguousVersion(id)
-		if err != nil {
-			return nil, err
-		}
-		version = parsed.Version
-	}
-	release, err := getRelease(p, version.String())
-	if err != nil {
-		return nil, err
-	}
-
-	return release, nil
+	// TODO implement me
+	panic("implement me")
 }
 
-func (s self) Information(name lucytypes.ProjectName) (
+func (s self) Information(name lucytype.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
-	p, err := getPlugin(string(name))
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
+	// TODO implement me
+	panic("implement me")
 }
 
-// TODO: Create a special case for MCDR dependency: mcdr/mcdr == mcdr/mcdreforged
-// remember the rule that the platform is a special package under itself.
-
-func (s self) Dependencies(id lucytypes.PackageId) (
+func (s self) Dependencies(id lucytype.PackageId) (
 	remote.RawPackageDependencies,
 	error,
 ) {
-	p, err := getPlugin(id.Name.ToPEP8())
-	if err != nil {
-		return nil, err
-	}
-	r, err := getRelease(p, id.Version.String())
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
+	// TODO implement me
+	panic("implement me")
 }
 
-func (s self) Support(name lucytypes.ProjectName) (
+func (s self) Support(name lucytype.ProjectName) (
 	supports remote.RawProjectSupport,
 	err error,
 ) {
@@ -117,22 +83,10 @@ func (s self) Support(name lucytypes.ProjectName) (
 	panic("implement me")
 }
 
-func (s self) ParseAmbiguousVersion(id lucytypes.PackageId) (
-	parsed lucytypes.PackageId,
+func (s self) ParseAmbiguousVersion(id lucytype.PackageId) (
+	parsed lucytype.PackageId,
 	err error,
 ) {
-	switch id.Version {
-	case lucytypes.AllVersion, lucytypes.LatestVersion, lucytypes.LatestCompatibleVersion:
-		p, err := getPlugin(id.Name.String())
-		if err != nil {
-			return id, err
-		}
-		id.Version = lucytypes.RawVersion(p.Release.LatestVersion)
-		return id, nil
-	}
-	return id, remote.FormatRemoteError(
-		remote.ErrorCannotInferVersion,
-		id.Name,
-		id.Version,
-	)
+	// TODO implement me
+	panic("implement me")
 }
