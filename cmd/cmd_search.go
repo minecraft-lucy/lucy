@@ -26,11 +26,12 @@ import (
 	"lucy/remote/source"
 	"lucy/types"
 
-	"github.com/urfave/cli/v3"
 	"lucy/logger"
 	"lucy/syntax"
 	"lucy/tools"
 	"lucy/tui"
+
+	"github.com/urfave/cli/v3"
 )
 
 var subcmdSearch = &cli.Command{
@@ -88,13 +89,13 @@ var actionSearch cli.ActionFunc = func(
 		IndexBy:           indexBy,
 	}
 	sourceStr := cmd.String("source")
-	source := types.StringToSource(sourceStr)
+	src := types.StringToSource(sourceStr)
 
 	out := &tui.Data{}
 	res := types.SearchResults{}
 	var err error
 
-	if source == types.AutoSource {
+	if src == types.AutoSource {
 		switch p.Platform {
 		case types.AllPlatform:
 			for _, sourceHandler := range source.All {
@@ -133,7 +134,7 @@ var actionSearch cli.ActionFunc = func(
 			)
 		}
 	} else {
-		if source == types.UnknownSource {
+		if src == types.UnknownSource {
 			logger.Fatal(
 				fmt.Errorf(
 					"%w: %s",
@@ -142,13 +143,13 @@ var actionSearch cli.ActionFunc = func(
 				),
 			)
 		}
-		sourceHandler, ok := source.Map[source]
+		sourceHandler, ok := source.Map[src]
 		if !ok {
 			logger.Fatal(
 				fmt.Errorf(
 					"%w: %s",
 					errorUnsupportedSource,
-					source.Title(),
+					src.Title(),
 				),
 			)
 		}

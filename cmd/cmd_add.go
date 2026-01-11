@@ -25,11 +25,12 @@ import (
 	"lucy/tools"
 	"lucy/util"
 
-	"github.com/urfave/cli/v3"
 	"lucy/local"
 	"lucy/logger"
 	"lucy/syntax"
 	"lucy/types"
+
+	"github.com/urfave/cli/v3"
 )
 
 var subcmdAdd = &cli.Command{
@@ -117,13 +118,13 @@ var actionAdd cli.ActionFunc = func(
 
 	// fetch remote data
 	var remoteData remote.RawPackageRemote
-	var source remote.SourceHandler
+	var src remote.SourceHandler
 	var err error
 
 	switch cmd.String("source") {
 	case "none":
-		for _, source = range source.All {
-			remoteData, err = source.Fetch(id)
+		for _, src = range source.All {
+			remoteData, err = src.Fetch(id)
 			if err != nil {
 				logger.InfoNow(err)
 				err = nil // prevent error got printed twice in the last iteration
@@ -160,7 +161,7 @@ var actionAdd cli.ActionFunc = func(
 	// let's try to get the correct dependency info first
 	// for sources like modrinth, the dependency info from remote is not reliable
 	if id.Platform == types.Mcdr {
-		depsData, err := source.Dependencies(id)
+		depsData, err := src.Dependencies(id)
 		if err != nil {
 			logger.Debug(err)
 		}
