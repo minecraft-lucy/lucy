@@ -19,11 +19,11 @@ package prompt
 import (
 	"github.com/manifoldco/promptui"
 	"lucy/logger"
-	"lucy/lucytype"
+	"lucy/types"
 )
 
 func SelectExecutable(
-	executables []*lucytype.ExecutableInfo,
+	executables []*types.ExecutableInfo,
 	notes []Note,
 ) int {
 	renewPromptTemplate()

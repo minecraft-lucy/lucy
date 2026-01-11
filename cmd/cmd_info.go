@@ -24,11 +24,11 @@ import (
 	"lucy/remote/source"
 
 	"lucy/logger"
-	"lucy/lucytype"
 	"lucy/remote"
 	"lucy/syntax"
 	"lucy/tools"
 	"lucy/tui"
+	"lucy/types"
 
 	"github.com/urfave/cli/v3"
 )
@@ -60,7 +60,7 @@ var actionInfo cli.ActionFunc = func(
 	var err error
 
 	switch id.Platform {
-	case lucytype.AllPlatform:
+	case types.AllPlatform:
 		for _, source := range source.All {
 			info, err := remote.Information(source, id.Name)
 			if err != nil {
@@ -77,7 +77,7 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 
-	case lucytype.Fabric, lucytype.Forge:
+	case types.Fabric, types.Forge:
 		info, err := remote.Information(source.Modrinth, id.Name)
 		if err != nil {
 			logger.ErrorNow(err)
@@ -91,7 +91,7 @@ var actionInfo cli.ActionFunc = func(
 			return err
 		}
 		out = infoOutput(p)
-	case lucytype.Mcdr:
+	case types.Mcdr:
 		info, err := remote.Information(
 			source.Mcdr,
 			id.Name,
@@ -130,7 +130,7 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func infoOutput(p *lucytype.Package) *tui.Data {
+func infoOutput(p *types.Package) *tui.Data {
 	o := &tui.Data{
 		Fields: []tui.Field{
 			&tui.FieldAnnotation{
@@ -219,7 +219,7 @@ func infoOutput(p *lucytype.Package) *tui.Data {
 	// TODO: Hide snapshot versions, except if the current server is using it
 	if p.Supports != nil &&
 		p.Supports.Platforms != nil &&
-		!slices.Contains(p.Supports.Platforms, lucytype.Mcdr) {
+		!slices.Contains(p.Supports.Platforms, types.Mcdr) {
 		f := &tui.FieldLabels{
 			Title:    "Game Versions",
 			Labels:   []string{},

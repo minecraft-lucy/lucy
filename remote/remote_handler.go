@@ -16,53 +16,53 @@ limitations under the License.
 
 package remote
 
-import "lucy/lucytype"
+import "lucy/types"
 
 type SourceHandler interface {
-	Search(query string, options lucytype.SearchOptions) (
+	Search(query string, options types.SearchOptions) (
 		res RawSearchResults,
 		err error,
 	)
-	Fetch(id lucytype.PackageId) (
+	Fetch(id types.PackageId) (
 		remote RawPackageRemote,
 		err error,
 	)
-	Information(name lucytype.ProjectName) (
+	Information(name types.ProjectName) (
 		info RawProjectInformation,
 		err error,
 	)
-	Dependencies(id lucytype.PackageId) (
+	Dependencies(id types.PackageId) (
 		deps RawPackageDependencies,
 		err error,
 	)
-	Support(name lucytype.ProjectName) (
+	Support(name types.ProjectName) (
 		supports RawProjectSupport,
 		err error,
 	)
-	ParseAmbiguousVersion(id lucytype.PackageId) (
-		parsed lucytype.PackageId,
+	ParseAmbiguousVersion(id types.PackageId) (
+		parsed types.PackageId,
 		err error,
 	)
-	Name() lucytype.Source
+	Name() types.Source
 }
 
 type (
 	RawProjectSupport interface {
-		ToProjectSupport() lucytype.ProjectSupport
+		ToProjectSupport() types.SupportedPlatforms
 	}
 	RawProjectInformation interface {
-		ToProjectInformation() lucytype.ProjectInformation
+		ToProjectInformation() types.ProjectInformation
 	}
 	RawPackageRemote interface {
-		ToPackageRemote() lucytype.PackageRemote
+		ToPackageRemote() types.PackageRemote
 	}
 	RawPackageDependencies interface {
-		ToPackageDependencies() lucytype.PackageDependencies
+		ToPackageDependencies() types.PackageDependencies
 	}
 
 	// TODO: Consider make SortBy a method on the RawSearchResults interface
 
 	RawSearchResults interface {
-		ToSearchResults() lucytype.SearchResults
+		ToSearchResults() types.SearchResults
 	}
 )

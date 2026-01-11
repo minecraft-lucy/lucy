@@ -28,8 +28,8 @@ import (
 	"github.com/urfave/cli/v3"
 	"lucy/local"
 	"lucy/logger"
-	"lucy/lucytype"
 	"lucy/syntax"
+	"lucy/types"
 )
 
 var subcmdAdd = &cli.Command{
@@ -79,8 +79,8 @@ var actionAdd cli.ActionFunc = func(
 	}
 
 	// check if the specified platform matches the server platform
-	if id.Platform != lucytype.AllPlatform {
-		if id.Platform == lucytype.Mcdr {
+	if id.Platform != types.AllPlatform {
+		if id.Platform == types.Mcdr {
 			// for mcdr, we only need to check if it's mcdr-managed
 			if serverInfo.Mcdr == nil {
 				return errors.New("mcdr not found")
@@ -96,17 +96,17 @@ var actionAdd cli.ActionFunc = func(
 	// installation methods.
 	var dir string
 	switch id.Platform {
-	case lucytype.AllPlatform:
+	case types.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
-	case lucytype.Mcdr:
+	case types.Mcdr:
 		dir = serverInfo.Mcdr.PluginPaths[0]
-	case lucytype.Forge, lucytype.Fabric:
+	case types.Forge, types.Fabric:
 		dir = serverInfo.ModPath
 	default:
 		return errors.New("unsupported platform")
 	}
 
-	p := lucytype.Package{
+	p := types.Package{
 		Id:           id,
 		Dependencies: nil,
 		Local:        nil,
@@ -135,12 +135,12 @@ var actionAdd cli.ActionFunc = func(
 			}
 		}
 	case source.Mcdr.Name().String():
-		if id.Platform != lucytype.Mcdr && id.Platform != lucytype.AllPlatform {
+		if id.Platform != types.Mcdr && id.Platform != types.AllPlatform {
 			return fmt.Errorf("source 'mcdr' only supports mcdr platform")
 		}
 		remoteData, err = source.Mcdr.Fetch(id)
 	case source.Modrinth.Name().String():
-		if id.Platform == lucytype.Mcdr {
+		if id.Platform == types.Mcdr {
 			return fmt.Errorf("source 'modrinth' does not support mcdr platform")
 		}
 		remoteData, err = source.Modrinth.Fetch(id)
@@ -159,7 +159,7 @@ var actionAdd cli.ActionFunc = func(
 
 	// let's try to get the correct dependency info first
 	// for sources like modrinth, the dependency info from remote is not reliable
-	if id.Platform == lucytype.Mcdr {
+	if id.Platform == types.Mcdr {
 		depsData, err := source.Dependencies(id)
 		if err != nil {
 			logger.Debug(err)

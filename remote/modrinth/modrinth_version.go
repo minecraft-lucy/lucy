@@ -25,7 +25,7 @@ import (
 	"lucy/logger"
 
 	"lucy/local"
-	"lucy/lucytype"
+	"lucy/types"
 )
 
 // TODO: Refactor to separate all API functions to accept an url. While the urls
@@ -39,7 +39,7 @@ var (
 )
 
 // TODO: This has a chance of causing segmentation faults
-func listVersions(slug lucytype.ProjectName) (
+func listVersions(slug types.ProjectName) (
 	versions []*versionResponse,
 	err error,
 ) {
@@ -60,7 +60,7 @@ func listVersions(slug lucytype.ProjectName) (
 
 // getVersion is named as so because a Package in lucy is equivalent to a version
 // in Modrinth.
-func getVersion(id lucytype.PackageId) (
+func getVersion(id types.PackageId) (
 	v *versionResponse,
 	err error,
 ) {
@@ -68,7 +68,7 @@ func getVersion(id lucytype.PackageId) (
 	if err != nil {
 		return nil, err
 	}
-	if id.Version == lucytype.LatestVersion {
+	if id.Version == types.LatestVersion {
 		v, err = latestVersion(id.Name)
 		if err != nil {
 			return nil, err
@@ -76,7 +76,7 @@ func getVersion(id lucytype.PackageId) (
 		return v, nil
 	}
 	for _, version := range versions {
-		if lucytype.RawVersion(version.VersionNumber) == id.Version &&
+		if types.RawVersion(version.VersionNumber) == id.Version &&
 			versionSupportsLoader(version, id.Platform) {
 			return version, nil
 		}
@@ -97,17 +97,17 @@ func getVersionById(id string) (v *versionResponse, err error) {
 
 func versionSupportsLoader(
 	version *versionResponse,
-	loader lucytype.Platform,
+	loader types.Platform,
 ) bool {
 	for _, l := range version.Loaders {
-		if lucytype.Platform(l).Eq(loader) {
+		if types.Platform(l).Eq(loader) {
 			return true
 		}
 	}
 	return false
 }
 
-func latestVersion(slug lucytype.ProjectName) (
+func latestVersion(slug types.ProjectName) (
 	v *versionResponse,
 	err error,
 ) {
@@ -130,7 +130,7 @@ func latestVersion(slug lucytype.ProjectName) (
 	return v, nil
 }
 
-func LatestCompatibleVersion(slug lucytype.ProjectName) (
+func LatestCompatibleVersion(slug types.ProjectName) (
 	v *versionResponse,
 	err error,
 ) {

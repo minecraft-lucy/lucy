@@ -25,14 +25,14 @@ import (
 	"lucy/logger"
 
 	"golang.org/x/sys/windows"
-	"lucy/lucytype"
 	"lucy/tools"
+	"lucy/types"
 )
 
 // This is AI generated code, please check it before use. I have no knowledge to
 // Windows syscall.
 var checkServerFileLock = tools.Memoize(
-	func() *lucytype.Activity {
+	func() *types.Activity {
 		lockPath := path.Join(
 			getSavePath(),
 			"session.lock",
@@ -59,7 +59,7 @@ var checkServerFileLock = tools.Memoize(
 				&info,
 			)
 			if err == nil {
-				return &lucytype.Activity{
+				return &types.Activity{
 					Active: true,
 					Pid:    int(info.VolumeSerialNumber),
 				}
@@ -76,7 +76,7 @@ var checkServerFileLock = tools.Memoize(
 			return nil
 		}
 
-		return &lucytype.Activity{
+		return &types.Activity{
 			Active: false,
 			Pid:    0,
 		}

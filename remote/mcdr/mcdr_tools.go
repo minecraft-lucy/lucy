@@ -18,11 +18,11 @@ package mcdr
 
 import (
 	"lucy/dependency"
-	"lucy/lucytype"
+	"lucy/types"
 	"strings"
 )
 
-func parseRequiredVersion(s string) (reqs []lucytype.DependencyExpression) {
+func parseRequiredVersion(s string) (reqs []types.DependencyExpression) {
 	split := strings.Split(s, ",")
 	for _, expr := range split {
 		expr = strings.TrimSpace(expr)
@@ -33,34 +33,34 @@ func parseRequiredVersion(s string) (reqs []lucytype.DependencyExpression) {
 		}
 
 		version := strings.TrimLeft(expr, "<>=!^~")
-		req := lucytype.DependencyExpression{
+		req := types.DependencyExpression{
 			Value: dependency.Parse(
-				lucytype.RawVersion(version),
-				lucytype.Semver,
+				types.RawVersion(version),
+				types.Semver,
 			),
 		}
 
 		// Currently, I did not see the x.x.x or *.*.* pattern in MCDR's plugin
 		// requirements, so I will not implement it for now.
 		if strings.HasPrefix(expr, "=") {
-			req.Operator = lucytype.OpEq
+			req.Operator = types.OpEq
 		} else if strings.HasPrefix(expr, "~") ||
 			strings.HasPrefix(expr, "~=") {
-			req.Operator = lucytype.OpWeakEq
+			req.Operator = types.OpWeakEq
 		} else if strings.HasPrefix(expr, "<=") {
-			req.Operator = lucytype.OpLe
+			req.Operator = types.OpLe
 		} else if strings.HasPrefix(expr, "<") {
-			req.Operator = lucytype.OpLt
+			req.Operator = types.OpLt
 		} else if strings.HasPrefix(expr, ">=") {
-			req.Operator = lucytype.OpGeq
+			req.Operator = types.OpGeq
 		} else if strings.HasPrefix(expr, ">") {
-			req.Operator = lucytype.OpGt
+			req.Operator = types.OpGt
 		} else if strings.HasPrefix(expr, "!=") {
-			req.Operator = lucytype.OpNeq
+			req.Operator = types.OpNeq
 		} else if strings.HasPrefix(expr, "^") {
-			req.Operator = lucytype.OpWeakGt
+			req.Operator = types.OpWeakGt
 		} else {
-			req.Operator = lucytype.OpEq
+			req.Operator = types.OpEq
 		}
 
 		reqs = append(reqs, req)

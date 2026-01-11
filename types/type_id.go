@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // Package lucytypes is a general package for all types used in Lucy.
-package lucytype
+package types
 
 import (
 	"strings"

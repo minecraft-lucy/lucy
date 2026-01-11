@@ -10,9 +10,9 @@ import (
 )
 
 func GetFileFromGitHub(apiEndpoint string) (
-err error,
-msg *GhApiMessage,
-data []byte,
+	err error,
+	msg *GhApiMessage,
+	data []byte,
 ) {
 	res, err := http.Get(apiEndpoint)
 	if err != nil {

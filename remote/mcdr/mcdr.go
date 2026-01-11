@@ -17,14 +17,14 @@ limitations under the License.
 package mcdr
 
 import (
-	"lucy/lucytype"
 	"lucy/remote"
+	"lucy/types"
 )
 
 type self struct{}
 
-func (s self) Name() lucytype.Source {
-	return lucytype.McdrCatalogue
+func (s self) Name() types.Source {
+	return types.McdrCatalogue
 }
 
 var Self self
@@ -32,12 +32,12 @@ var Self self
 // Just a trivial type to implement the SearchResults interface
 type mcdrSearchResult []string
 
-func (m mcdrSearchResult) ToSearchResults() lucytype.SearchResults {
-	var res lucytype.SearchResults
+func (m mcdrSearchResult) ToSearchResults() types.SearchResults {
+	var res types.SearchResults
 	for _, id := range m {
-		res.Results = append(res.Results, lucytype.ProjectName(id))
+		res.Results = append(res.Results, types.ProjectName(id))
 	}
-	res.Source = lucytype.McdrCatalogue
+	res.Source = types.McdrCatalogue
 	return res
 }
 
@@ -45,13 +45,13 @@ func (m mcdrSearchResult) ToSearchResults() lucytype.SearchResults {
 
 func (s self) Search(
 	query string,
-	options lucytype.SearchOptions,
+	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	res, err = searchPlugin(query)
 	return
 }
 
-func (s self) Fetch(id lucytype.PackageId) (
+func (s self) Fetch(id types.PackageId) (
 	rem remote.RawPackageRemote,
 	err error,
 ) {
@@ -59,7 +59,7 @@ func (s self) Fetch(id lucytype.PackageId) (
 	panic("implement me")
 }
 
-func (s self) Information(name lucytype.ProjectName) (
+func (s self) Information(name types.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
@@ -67,7 +67,7 @@ func (s self) Information(name lucytype.ProjectName) (
 	panic("implement me")
 }
 
-func (s self) Dependencies(id lucytype.PackageId) (
+func (s self) Dependencies(id types.PackageId) (
 	remote.RawPackageDependencies,
 	error,
 ) {
@@ -75,7 +75,7 @@ func (s self) Dependencies(id lucytype.PackageId) (
 	panic("implement me")
 }
 
-func (s self) Support(name lucytype.ProjectName) (
+func (s self) Support(name types.ProjectName) (
 	supports remote.RawProjectSupport,
 	err error,
 ) {
@@ -83,8 +83,8 @@ func (s self) Support(name lucytype.ProjectName) (
 	panic("implement me")
 }
 
-func (s self) ParseAmbiguousVersion(id lucytype.PackageId) (
-	parsed lucytype.PackageId,
+func (s self) ParseAmbiguousVersion(id types.PackageId) (
+	parsed types.PackageId,
 	err error,
 ) {
 	// TODO implement me

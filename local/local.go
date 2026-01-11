@@ -44,8 +44,8 @@ import (
 
 	"lucy/datatype"
 	"lucy/logger"
-	"lucy/lucytype"
 	"lucy/tools"
+	"lucy/types"
 )
 
 // GetServerInfo is the exposed function for external packages to get serverInfo.
@@ -58,10 +58,10 @@ var GetServerInfo = tools.Memoize(buildServerInfo)
 // and gathering data from various sources. It uses goroutines to perform these
 // tasks concurrently and a sync.Mutex to ensure thread-safe updates to the
 // serverInfo struct.
-func buildServerInfo() lucytype.ServerInfo {
+func buildServerInfo() types.ServerInfo {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	var serverInfo lucytype.ServerInfo
+	var serverInfo types.ServerInfo
 
 	// MCDR Stage
 	wg.Add(1)
@@ -70,7 +70,7 @@ func buildServerInfo() lucytype.ServerInfo {
 		mcdrConfig := getMcdrConfig()
 		if mcdrConfig != nil {
 			mu.Lock()
-			serverInfo.Mcdr = &lucytype.McdrInstallation{
+			serverInfo.Mcdr = &types.McdrInstallation{
 				PluginPaths: mcdrConfig.PluginDirectories,
 			}
 			mu.Unlock()
@@ -179,7 +179,7 @@ func buildServerInfo() lucytype.ServerInfo {
 
 var getServerModPath = tools.Memoize(
 	func() string {
-		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == lucytype.Fabric || exec.LoaderPlatform == lucytype.Forge) {
+		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == types.Fabric || exec.LoaderPlatform == types.Forge) {
 			return path.Join(getServerWorkPath(), "mods")
 		}
 		return ""
@@ -237,7 +237,7 @@ var checkHasLucy = tools.Memoize(
 )
 
 var getMods = tools.Memoize(
-	func() (mods []lucytype.Package) {
+	func() (mods []types.Package) {
 		path := getServerModPath()
 		jarPaths, err := findJar(path)
 		if err != nil {
@@ -280,7 +280,7 @@ const (
 // 1. Check for the identifier file
 // 2. Analyze informative files
 // 3. Fill in the Package struct
-func analyzeModJar(file *os.File) (packages []lucytype.Package) {
+func analyzeModJar(file *os.File) (packages []types.Package) {
 	stat, err := file.Stat()
 	if err != nil {
 		return nil
@@ -290,7 +290,7 @@ func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 		return nil
 	}
 
-	packages = []lucytype.Package{}
+	packages = []types.Package{}
 
 	for _, f := range zipReader.File {
 		// fabric check
@@ -305,13 +305,13 @@ func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 
 			packages = append(
 				packages,
-				lucytype.Package{
-					Id: lucytype.PackageId{
-						Platform: lucytype.Fabric,
+				types.Package{
+					Id: types.PackageId{
+						Platform: types.Fabric,
 						Name:     syntax.PackageName(modInfo.Id),
-						Version:  lucytype.RawVersion(modInfo.Version),
+						Version:  types.RawVersion(modInfo.Version),
 					},
-					Local: &lucytype.PackageInstallation{
+					Local: &types.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -335,13 +335,13 @@ func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 			}
 
 			for _, modInfo := range *modInfos {
-				p := lucytype.Package{
-					Id: lucytype.PackageId{
-						Platform: lucytype.Forge,
+				p := types.Package{
+					Id: types.PackageId{
+						Platform: types.Forge,
 						Name:     syntax.PackageName(modInfo.ModId),
-						Version:  lucytype.RawVersion(modInfo.Version),
+						Version:  types.RawVersion(modInfo.Version),
 					},
-					Local: &lucytype.PackageInstallation{
+					Local: &types.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -370,13 +370,13 @@ func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 			}
 
 			for _, mod := range modInfo.Mods {
-				p := lucytype.Package{
-					Id: lucytype.PackageId{
-						Platform: lucytype.Forge,
-						Name:     lucytype.ProjectName(mod.ModID),
-						Version:  lucytype.RawVersion(mod.Version),
+				p := types.Package{
+					Id: types.PackageId{
+						Platform: types.Forge,
+						Name:     types.ProjectName(mod.ModID),
+						Version:  types.RawVersion(mod.Version),
 					},
-					Local: &lucytype.PackageInstallation{
+					Local: &types.PackageInstallation{
 						Path: file.Name(),
 					},
 					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
@@ -395,29 +395,29 @@ func analyzeModJar(file *os.File) (packages []lucytype.Package) {
 	return nil
 }
 
-func getForgeVariableVersion(zip *zip.Reader) lucytype.RawVersion {
+func getForgeVariableVersion(zip *zip.Reader) types.RawVersion {
 	var r io.ReadCloser
 	var err error
 	for _, f := range zip.File {
 		if f.Name == javaManifest {
 			r, err = f.Open()
 			if err != nil {
-				return lucytype.UnknownVersion
+				return types.UnknownVersion
 			}
 		}
 	}
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return lucytype.UnknownVersion
+		return types.UnknownVersion
 	}
 	manifest := string(data)
 	const versionField = "Implementation-Version: "
 	i := strings.Index(manifest, versionField) + len(versionField)
 	if i == -1 {
-		return lucytype.UnknownVersion
+		return types.UnknownVersion
 	}
 	v := manifest[i:]
 	v = strings.Split(v, "\r")[0]
 	v = strings.Split(v, "\n")[0]
-	return lucytype.RawVersion(v)
+	return types.RawVersion(v)
 }

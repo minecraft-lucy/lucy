@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"lucy/lucytype"
 	"lucy/remote"
 	"lucy/remote/source"
+	"lucy/types"
 
 	"github.com/urfave/cli/v3"
 	"lucy/logger"
@@ -43,7 +43,7 @@ var subcmdSearch = &cli.Command{
 			Usage:   "Index search results by `INDEX`",
 			Value:   "relevance",
 			Validator: func(s string) error {
-				if lucytype.SearchIndex(s).Valid() {
+				if types.SearchIndex(s).Valid() {
 					return nil
 				}
 				return errors.New("must be one of \"relevance\", \"downloads\",\"newest\"")
@@ -82,21 +82,21 @@ var actionSearch cli.ActionFunc = func(
 	p := syntax.Parse(cmd.Args().First())
 
 	showClientPackage := cmd.Bool("client")
-	indexBy := lucytype.SearchIndex(cmd.String("index"))
-	options := lucytype.SearchOptions{
+	indexBy := types.SearchIndex(cmd.String("index"))
+	options := types.SearchOptions{
 		ShowClientPackage: showClientPackage,
 		IndexBy:           indexBy,
 	}
 	sourceStr := cmd.String("source")
-	source := lucytype.StringToSource(sourceStr)
+	source := types.StringToSource(sourceStr)
 
 	out := &tui.Data{}
-	res := lucytype.SearchResults{}
+	res := types.SearchResults{}
 	var err error
 
-	if source == lucytype.AutoSource {
+	if source == types.AutoSource {
 		switch p.Platform {
-		case lucytype.AllPlatform:
+		case types.AllPlatform:
 			for _, sourceHandler := range source.All {
 				res, err = remote.Search(sourceHandler, p.Name, options)
 				if err != nil {
@@ -111,19 +111,19 @@ var actionSearch cli.ActionFunc = func(
 				}
 				appendToSearchOutput(out, cmd.Bool("long"), res)
 			}
-		case lucytype.Forge, lucytype.Fabric, lucytype.Neoforge:
+		case types.Forge, types.Fabric, types.Neoforge:
 			res, err = remote.Search(source.Modrinth, p.Name, options)
 			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
 				logger.Fatal(err)
 			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
-		case lucytype.Mcdr:
+		case types.Mcdr:
 			res, err = remote.Search(source.Mcdr, p.Name, options)
 			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
 				logger.Fatal(err)
 			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
-		case lucytype.UnknownPlatform:
+		case types.UnknownPlatform:
 			logger.Fatal(
 				fmt.Errorf(
 					"%w: %s",
@@ -133,7 +133,7 @@ var actionSearch cli.ActionFunc = func(
 			)
 		}
 	} else {
-		if source == lucytype.UnknownSource {
+		if source == types.UnknownSource {
 			logger.Fatal(
 				fmt.Errorf(
 					"%w: %s",
@@ -173,7 +173,7 @@ var actionSearch cli.ActionFunc = func(
 func appendToSearchOutput(
 	out *tui.Data,
 	showAll bool,
-	res lucytype.SearchResults,
+	res types.SearchResults,
 ) {
 	var results []string
 	for _, r := range res.Results {
@@ -196,7 +196,7 @@ func appendToSearchOutput(
 		},
 	)
 
-	if res.Source == lucytype.Modrinth && len(res.Results) == 100 {
+	if res.Source == types.Modrinth && len(res.Results) == 100 {
 		out.Fields = append(
 			out.Fields,
 			&tui.FieldAnnotation{

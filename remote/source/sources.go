@@ -17,10 +17,10 @@ limitations under the License.
 package source
 
 import (
-	"lucy/lucytype"
 	"lucy/remote"
 	"lucy/remote/mcdr"
 	"lucy/remote/modrinth"
+	"lucy/types"
 )
 
 // All is currently hardcoded, but in the future, this could be made customizable
@@ -34,7 +34,7 @@ var (
 	Mcdr     = mcdr.Self
 )
 
-var Map = map[lucytype.Source]remote.SourceHandler{
-	lucytype.Modrinth:      modrinth.Self,
-	lucytype.McdrCatalogue: mcdr.Self,
+var Map = map[types.Source]remote.SourceHandler{
+	types.Modrinth:      modrinth.Self,
+	types.McdrCatalogue: mcdr.Self,
 }

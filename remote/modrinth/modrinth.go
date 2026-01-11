@@ -33,8 +33,8 @@ import (
 	"io"
 	"net/http"
 
-	"lucy/lucytype"
 	"lucy/remote"
+	"lucy/types"
 
 	"lucy/logger"
 	"lucy/tools"
@@ -42,8 +42,8 @@ import (
 
 type self struct{}
 
-func (s self) Name() lucytype.Source {
-	return lucytype.Modrinth
+func (s self) Name() types.Source {
+	return types.Modrinth
 }
 
 var Self self
@@ -54,15 +54,15 @@ var Self self
 // https://docs.modrinth.com/api/operations/searchprojects/
 func (s self) Search(
 	query string,
-	options lucytype.SearchOptions,
+	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	var facets []facetItems
 	switch options.Platform {
-	case lucytype.Forge:
+	case types.Forge:
 		facets = append(facets, facetForge)
-	case lucytype.Fabric:
+	case types.Fabric:
 		facets = append(facets, facetFabric)
-	case lucytype.AllPlatform:
+	case types.AllPlatform:
 		fallthrough
 	default:
 		facets = append(facets, facetForge, facetAllLoaders)
@@ -78,7 +78,7 @@ func (s self) Search(
 		index:  options.IndexBy.ToModrinth(),
 		facets: facets,
 	}
-	searchUrl := searchUrl(lucytype.ProjectName(query), internalOptions)
+	searchUrl := searchUrl(types.ProjectName(query), internalOptions)
 
 	// Make the call to Modrinth API
 	logger.Debug("searching via modrinth api: " + searchUrl)
@@ -99,7 +99,7 @@ func (s self) Search(
 	return res, nil
 }
 
-func (s self) Fetch(id lucytype.PackageId) (
+func (s self) Fetch(id types.PackageId) (
 	remote remote.RawPackageRemote,
 	err error,
 ) {
@@ -111,7 +111,7 @@ func (s self) Fetch(id lucytype.PackageId) (
 	return version, nil
 }
 
-func (s self) Information(name lucytype.ProjectName) (
+func (s self) Information(name types.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
@@ -124,7 +124,7 @@ func (s self) Information(name lucytype.ProjectName) (
 
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
-func (s self) Support(name lucytype.ProjectName) (
+func (s self) Support(name types.ProjectName) (
 	supports remote.RawProjectSupport,
 	err error,
 ) {
@@ -137,7 +137,7 @@ func (s self) Support(name lucytype.ProjectName) (
 
 var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
 
-func (s self) Dependencies(id lucytype.PackageId) (
+func (s self) Dependencies(id types.PackageId) (
 	deps remote.RawPackageDependencies,
 	err error,
 ) {
@@ -145,8 +145,8 @@ func (s self) Dependencies(id lucytype.PackageId) (
 	panic("implement me")
 }
 
-func (s self) ParseAmbiguousVersion(p lucytype.PackageId) (
-	parsed lucytype.PackageId,
+func (s self) ParseAmbiguousVersion(p types.PackageId) (
+	parsed types.PackageId,
 	err error,
 ) {
 	parsed.Platform = p.Platform
@@ -154,9 +154,9 @@ func (s self) ParseAmbiguousVersion(p lucytype.PackageId) (
 	var v *versionResponse
 
 	switch p.Version {
-	case lucytype.LatestCompatibleVersion:
+	case types.LatestCompatibleVersion:
 		v, err = LatestCompatibleVersion(p.Name)
-	case lucytype.AllVersion, lucytype.NoVersion, lucytype.LatestVersion:
+	case types.AllVersion, types.NoVersion, types.LatestVersion:
 		v, err = latestVersion(p.Name)
 	default:
 		return p, nil
@@ -164,7 +164,7 @@ func (s self) ParseAmbiguousVersion(p lucytype.PackageId) (
 	if err != nil {
 		return p, err
 	}
-	parsed.Version = lucytype.RawVersion(v.VersionNumber)
+	parsed.Version = types.RawVersion(v.VersionNumber)
 
 	return parsed, nil
 }

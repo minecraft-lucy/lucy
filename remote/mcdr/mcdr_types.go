@@ -17,6 +17,7 @@ limitations under the License.
 package mcdr
 
 import (
+	"lucy/types"
 	"time"
 )
 
@@ -58,6 +59,15 @@ type release struct {
 	Prerelease  bool       `json:"prerelease"`
 	Asset       asset      `json:"asset"`
 	Meta        pluginMeta `json:"meta"`
+}
+
+func (r release) ToPackageRemote() types.PackageRemote {
+	remote := types.PackageRemote{
+		Source:   types.McdrCatalogue,
+		FileUrl:  r.Asset.BrowserDownloadUrl,
+		Filename: r.Asset.Name,
+	}
+	return remote
 }
 
 type asset struct {

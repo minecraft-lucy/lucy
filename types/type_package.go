@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package lucytype
+package types
 
 type PackageUrlType uint8
 
@@ -69,7 +69,7 @@ type Package struct {
 	Remote       *PackageRemote
 
 	// Project data
-	Supports    *ProjectSupport
+	Supports    *SupportedPlatforms
 	Information *ProjectInformation
 }
 
@@ -88,26 +88,26 @@ type ProjectInformation struct {
 	Description         string
 	DescriptionUrl      string
 	MarkdownDescription bool
-	Author              []PackageMember
+	Author              []Person
 	Urls                []PackageUrl
 	License             string
 }
 
 type (
-	PackageMember struct {
+	Person struct {
 		Name  string
 		Role  string
 		Url   string
 		Email string
 	}
 
-	// PackageInstallation is an optional attribution to lucytype.Package. It is
+	// PackageInstallation is an optional attribution to types.Package. It is
 	// used for packages that are known to be installed in the local filesystem.
 	PackageInstallation struct {
 		Path string
 	}
 
-	// PackageRemote is an optional attribution to lucytype.Package. It is used to
+	// PackageRemote is an optional attribution to types.Package. It is used to
 	// represent package's presence in a remote source.
 	PackageRemote struct {
 		// This string should come from a remote.Source. It is here because structured
@@ -115,11 +115,15 @@ type (
 		Source   Source
 		FileUrl  string
 		Filename string
+
+		// Not implementing this for now until I found a good library to handle it.
+		// Hash       string
+		// HashMethod string
 	}
 
-	// ProjectSupport reflects the support information of the whole project. For
+	// SupportedPlatforms reflects the support information of the whole project. For
 	// specific dependency of a single package, use the PackageDependencies struct.
-	ProjectSupport struct {
+	SupportedPlatforms struct {
 		MinecraftVersions []RawVersion
 		Platforms         []Platform
 	}

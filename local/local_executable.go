@@ -33,16 +33,16 @@ import (
 
 	"lucy/datatype"
 	"lucy/logger"
-	"lucy/lucytype"
 	"lucy/tools"
+	"lucy/types"
 )
 
 // TODO: Improve probe logic, plain executable unpacking do not work well
 // TODO: Research on forge installation
 
 var getExecutableInfo = tools.Memoize(
-	func() *lucytype.ExecutableInfo {
-		var valid []*lucytype.ExecutableInfo
+	func() *types.ExecutableInfo {
+		var valid []*types.ExecutableInfo
 		workPath := getServerWorkPath()
 		jars, err := findJar(workPath)
 		if err != nil {
@@ -172,11 +172,11 @@ func findJarRecursive(dir string) (jarFiles []string) {
 	return
 }
 
-var UnknownExecutable = &lucytype.ExecutableInfo{
+var UnknownExecutable = &types.ExecutableInfo{
 	Path:           "",
 	GameVersion:    "unknown",
 	BootCommand:    nil,
-	LoaderPlatform: lucytype.UnknownPlatform,
+	LoaderPlatform: types.UnknownPlatform,
 }
 
 const (
@@ -189,7 +189,7 @@ const (
 
 // analyzeExecutable gives nil if the jar file is invalid. The constant UnknownExecutable
 // is not yet used in the codebase, however still reserved for future use.
-func analyzeExecutable(filePath string) (exec *lucytype.ExecutableInfo) {
+func analyzeExecutable(filePath string) (exec *types.ExecutableInfo) {
 	// exec is a nil before an analysis function is called
 	// Anything other than exec.Path is set in the analysis function
 	file, _ := os.Open(filePath)
@@ -242,15 +242,15 @@ func analyzeExecutable(filePath string) (exec *lucytype.ExecutableInfo) {
 	return
 }
 
-func analyzeVanilla(versionJson *zip.File) (exec *lucytype.ExecutableInfo) {
-	exec = &lucytype.ExecutableInfo{}
-	exec.LoaderPlatform = lucytype.Minecraft
+func analyzeVanilla(versionJson *zip.File) (exec *types.ExecutableInfo) {
+	exec = &types.ExecutableInfo{}
+	exec.LoaderPlatform = types.Minecraft
 	reader, _ := versionJson.Open()
 	defer tools.CloseReader(reader, logger.Warn)
 	data, _ := io.ReadAll(reader)
 	obj := VersionDotJson{}
 	_ = json.Unmarshal(data, &obj)
-	exec.GameVersion = lucytype.RawVersion(obj.Id)
+	exec.GameVersion = types.RawVersion(obj.Id)
 	return
 }
 
@@ -258,21 +258,21 @@ func analyzeVanilla(versionJson *zip.File) (exec *lucytype.ExecutableInfo) {
 // fabric-loader-version=0.16.9
 // game-version=1.21.4
 
-func analyzeFabricSingle(installProperties *zip.File) (exec *lucytype.ExecutableInfo) {
-	exec = &lucytype.ExecutableInfo{}
-	exec.LoaderPlatform = lucytype.Fabric
+func analyzeFabricSingle(installProperties *zip.File) (exec *types.ExecutableInfo) {
+	exec = &types.ExecutableInfo{}
+	exec.LoaderPlatform = types.Fabric
 	r, _ := installProperties.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
 	s := string(data)
 
 	// Read second line, split by "=" and get the second part
-	exec.GameVersion = lucytype.RawVersion(
+	exec.GameVersion = types.RawVersion(
 		strings.Split(strings.Split(s, "\n")[1], "=")[1],
 	)
 
 	// Read first line, split by "=" and get the second part
-	exec.LoaderVersion = lucytype.RawVersion(
+	exec.LoaderVersion = types.RawVersion(
 		strings.Split(strings.Split(s, "\n")[0], "=")[1],
 	)
 
@@ -294,9 +294,9 @@ func analyzeFabricSingle(installProperties *zip.File) (exec *lucytype.Executable
 
 func analyzeFabricLauncher(
 	manifest *zip.File,
-) (exec *lucytype.ExecutableInfo) {
-	exec = &lucytype.ExecutableInfo{}
-	exec.LoaderPlatform = lucytype.Fabric
+) (exec *types.ExecutableInfo) {
+	exec = &types.ExecutableInfo{}
+	exec.LoaderPlatform = types.Fabric
 	r, _ := manifest.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
@@ -310,12 +310,12 @@ func analyzeFabricLauncher(
 	classPaths := strings.Split(s, " ")
 	for _, classPath := range classPaths {
 		if strings.Contains(classPath, "libraries/net/fabricmc/intermediary") {
-			exec.GameVersion = lucytype.RawVersion(
+			exec.GameVersion = types.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
 		if strings.Contains(classPath, "libraries/net/fabricmc/fabric-loader") {
-			exec.LoaderVersion = lucytype.RawVersion(
+			exec.LoaderVersion = types.RawVersion(
 				strings.Split(classPath, "/")[4],
 			)
 		}
@@ -326,7 +326,7 @@ func analyzeFabricLauncher(
 func analyzeForge(
 	jar *os.File,
 	file *zip.File,
-) (exec *lucytype.ExecutableInfo) {
+) (exec *types.ExecutableInfo) {
 	r, _ := file.Open()
 	defer tools.CloseReader(r, logger.Warn)
 	data, _ := io.ReadAll(r)
@@ -338,8 +338,8 @@ func analyzeForge(
 	for _, mod := range p.Mods {
 		if mod.ModID == "forge" {
 			dir := path.Dir(jar.Name())
-			exec := &lucytype.ExecutableInfo{
-				LoaderPlatform: lucytype.Forge,
+			exec := &types.ExecutableInfo{
+				LoaderPlatform: types.Forge,
 				BootCommand:    nil,
 			}
 			argFile, err := os.Open(path.Join(dir, "unix_args.txt"))
@@ -349,8 +349,8 @@ func analyzeForge(
 			}
 			if err != nil {
 				logger.Debug(fmt.Errorf("cannot open win_args.txt: %w", err))
-				exec.GameVersion = lucytype.UnknownVersion
-				exec.LoaderVersion = lucytype.UnknownVersion
+				exec.GameVersion = types.UnknownVersion
+				exec.LoaderVersion = types.UnknownVersion
 				return exec
 			} else if mod.Version == "${global.forgeVersion}" {
 				exec.LoaderVersion, exec.GameVersion = analyzeForgeArgFile(argFile)
@@ -365,8 +365,8 @@ func analyzeForge(
 }
 
 func analyzeForgeArgFile(file *os.File) (
-	forgeVersion lucytype.RawVersion,
-	mcVersion lucytype.RawVersion,
+	forgeVersion types.RawVersion,
+	mcVersion types.RawVersion,
 ) {
 	data, _ := io.ReadAll(file)
 	s := string(data)
@@ -375,18 +375,18 @@ func analyzeForgeArgFile(file *os.File) (
 		if strings.HasPrefix(line, "--fml.forgeVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				forgeVersion = lucytype.RawVersion(split[1])
+				forgeVersion = types.RawVersion(split[1])
 				continue
 			}
-			forgeVersion = lucytype.UnknownVersion
+			forgeVersion = types.UnknownVersion
 		}
 		if strings.HasPrefix(line, "--fml.mcVersion") {
 			split := strings.Split(line, " ")
 			if len(split) == 2 {
-				mcVersion = lucytype.RawVersion(split[1])
+				mcVersion = types.RawVersion(split[1])
 				continue
 			}
-			mcVersion = lucytype.UnknownVersion
+			mcVersion = types.UnknownVersion
 		}
 	}
 

@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"lucy/lucytype"
+	"lucy/types"
 )
 
 // Parse is the main function to parse a RawVersion into a ComparableVersion.
@@ -35,41 +35,41 @@ import (
 // ensure a basic support to some non-standard versions numbers by only supporting
 // Eq and Neq comparisons.
 func Parse(
-	raw lucytype.RawVersion,
-	scheme lucytype.VersionScheme,
-) lucytype.ComparableVersion {
+	raw types.RawVersion,
+	scheme types.VersionScheme,
+) types.ComparableVersion {
 	switch raw {
-	case lucytype.LatestVersion, lucytype.LatestCompatibleVersion, lucytype.NoVersion, lucytype.AllVersion, lucytype.UnknownVersion:
-		return lucytype.InvalidVersion
+	case types.LatestVersion, types.LatestCompatibleVersion, types.NoVersion, types.AllVersion, types.UnknownVersion:
+		return types.InvalidVersion
 	}
 	switch scheme {
-	case lucytype.Semver:
+	case types.Semver:
 		return parseSemver(string(raw))
-	case lucytype.MinecraftRelease:
+	case types.MinecraftRelease:
 		return parseMinecraftRelease(string(raw))
-	case lucytype.MinecraftSnapshot:
+	case types.MinecraftSnapshot:
 		return parseMinecraftSnapshot(string(raw))
 	default:
-		return lucytype.InvalidVersion
+		return types.InvalidVersion
 	}
 }
 
-func parseSemver(s string) (v lucytype.ComparableVersion) {
+func parseSemver(s string) (v types.ComparableVersion) {
 	return operatorPlus(s)
 }
 
 // These two are equivalent, for now.
-func parseMinecraftRelease(s string) (v lucytype.ComparableVersion) {
+func parseMinecraftRelease(s string) (v types.ComparableVersion) {
 	return parseSemver(s)
 }
 
-func operatorPlus(s string) (v lucytype.ComparableVersion) {
+func operatorPlus(s string) (v types.ComparableVersion) {
 	tokens := strings.Split(s, "+")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
 	}
 	v = operatorDash(s)
-	if v == lucytype.InvalidVersion {
+	if v == types.InvalidVersion {
 		return v
 	}
 	if len(tokens) >= 2 {
@@ -78,13 +78,13 @@ func operatorPlus(s string) (v lucytype.ComparableVersion) {
 	return v
 }
 
-func operatorDash(s string) (v lucytype.ComparableVersion) {
+func operatorDash(s string) (v types.ComparableVersion) {
 	tokens := strings.Split(s, "-")
 	if len(tokens) >= 2 {
 		s = strings.Join(tokens[:len(tokens)-1], "")
 	}
 	v = operatorDot(s)
-	if v == lucytype.InvalidVersion {
+	if v == types.InvalidVersion {
 		return v
 	}
 	if len(tokens) >= 2 {
@@ -93,16 +93,16 @@ func operatorDash(s string) (v lucytype.ComparableVersion) {
 	return v
 }
 
-func operatorDot(s string) (v lucytype.ComparableVersion) {
+func operatorDot(s string) (v types.ComparableVersion) {
 	tokens := strings.Split(s, ".")
 	if len(tokens) >= 2 {
 		major, err := strconv.Atoi(tokens[0])
 		if err != nil {
-			return lucytype.InvalidVersion
+			return types.InvalidVersion
 		}
 		minor, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return lucytype.InvalidVersion
+			return types.InvalidVersion
 		}
 		v.Major = uint16(major)
 		v.Minor = uint16(minor)
@@ -110,46 +110,46 @@ func operatorDot(s string) (v lucytype.ComparableVersion) {
 	if len(tokens) == 3 {
 		patch, err := strconv.Atoi(tokens[2])
 		if err != nil {
-			return lucytype.InvalidVersion
+			return types.InvalidVersion
 		}
 		v.Patch = uint16(patch)
 	}
 	return v
 }
 
-func parseMinecraftSnapshot(s string) lucytype.ComparableVersion {
+func parseMinecraftSnapshot(s string) types.ComparableVersion {
 	return operatorInWeekIndex(s)
 }
 
-func operatorWeek(s string) (v lucytype.ComparableVersion) {
+func operatorWeek(s string) (v types.ComparableVersion) {
 	tokens := strings.Split(s, "w")
 	if len(tokens) != 2 {
-		return lucytype.InvalidVersion
+		return types.InvalidVersion
 	}
 	major, err := strconv.Atoi(tokens[0])
 	if err != nil {
-		return lucytype.InvalidVersion
+		return types.InvalidVersion
 	}
 	minor, err := strconv.Atoi(tokens[1])
 	if err != nil {
-		return lucytype.InvalidVersion
+		return types.InvalidVersion
 	}
 	v.Major = uint16(major)
 	v.Minor = uint16(minor)
 	return v
 }
 
-func operatorInWeekIndex(s string) (v lucytype.ComparableVersion) {
+func operatorInWeekIndex(s string) (v types.ComparableVersion) {
 	tokens := s[len(s)-1]
 	v = operatorWeek(s[:len(s)-1])
-	if v == lucytype.InvalidVersion {
+	if v == types.InvalidVersion {
 		return v
 	}
 	switch tokens {
 	case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h':
 		v.Patch = uint16(tokens)
 	default:
-		return lucytype.InvalidVersion
+		return types.InvalidVersion
 	}
 	return v
 }

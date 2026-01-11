@@ -29,7 +29,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"lucy/datatype"
-	"lucy/lucytype"
+	"lucy/types"
 
 	"lucy/logger"
 	"lucy/tools"
@@ -73,8 +73,8 @@ var getMcdrConfig = tools.Memoize(
 )
 
 var getMcdrPlugins = tools.Memoize(
-	func() (plugins []lucytype.Package) {
-		plugins = make([]lucytype.Package, 0)
+	func() (plugins []types.Package) {
+		plugins = make([]types.Package, 0)
 		// Remember that MCDR can have multiple plugin directories
 		PluginDirectories := getMcdrConfig().PluginDirectories
 		if PluginDirectories == nil {
@@ -112,7 +112,7 @@ var getMcdrPlugins = tools.Memoize(
 const mcdrPluginIdentifierFile = "mcdreforged.plugin.json"
 
 func analyzeMcdrPlugin(file *os.File) (
-	plugin *lucytype.Package,
+	plugin *types.Package,
 	err error,
 ) {
 	stat, err := file.Stat()
@@ -136,13 +136,13 @@ func analyzeMcdrPlugin(file *os.File) (
 			if err != nil {
 				return nil, err
 			}
-			return &lucytype.Package{
-				Id: lucytype.PackageId{
-					Platform: lucytype.Mcdr,
+			return &types.Package{
+				Id: types.PackageId{
+					Platform: types.Mcdr,
 					Name:     syntax.PackageName(pluginInfo.Id),
-					Version:  lucytype.RawVersion(pluginInfo.Version),
+					Version:  types.RawVersion(pluginInfo.Version),
 				},
-				Local: &lucytype.PackageInstallation{
+				Local: &types.PackageInstallation{
 					Path: file.Name(),
 				},
 				Dependencies: nil, // TODO: This is not yet implemented, mcdr includes external (python packages) dependencies

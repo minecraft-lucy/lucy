@@ -17,10 +17,10 @@ limitations under the License.
 package modrinth
 
 import (
-	"lucy/lucytype"
+	"lucy/types"
 )
 
-func GetFile(id lucytype.PackageId) (url string, filename string, err error) {
+func GetFile(id types.PackageId) (url string, filename string, err error) {
 	version, err := getVersion(id)
 	if err != nil {
 		return "", "", err

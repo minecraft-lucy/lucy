@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"lucy/github"
-	"lucy/lucytype"
+	"lucy/types"
 
 	"github.com/sahilm/fuzzy"
 )
@@ -89,13 +89,13 @@ func getMeta(id string) (*pluginMeta, error) {
 	return &meta, nil
 }
 
-func getRelease(id string, version lucytype.RawVersion) (*release, error) {
+func getRelease(id string, version types.RawVersion) (*release, error) {
 	history, err := getReleaseHistory(id)
 	if err != nil {
 		return nil, err
 	}
 
-	if version == lucytype.LatestVersion {
+	if version == types.LatestVersion {
 		return &history.Releases[history.LatestVersionIndex], nil
 	}
 
