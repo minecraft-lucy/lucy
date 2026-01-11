@@ -133,3 +133,25 @@ func getReleaseHistory(id string) (*pluginRelease, error) {
 	}
 	return &releaseHistory, nil
 }
+
+func getRepositoryInfo(id string) (*pluginRepo, error) {
+	ghEndpoint := pluginCatalogueRepoEndpoint + id + "/repository.json" + branchMeta
+	var data []byte
+	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	if msg != nil && msg.Message != "" {
+		if msg.Status == "404" {
+			return nil, ErrPluginNotFound
+		}
+		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
+	}
+
+	var repo pluginRepo
+	err = json.Unmarshal(data, &repo)
+	if err != nil {
+		return nil, err
+	}
+	return &repo, nil
+}

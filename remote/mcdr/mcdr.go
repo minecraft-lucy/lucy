@@ -44,49 +44,78 @@ func (m mcdrSearchResult) ToSearchResults() types.SearchResults {
 // TODO: handle search options
 
 func (s self) Search(
-	query string,
-	options types.SearchOptions,
+query string,
+options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	res, err = searchPlugin(query)
 	return
 }
 
 func (s self) Fetch(id types.PackageId) (
-	rem remote.RawPackageRemote,
-	err error,
+rem remote.RawPackageRemote,
+err error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	return getRelease(id.Name.Pep8String(), id.Version)
 }
 
 func (s self) Information(name types.ProjectName) (
-	info remote.RawProjectInformation,
-	err error,
+info remote.RawProjectInformation,
+err error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	plugin, err := getPluginInfo(name.Pep8String())
+	if err != nil {
+		return nil, err
+	}
+	meta, err := getMeta(name.Pep8String())
+	if err != nil {
+		return nil, err
+	}
+	repo, err := getRepositoryInfo(name.Pep8String())
+	if err != nil {
+		return nil, err
+	}
+
+	info = rawProjectInformation{
+		Info:       plugin,
+		Meta:       meta,
+		Repository: repo,
+	}
+
+	return info, nil
 }
 
 func (s self) Dependencies(id types.PackageId) (
-	remote.RawPackageDependencies,
-	error,
+remote.RawPackageDependencies,
+error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Support(name types.ProjectName) (
-	supports remote.RawProjectSupport,
-	err error,
+supports remote.RawProjectSupport,
+err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(id types.PackageId) (
-	parsed types.PackageId,
-	err error,
+parsed types.PackageId,
+err error,
 ) {
-	// TODO implement me
-	panic("implement me")
+	var rel *release
+	switch id.Version {
+	case types.LatestVersion:
+		rel, err = getRelease(id.Name.Pep8String(), id.Version)
+		if err != nil {
+			return id, err
+		}
+	}
+	parsed = types.PackageId{
+		Platform: types.Mcdr,
+		Name:     id.Name,
+		Version:  types.RawVersion(rel.Meta.Version),
+	}
+	return parsed, nil
 }

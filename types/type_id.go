@@ -114,7 +114,7 @@ func (n ProjectName) String() string {
 	return string(n)
 }
 
-func (n ProjectName) ToPEP8() string {
+func (n ProjectName) Pep8String() string {
 	return strings.ReplaceAll(string(n), "-", "_")
 }
 

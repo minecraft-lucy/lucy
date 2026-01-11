@@ -17,6 +17,7 @@ limitations under the License.
 package mcdr
 
 import (
+	"lucy/tools"
 	"lucy/types"
 	"time"
 )
@@ -95,4 +96,74 @@ type pluginMeta struct {
 		EnUs string `json:"en_us"`
 		ZhCn string `json:"zh_cn"`
 	} `json:"description"`
+}
+
+type pluginRepo struct {
+	Url             string `json:"url"`
+	Name            string `json:"name"`
+	FullName        string `json:"full_name"`
+	HtmlUrl         string `json:"html_url"`
+	Description     string `json:"description"`
+	Archived        bool   `json:"archived"`
+	StargazersCount int    `json:"stargazers_count"`
+	WatchersCount   int    `json:"watchers_count"`
+	ForksCount      int    `json:"forks_count"`
+	Readme          string `json:"readme"`
+	ReadmeUrl       string `json:"readme_url"`
+	License         *struct {
+		Key    string `json:"key"`
+		Name   string `json:"name"`
+		SpdxId string `json:"spdx_id"`
+		Url    string `json:"url"`
+	} `json:"license"`
+}
+
+// Internal struct to fulfill the remote.RawProjectInformation interface
+type rawProjectInformation struct {
+	Info       *pluginInfo
+	Meta       *pluginMeta
+	Repository *pluginRepo
+}
+
+func (r rawProjectInformation) ToProjectInformation() types.ProjectInformation {
+	info := types.ProjectInformation{
+		Title:                 r.Meta.Name,
+		Brief:                 r.Meta.Description.EnUs,
+		Description:           r.Repository.Readme,
+		DescriptionUrl:        r.Repository.ReadmeUrl,
+		DescriptionIsMarkdown: true,
+		Authors:               nil,
+		Urls:                  nil,
+		License: tools.Ternary(
+			r.Repository.License != nil,
+			r.Repository.License.Name,
+			"n/a",
+		),
+	}
+
+	info.Authors = make([]types.Person, 0)
+	for _, author := range r.Info.Authors {
+		info.Authors = append(
+			info.Authors, types.Person{
+				Name: author.Name,
+				Url:  author.Link,
+			},
+		)
+	}
+
+	info.Urls = make([]types.PackageUrl, 0)
+	info.Urls = append(
+		info.Urls,
+		types.PackageUrl{
+			Name: "Plugin Page",
+			Type: types.HomepageUrl,
+			Url:  r.Meta.Link,
+		}, types.PackageUrl{
+			Name: "GitHub Repository",
+			Type: types.SourceUrl,
+			Url:  r.Info.Repository,
+		},
+	)
+
+	return info
 }

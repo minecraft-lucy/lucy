@@ -145,7 +145,7 @@ func infoOutput(p *types.Package) *tui.Data {
 				Text:  p.Information.Brief,
 			},
 			tools.Ternary[tui.Field](
-				p.Information.MarkdownDescription,
+				p.Information.DescriptionIsMarkdown,
 				&tui.FieldMarkdown{
 					Title:         "Information",
 					Text:          p.Information.Description,
@@ -172,7 +172,7 @@ func infoOutput(p *types.Package) *tui.Data {
 
 	var authorNames []string
 	var authorLinks []string
-	for _, author := range p.Information.Author {
+	for _, author := range p.Information.Authors {
 		authorNames = append(authorNames, author.Name)
 		authorLinks = append(authorLinks, author.Url)
 	}
