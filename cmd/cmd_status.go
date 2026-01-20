@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli/v3"
-	"lucy/local"
+	"lucy/probe"
 	"lucy/tools"
 	"lucy/tui"
 	"lucy/types"
@@ -44,7 +44,7 @@ var actionStatus cli.ActionFunc = func(
 	_ context.Context,
 	cmd *cli.Command,
 ) error {
-	serverInfo := local.GetServerInfo()
+	serverInfo := probe.GetServerInfo()
 	if cmd.Bool("json") {
 		tools.PrintAsJson(serverInfo)
 	} else {

@@ -24,7 +24,7 @@ import (
 
 	"lucy/logger"
 
-	"lucy/local"
+	"lucy/probe"
 	"lucy/types"
 )
 
@@ -138,8 +138,8 @@ func LatestCompatibleVersion(slug types.ProjectName) (
 	if err != nil {
 		return nil, err
 	}
-	serverInfo := local.GetServerInfo()
-	if serverInfo.Executable == local.UnknownExecutable {
+	serverInfo := probe.GetServerInfo()
+	if serverInfo.Executable == probe.UnknownExecutable {
 		logger.Info("no executable found, unable to infer a compatible version. falling back to latest version")
 		v, err := latestVersion(slug)
 		if err != nil {

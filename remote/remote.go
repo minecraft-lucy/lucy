@@ -50,8 +50,8 @@ func Dependencies(
 	return nil, fmt.Errorf("%w: %s", ErrorSourceNotSupported, source)
 }
 
-func Support(source types.Source, name types.ProjectName) (
-	supports *types.SupportedPlatforms,
+func PlatformSupport(source types.Source, name types.ProjectName) (
+	supports *types.PlatformSupport,
 	err error,
 ) {
 	// TODO: Implement

@@ -31,13 +31,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"lucy/tools"
 	"net/http"
 
 	"lucy/remote"
 	"lucy/types"
 
 	"lucy/logger"
-	"lucy/tools"
 )
 
 type self struct{}
@@ -53,8 +53,8 @@ var Self self
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func (s self) Search(
-	query string,
-	options types.SearchOptions,
+query string,
+options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	var facets []facetItems
 	switch options.Platform {
@@ -83,6 +83,7 @@ func (s self) Search(
 	// Make the call to Modrinth API
 	logger.Debug("searching via modrinth api: " + searchUrl)
 	httpRes, err := http.Get(searchUrl)
+	defer tools.CloseReader(httpRes.Body, logger.Warn)
 	if err != nil {
 		return nil, ErrInvalidAPIResponse
 	}
@@ -90,7 +91,6 @@ func (s self) Search(
 	if err != nil {
 		return nil, err
 	}
-	defer tools.CloseReader(httpRes.Body, logger.Warn)
 	res = &searchResultResponse{}
 	err = json.Unmarshal(data, res)
 	if err != nil {
@@ -100,8 +100,8 @@ func (s self) Search(
 }
 
 func (s self) Fetch(id types.PackageId) (
-	remote remote.RawPackageRemote,
-	err error,
+remote remote.RawPackageRemote,
+err error,
 ) {
 	id, err = s.ParseAmbiguousVersion(id)
 	version, err := getVersion(id)
@@ -112,8 +112,8 @@ func (s self) Fetch(id types.PackageId) (
 }
 
 func (s self) Information(name types.ProjectName) (
-	info remote.RawProjectInformation,
-	err error,
+info remote.RawProjectInformation,
+err error,
 ) {
 	project, err := getProjectByName(name)
 	if err != nil {
@@ -125,8 +125,8 @@ func (s self) Information(name types.ProjectName) (
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
 func (s self) Support(name types.ProjectName) (
-	supports remote.RawProjectSupport,
-	err error,
+supports remote.RawProjectSupport,
+err error,
 ) {
 	project, err := getProjectByName(name)
 	if err != nil {
@@ -138,16 +138,16 @@ func (s self) Support(name types.ProjectName) (
 var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
 
 func (s self) Dependencies(id types.PackageId) (
-	deps remote.RawPackageDependencies,
-	err error,
+deps remote.RawPackageDependencies,
+err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(p types.PackageId) (
-	parsed types.PackageId,
-	err error,
+parsed types.PackageId,
+err error,
 ) {
 	parsed.Platform = p.Platform
 	parsed.Name = p.Name

@@ -76,8 +76,8 @@ type projectResponse struct {
 	MonetizationStatus string        `json:"monetization_status"`
 }
 
-func (p *projectResponse) ToProjectSupport() types.SupportedPlatforms {
-	supports := types.SupportedPlatforms{
+func (p *projectResponse) ToProjectSupport() types.PlatformSupport {
+	supports := types.PlatformSupport{
 		MinecraftVersions: make([]types.RawVersion, 0),
 		Platforms:         make([]types.Platform, 0),
 	}

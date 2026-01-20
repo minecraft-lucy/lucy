@@ -25,8 +25,8 @@ import (
 	"lucy/tools"
 	"lucy/util"
 
-	"lucy/local"
 	"lucy/logger"
+	"lucy/probe"
 	"lucy/syntax"
 	"lucy/types"
 
@@ -67,7 +67,7 @@ var actionAdd cli.ActionFunc = func(
 	id := syntax.Parse(cmd.Args().First())
 
 	// probe server info
-	serverInfo := local.GetServerInfo()
+	serverInfo := probe.GetServerInfo()
 
 	// ensure we are in a lucy-managed server
 	// TODO: Disabled for now, the part for building the program directory is not done
@@ -75,7 +75,7 @@ var actionAdd cli.ActionFunc = func(
 	// 	return errors.New("lucy is not installed, run `lucy init` before downloading mods")
 	// }
 
-	if serverInfo.Executable == local.UnknownExecutable {
+	if serverInfo.Executable == probe.UnknownExecutable {
 		return errors.New("no executable found, `lucy add` requires a server in current directory")
 	}
 

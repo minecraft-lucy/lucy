@@ -23,7 +23,7 @@ limitations under the License.
 // The main exposed function is GetServerInfo, which returns a comprehensive
 // ServerInfo struct containing all the gathered information. To avoid side
 // effects, the ServerInfo struct is returned as a copy, rather than reference.
-package local
+package probe
 
 import (
 	"archive/zip"

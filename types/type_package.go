@@ -69,7 +69,7 @@ type Package struct {
 	Remote       *PackageRemote
 
 	// Project data
-	Supports    *SupportedPlatforms
+	Supports    *PlatformSupport
 	Information *ProjectInformation
 }
 
@@ -78,6 +78,7 @@ type Package struct {
 // local packages, such as `lucy install` or `lucy remove`.
 type PackageDependencies struct {
 	Dependencies []Dependency
+	Authentic    bool
 }
 
 // ProjectInformation is a struct that contains informational data about the
@@ -121,10 +122,11 @@ type (
 		// HashMethod string
 	}
 
-	// SupportedPlatforms reflects the support information of the whole project. For
+	// PlatformSupport reflects the support information of the whole project. For
 	// specific dependency of a single package, use the PackageDependencies struct.
-	SupportedPlatforms struct {
+	PlatformSupport struct {
 		MinecraftVersions []RawVersion
 		Platforms         []Platform
+		Authentic         bool
 	}
 )

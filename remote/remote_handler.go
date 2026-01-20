@@ -48,7 +48,7 @@ type SourceHandler interface {
 
 type (
 	RawProjectSupport interface {
-		ToProjectSupport() types.SupportedPlatforms
+		ToProjectSupport() types.PlatformSupport
 	}
 	RawProjectInformation interface {
 		ToProjectInformation() types.ProjectInformation
