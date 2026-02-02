@@ -21,32 +21,29 @@ import "strings"
 // RawVersion is the version of a package. Here we expect mods and plugins
 // use semver (which they should). A known exception is Minecraft snapshots.
 //
-// There are several special constant values for RawVersion. You MUST call
-// remote.InferVersion() before parsing them to ComparableVersion.
+// There are several special constants for a ambiguous(adaptive) version.
+// You MUST call remote.InferVersion() before parsing them to ComparableVersion.
 type RawVersion string
 
 func (v RawVersion) String() string {
-	if v == AllVersion || v == "" {
+	switch v {
+	case AllVersion, "":
 		return "any"
-	}
-	if v == NoVersion {
+	case NoVersion:
 		return "none"
-	}
-	if v == UnknownVersion {
+	case UnknownVersion:
 		return "unknown"
-	}
-	if v == LatestVersion {
+	case LatestVersion:
 		return "latest"
-	}
-	if v == LatestCompatibleVersion {
+	case LatestCompatibleVersion:
 		return "compatible"
 	}
 	return string(v)
 }
 
 func (v RawVersion) NeedsInfer() bool {
-	if v == AllVersion || v == NoVersion || v == UnknownVersion ||
-		v == LatestVersion || v == LatestCompatibleVersion {
+	switch v {
+	case AllVersion, NoVersion, UnknownVersion, LatestVersion, LatestCompatibleVersion:
 		return true
 	}
 	return false
@@ -275,6 +272,8 @@ const (
 	minInWeekIndex        = uint16('a')
 )
 
+// Dependency represents a dependency requirement for a package.
+// DO NOT read the Id.Version field. It is supposed to be empty, either being an invalid value
 type Dependency struct {
 	Id     PackageId
 	Bounds []DependencyExpression
