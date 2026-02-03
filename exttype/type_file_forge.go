@@ -14,21 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package externtype
+package exttype
 
-// ForgeModIdentifierNew is for 1.13+ forge & neoforge. This is a toml file.
-type ForgeModIdentifierNew struct {
+// FileForgeModIdentifier is for 1.13+ forge & neoforge. This is a toml file.
+type FileForgeModIdentifier struct {
 	ModLoader       string                            `toml:"modLoader"`
 	LoaderVersion   string                            `toml:"loaderVersion"`
 	IssueTrackerURL string                            `toml:"issueTrackerURL"`
 	LogoFile        string                            `toml:"logoFile"`
 	License         string                            `toml:"license"`
-	Mods            []ForgeModInfo                    `toml:"mods"`
-	Dependencies    map[string][]ForgeModDependencies `toml:"dependencies"`
+	Mods            []forgeModInfo                    `toml:"mods"`
+	Dependencies    map[string][]forgeModDependencies `toml:"dependencies"`
 	ModProperties   map[string]string                 `toml:"-"` // ignored
 }
 
-type ForgeModInfo struct {
+type forgeModInfo struct {
 	ModID         string `toml:"modId"`
 	Version       string `toml:"version"`
 	DisplayName   string `toml:"displayName"`
@@ -41,10 +41,26 @@ type ForgeModInfo struct {
 	Description   string `toml:"description"`
 }
 
-type ForgeModDependencies struct {
+type forgeModDependencies struct {
 	ModID        string `toml:"modId"`
 	Mandatory    bool   `toml:"mandatory"`
 	VersionRange string `toml:"versionRange"`
 	Ordering     string `toml:"ordering"`
 	Side         string `toml:"side"`
+}
+
+// FileForgeModIdentifierOld is for 1.12 and older forge mods. This is a json file.
+type FileForgeModIdentifierOld []struct {
+	ModId        string        `json:"modid"`
+	Name         string        `json:"name"`
+	Description  string        `json:"description"`
+	Version      string        `json:"version"`
+	McVersion    string        `json:"mcversion"`
+	URL          string        `json:"url"`
+	UpdateURL    string        `json:"updateUrl"`
+	AuthorList   []string      `json:"authorList"`
+	Credits      string        `json:"credits"`
+	LogoFile     string        `json:"logoFile"`
+	Screenshots  []interface{} `json:"screenshots"`
+	Dependencies []interface{} `json:"dependencies"`
 }

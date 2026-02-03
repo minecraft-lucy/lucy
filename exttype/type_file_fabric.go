@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package externtype
+package exttype
 
 type FabricEnvironment string
 
@@ -24,11 +24,11 @@ const (
 	FabricEnvironmentAny    FabricEnvironment = "*"
 )
 
-// FabricModIdentifier represents the structure of fabric.mod.json files found
+// FileFabricModIdentifier represents the structure of fabric.mod.json files found
 // in Fabric mods' `.jar` files.
 //
 // Docs: https://fabricmc.net/wiki/documentation:fabric_mod_json_spec
-type FabricModIdentifier struct {
+type FileFabricModIdentifier struct {
 	SchemaVersion int      `json:"schemaVersion"`
 	Id            string   `json:"id"`
 	Version       string   `json:"version"`
@@ -69,7 +69,7 @@ type FabricModIdentifier struct {
 	Custom interface{} `json:"-"`
 }
 
-type FabricModIdentifierOld struct {
+type FileFabricModIdentifierOld struct {
 	// TODO: See https://wiki.fabricmc.net/documentation:fabric_mod_json_spec
 	// This is for very old fabric (< 0.4.0). It does not matter much right
 	// now. Besides, it is poorly documented.

@@ -24,7 +24,7 @@ import (
 	"os"
 	"strings"
 
-	externaltype "lucy/externtype"
+	externaltype "lucy/exttype"
 	"lucy/logger"
 	"lucy/syntax"
 	"lucy/tools"
@@ -211,7 +211,7 @@ func (d *FabricModDetector) Detect(
 				return nil, err
 			}
 
-			modInfo := &externaltype.FabricModIdentifier{}
+			modInfo := &externaltype.FileFabricModIdentifier{}
 			err = json.Unmarshal(data, modInfo)
 			if err != nil {
 				return nil, err

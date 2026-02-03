@@ -23,7 +23,7 @@ import (
 	"os"
 	"strings"
 
-	"lucy/externtype"
+	"lucy/exttype"
 	"lucy/logger"
 	"lucy/syntax"
 	"lucy/tools"
@@ -130,7 +130,7 @@ func (d *forgeModDetector) Detect(
 				return nil, err
 			}
 
-			modIdentifier := &externtype.ForgeModIdentifierNew{}
+			modIdentifier := &exttype.FileForgeModIdentifier{}
 			err = toml.Unmarshal(data, modIdentifier)
 			if err != nil {
 				return nil, err

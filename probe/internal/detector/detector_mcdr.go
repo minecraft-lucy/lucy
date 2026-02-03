@@ -23,7 +23,7 @@ import (
 	"os"
 	"path"
 
-	"lucy/externtype"
+	"lucy/exttype"
 	"lucy/syntax"
 	"lucy/tools"
 	"lucy/types"
@@ -68,7 +68,7 @@ func (d *McdrDetector) Detect(workDir string) any {
 		return nil
 	}
 
-	config := &externtype.McdrConfig{}
+	config := &exttype.FileMcdrConfig{}
 	if err := yaml.Unmarshal(configData, config); err != nil {
 		logger.Warn(err)
 		return nil
@@ -79,11 +79,12 @@ func (d *McdrDetector) Detect(workDir string) any {
 
 func init() {
 	RegisterEnvironmentDetector(&McdrDetector{})
+	RegisterModDetector(&McdrPluginDetector{})
 }
 
 // GetMcdrConfig uses the new environment detector to check for MCDR installation
 var GetMcdrConfig = tools.Memoize(
-	func() (config *externtype.McdrConfig) {
+	func() (config *exttype.FileMcdrConfig) {
 		environment := Environment(".")
 
 		if environment.Mcdr != nil {
@@ -153,7 +154,7 @@ func analyzeMcdrPlugin(file *os.File) (
 			if err != nil {
 				return nil, err
 			}
-			pluginInfo := &externtype.McdrPluginIdentifierFile{}
+			pluginInfo := &exttype.FileMcdrPluginIdentifier{}
 			err = json.Unmarshal(data, pluginInfo)
 			if err != nil {
 				return nil, err

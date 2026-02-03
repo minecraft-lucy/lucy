@@ -22,7 +22,7 @@ import (
 	"io"
 	"os"
 
-	"lucy/externtype"
+	"lucy/exttype"
 	"lucy/logger"
 	"lucy/tools"
 	"lucy/types"
@@ -54,7 +54,7 @@ func (d *VanillaDetector) Detect(
 				return nil, err
 			}
 
-			obj := externtype.MinecraftVersionSpec{}
+			obj := exttype.FileMinecraftVersionSpec{}
 			err = json.Unmarshal(data, &obj)
 			if err != nil {
 				return nil, err

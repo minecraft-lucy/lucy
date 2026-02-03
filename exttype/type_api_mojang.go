@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package externtype
+package exttype
 
 import "time"
 
-// VersionManifest https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
-type VersionManifest struct {
+// ApiMojangMinecraftVersionManifest https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
+type ApiMojangMinecraftVersionManifest struct {
 	Latest struct {
 		Release  string `json:"release"`
 		Snapshot string `json:"snapshot"`

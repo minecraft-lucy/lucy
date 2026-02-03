@@ -32,7 +32,7 @@ import (
 	"sort"
 	"sync"
 
-	"lucy/externtype"
+	"lucy/exttype"
 	"lucy/probe/internal/detector"
 
 	"gopkg.in/ini.v1"
@@ -184,7 +184,7 @@ var getServerWorkPath = tools.Memoize(
 )
 
 var getServerDotProperties = tools.Memoize(
-	func() externtype.MinercaftServerProperties {
+	func() exttype.FileMinercaftServerProperties {
 		exec := getExecutableInfo()
 		propertiesPath := path.Join(getServerWorkPath(), "server.properties")
 		file, err := ini.Load(propertiesPath)

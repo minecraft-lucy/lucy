@@ -1,8 +1,8 @@
-package externtype
+package exttype
 
 import "time"
 
-type MinecraftVersionSpec struct {
+type FileMinecraftVersionSpec struct {
 	Id              string `json:"id"`
 	Name            string `json:"name"`
 	WorldVersion    int    `json:"world_version"`
@@ -22,4 +22,4 @@ type MinecraftVersionSpec struct {
 // FileServerProperties is not universal across game versions. Therefore,
 // it is just a map[string]string. Just remember to check the game version
 // before calling any newly added property.
-type MinercaftServerProperties map[string]string
+type FileMinercaftServerProperties map[string]string

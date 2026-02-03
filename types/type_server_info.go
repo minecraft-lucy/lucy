@@ -19,7 +19,7 @@ package types
 import (
 	"os/exec"
 
-	"lucy/externtype"
+	"lucy/exttype"
 )
 
 // ServerInfo components that do not exist, use an empty string. Note Executable
@@ -54,7 +54,7 @@ type EnvironmentInfo struct {
 
 type McdrEnv struct {
 	ConfigPath string
-	Config     *externtype.McdrConfig
+	Config     *exttype.FileMcdrConfig
 	PluginList []Package
 }
 

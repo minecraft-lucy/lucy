@@ -21,13 +21,13 @@ import (
 	"io"
 	"net/http"
 
-	"lucy/externtype"
+	"lucy/exttype"
 )
 
 const VersionManifestURL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
-func getVersionManifest() (manifest *externtype.VersionManifest, err error) {
-	manifest = &externtype.VersionManifest{}
+func getVersionManifest() (manifest *exttype.ApiMojangMinecraftVersionManifest, err error) {
+	manifest = &exttype.ApiMojangMinecraftVersionManifest{}
 
 	// TODO: Add cache mechanism if http call is too slow or fails
 	resp, err := http.Get(VersionManifestURL)

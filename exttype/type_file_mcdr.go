@@ -14,27 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package externtype
+package exttype
 
 import "lucy/tools"
 
-type McdrPluginInfo struct {
-	Id      string `json:"id"`
-	Authors []struct {
-		Name string `json:"name"`
-		Link string `json:"link"`
-	} `json:"authors"`
-	Repository   string   `json:"repository"`
-	Branch       string   `json:"branch"`
-	RelatedPath  string   `json:"related_path"`
-	Labels       []string `json:"labels"`
-	Introduction struct {
-		EnUs string `json:"en_us"`
-		ZhCn string `json:"zh_cn"`
-	} `json:"introduction"`
-}
-
-type McdrPluginIdentifierFile struct {
+type FileMcdrPluginIdentifier struct {
 	Id          string `json:"id"`
 	Version     string `json:"version"`
 	Name        string `json:"name"`
@@ -50,7 +34,7 @@ type McdrPluginIdentifierFile struct {
 	Resources []string `json:"resources"`
 }
 
-type McdrConfig struct {
+type FileMcdrConfig struct {
 	Language         string `yaml:"language"`
 	WorkingDirectory string `yaml:"working_directory"`
 	StartCommand     string `yaml:"start_command"`
