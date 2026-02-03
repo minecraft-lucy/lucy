@@ -1,16 +1,19 @@
 package probe
 
 import (
+	"os"
+	"path"
+	"sync"
+	"sync/atomic"
+
 	"lucy/logger"
 	"lucy/probe/internal/detector"
 	"lucy/prompt"
 	"lucy/tools"
 	"lucy/types"
-	"os"
-	"path"
-	"sync"
-	"sync/atomic"
 )
+
+var UnknownExecutable = detector.UnknownExecutable
 
 // getExecutableInfo uses the new detector-based architecture to find server executables
 var getExecutableInfo = tools.Memoize(
@@ -66,7 +69,7 @@ var getExecutableInfo = tools.Memoize(
 
 		if len(valid) == 0 {
 			logger.Info("no server under current directory")
-			return detector.UnknownExecutable
+			return UnknownExecutable
 		} else if len(valid) == 1 {
 			return valid[0]
 		}

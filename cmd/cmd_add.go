@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"lucy/probe"
 	"lucy/remote"
 	"lucy/remote/source"
@@ -62,7 +63,6 @@ var actionAdd cli.ActionFunc = func(
 	ctx context.Context,
 	cmd *cli.Command,
 ) error {
-
 	// get id from args
 	id := syntax.Parse(cmd.Args().First())
 
@@ -100,7 +100,7 @@ var actionAdd cli.ActionFunc = func(
 	case types.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
 	case types.Mcdr:
-		dir = serverInfo.Environments.Mcdr.PluginPaths[0]
+		dir = serverInfo.Environments.Mcdr.Config.PluginDirectories[0]
 	case types.Forge, types.Fabric:
 		dir = serverInfo.ModPath
 	default:
@@ -178,5 +178,4 @@ var actionAdd cli.ActionFunc = func(
 }
 
 func cmdAddInstall() {
-
 }

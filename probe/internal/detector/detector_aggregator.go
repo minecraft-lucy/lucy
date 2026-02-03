@@ -26,6 +26,8 @@ import (
 	"lucy/types"
 )
 
+var UnknownExecutable = &types.ExecutableInfo{}
+
 // Executable analyzes a JAR file using all registered detectors
 // and returns the first successful match (in registration order).
 // If multiple detectors match, callers should handle ambiguity separately.
