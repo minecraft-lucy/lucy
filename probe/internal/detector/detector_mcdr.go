@@ -14,69 +14,91 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package probe
+package detector
 
 import (
 	"archive/zip"
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 	"path"
 
+	"lucy/externtype"
 	"lucy/syntax"
+	"lucy/tools"
+	"lucy/types"
 
 	"gopkg.in/yaml.v3"
 
-	"lucy/datatype"
-	"lucy/types"
-
 	"lucy/logger"
-	"lucy/tools"
 )
 
 const mcdrConfigFileName = "config.yml"
 
-// For this part of code, refer to the original MCDR project
-// MCDR detects its installation under cwd by check whether the config.yml file exists
-// No validation is performed, for empty fields the default value will be filled
-// Therefore to align with it, we only detect for the existence of the config.yml file
-var getMcdrConfig = tools.Memoize(
-	func() (config *McdrConfigDotYml) {
-		if _, err := os.Stat(mcdrConfigFileName); os.IsNotExist(err) {
-			return nil
-		}
-		config = &McdrConfigDotYml{}
+// McdrDetector detects MCDR (MCDReforged) installations
+type McdrDetector struct{}
 
-		configFile, err := os.Open(mcdrConfigFileName)
+func (d *McdrDetector) Name() string {
+	return "mcdr"
+}
+
+func (d *McdrDetector) Detect(workDir string) any {
+	configPath := path.Join(workDir, mcdrConfigFileName)
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return nil
+	}
+
+	// File exists, try to read it
+	configFile, err := os.Open(configPath)
+	if err != nil {
+		logger.Warn(err)
+		return nil
+	}
+	defer func(configFile io.ReadCloser) {
+		err := configFile.Close()
 		if err != nil {
 			logger.Warn(err)
 		}
+	}(configFile)
 
-		configData, err := io.ReadAll(configFile)
-		defer func(configFile io.ReadCloser) {
-			err := configFile.Close()
-			if err != nil {
-				logger.Warn(err)
-			}
-		}(configFile)
-		if err != nil {
-			logger.Warn(err)
+	configData, err := io.ReadAll(configFile)
+	if err != nil {
+		logger.Warn(err)
+		return nil
+	}
+
+	config := &externtype.McdrConfig{}
+	if err := yaml.Unmarshal(configData, config); err != nil {
+		logger.Warn(err)
+		return nil
+	}
+
+	return config
+}
+
+func init() {
+	RegisterEnvironmentDetector(&McdrDetector{})
+}
+
+// GetMcdrConfig uses the new environment detector to check for MCDR installation
+var GetMcdrConfig = tools.Memoize(
+	func() (config *externtype.McdrConfig) {
+		environment := Environment(".")
+
+		if environment.Mcdr != nil {
+			return environment.Mcdr.Config
 		}
 
-		if err := yaml.Unmarshal(configData, config); err != nil {
-			log.Fatal(err)
-		}
-
-		return
+		return nil
 	},
 )
 
-var getMcdrPlugins = tools.Memoize(
+var GetMcdrPlugins = tools.Memoize(
 	func() (plugins []types.Package) {
 		plugins = make([]types.Package, 0)
 		// Remember that MCDR can have multiple plugin directories
-		PluginDirectories := getMcdrConfig().PluginDirectories
+		PluginDirectories := GetMcdrConfig().PluginDirectories
 		if PluginDirectories == nil {
 			return plugins
 		}
@@ -131,7 +153,7 @@ func analyzeMcdrPlugin(file *os.File) (
 			if err != nil {
 				return nil, err
 			}
-			pluginInfo := &datatype.McdrPluginIdentifierFile{}
+			pluginInfo := &externtype.McdrPluginIdentifierFile{}
 			err = json.Unmarshal(data, pluginInfo)
 			if err != nil {
 				return nil, err
@@ -139,7 +161,7 @@ func analyzeMcdrPlugin(file *os.File) (
 			return &types.Package{
 				Id: types.PackageId{
 					Platform: types.Mcdr,
-					Name:     syntax.PackageName(pluginInfo.Id),
+					Name:     syntax.ToProjectName(pluginInfo.Id),
 					Version:  types.RawVersion(pluginInfo.Version),
 				},
 				Local: &types.PackageInstallation{

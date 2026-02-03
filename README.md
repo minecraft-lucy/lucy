@@ -52,14 +52,11 @@ lucy search <keyword>
 # Get detailed information about a specific package
 lucy info <package-id>
 
-# Install a package to your server
-lucy install <package-id>
+# Add a package to your server
+lucy add <package-id>
 
 # Check server status and list installed packages
-lucy status <server-path>
-
-# Update configuration and settings
-lucy config
+lucy status
 ```
 
 ### Real-World Examples
@@ -74,7 +71,7 @@ lucy search fabric
 lucy info fabric/fabric
 
 # Install Fabric
-lucy install fabric/fabric@latest
+lucy add fabric/fabric@latest
 ```
 
 #### Example 2: Install Mods with Dependencies
@@ -84,7 +81,7 @@ lucy install fabric/fabric@latest
 lucy search create
 
 # Install Create (dependencies auto-resolved)
-lucy install create
+lucy add create
 
 # Lucy automatically handles Fabric API and other dependencies
 ```

@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-func parseRequiredVersion(s string) (reqs []types.DependencyExpression) {
+func parseRequiredVersion(s string) (reqs []types.VersionConstraint) {
 	split := strings.Split(s, ",")
 	for _, expr := range split {
 		expr = strings.TrimSpace(expr)
@@ -33,7 +33,7 @@ func parseRequiredVersion(s string) (reqs []types.DependencyExpression) {
 		}
 
 		version := strings.TrimLeft(expr, "<>=!^~")
-		req := types.DependencyExpression{
+		req := types.VersionConstraint{
 			Value: dependency.Parse(
 				types.RawVersion(version),
 				types.Semver,
@@ -48,11 +48,11 @@ func parseRequiredVersion(s string) (reqs []types.DependencyExpression) {
 			strings.HasPrefix(expr, "~=") {
 			req.Operator = types.OpWeakEq
 		} else if strings.HasPrefix(expr, "<=") {
-			req.Operator = types.OpLe
+			req.Operator = types.OpLte
 		} else if strings.HasPrefix(expr, "<") {
 			req.Operator = types.OpLt
 		} else if strings.HasPrefix(expr, ">=") {
-			req.Operator = types.OpGeq
+			req.Operator = types.OpGte
 		} else if strings.HasPrefix(expr, ">") {
 			req.Operator = types.OpGt
 		} else if strings.HasPrefix(expr, "!=") {

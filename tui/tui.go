@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package structout is a key-value based commandline output framework.
+// Package tui is a key-value based commandline output framework.
 //
 // The core of this package it the lucytypes.OutputData struct. It is an array
 // of different types of fields that defines different types of output formats.

@@ -20,13 +20,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"lucy/probe"
 	"lucy/remote"
 	"lucy/remote/source"
 	"lucy/tools"
 	"lucy/util"
 
 	"lucy/logger"
-	"lucy/probe"
 	"lucy/syntax"
 	"lucy/types"
 
@@ -83,7 +83,7 @@ var actionAdd cli.ActionFunc = func(
 	if id.Platform != types.AllPlatform {
 		if id.Platform == types.Mcdr {
 			// for mcdr, we only need to check if it's mcdr-managed
-			if serverInfo.Mcdr == nil {
+			if serverInfo.Environments.Mcdr == nil {
 				return errors.New("mcdr not found")
 			}
 		} else if id.Platform != serverInfo.Executable.LoaderPlatform {
@@ -100,7 +100,7 @@ var actionAdd cli.ActionFunc = func(
 	case types.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
 	case types.Mcdr:
-		dir = serverInfo.Mcdr.PluginPaths[0]
+		dir = serverInfo.Environments.Mcdr.PluginPaths[0]
 	case types.Forge, types.Fabric:
 		dir = serverInfo.ModPath
 	default:

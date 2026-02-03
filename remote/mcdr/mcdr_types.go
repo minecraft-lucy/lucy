@@ -151,16 +151,16 @@ func (r rawProjectInformation) ToProjectInformation() types.ProjectInformation {
 		)
 	}
 
-	info.Urls = make([]types.PackageUrl, 0)
+	info.Urls = make([]types.Url, 0)
 	info.Urls = append(
 		info.Urls,
-		types.PackageUrl{
+		types.Url{
 			Name: "Plugin Page",
-			Type: types.HomepageUrl,
+			Type: types.UrlHome,
 			Url:  r.Meta.Link,
-		}, types.PackageUrl{
+		}, types.Url{
 			Name: "GitHub Repository",
-			Type: types.SourceUrl,
+			Type: types.UrlSource,
 			Url:  r.Info.Repository,
 		},
 	)

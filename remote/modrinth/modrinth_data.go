@@ -19,6 +19,7 @@ package modrinth
 import (
 	"time"
 
+	"lucy/syntax"
 	"lucy/types"
 )
 
@@ -104,15 +105,15 @@ func (p *projectResponse) ToProjectInformation() (info types.ProjectInformation)
 		Brief:       p.Description,
 		Description: p.Body,
 		License:     p.License.Name,
-		Urls:        make([]types.PackageUrl, 0),
+		Urls:        make([]types.Url, 0),
 	}
 
 	// Urls
 	if p.DiscordUrl != "" {
 		info.Urls = append(
-			info.Urls, types.PackageUrl{
+			info.Urls, types.Url{
 				Name: "Discord",
-				Type: types.ForumUrl,
+				Type: types.UrlForum,
 				Url:  p.DiscordUrl,
 			},
 		)
@@ -120,9 +121,9 @@ func (p *projectResponse) ToProjectInformation() (info types.ProjectInformation)
 
 	if p.IssuesUrl != "" {
 		info.Urls = append(
-			info.Urls, types.PackageUrl{
+			info.Urls, types.Url{
 				Name: "Issues",
-				Type: types.SourceUrl,
+				Type: types.UrlSource,
 				Url:  "",
 			},
 		)
@@ -130,9 +131,9 @@ func (p *projectResponse) ToProjectInformation() (info types.ProjectInformation)
 
 	if p.SourceUrl != "" {
 		info.Urls = append(
-			info.Urls, types.PackageUrl{
+			info.Urls, types.Url{
 				Name: "Source",
-				Type: types.SourceUrl,
+				Type: types.UrlSource,
 				Url:  p.SourceUrl,
 			},
 		)
@@ -140,9 +141,9 @@ func (p *projectResponse) ToProjectInformation() (info types.ProjectInformation)
 
 	if p.WikiUrl != "" {
 		info.Urls = append(
-			info.Urls, types.PackageUrl{
+			info.Urls, types.Url{
 				Name: "Wiki",
-				Type: types.WikiUrl,
+				Type: types.UrlWiki,
 				Url:  p.WikiUrl,
 			},
 		)
@@ -150,9 +151,9 @@ func (p *projectResponse) ToProjectInformation() (info types.ProjectInformation)
 
 	for _, donationUrl := range p.DonationUrls {
 		info.Urls = append(
-			info.Urls, types.PackageUrl{
+			info.Urls, types.Url{
 				Name: donationUrl.Platform,
-				Type: types.DonationUrl,
+				Type: types.UrlSponsor,
 				Url:  donationUrl.Url,
 			},
 		)
@@ -205,7 +206,7 @@ func (s *searchResultResponse) ToSearchResults() types.SearchResults {
 
 	// The hits should already be sorted by whatever index passed in.
 	for _, hit := range s.Hits {
-		res.Results = append(res.Results, types.ProjectName(hit.Slug))
+		res.Results = append(res.Results, syntax.ToProjectName(hit.Slug))
 	}
 
 	return res

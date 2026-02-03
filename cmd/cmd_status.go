@@ -20,11 +20,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/urfave/cli/v3"
 	"lucy/probe"
 	"lucy/tools"
 	"lucy/tui"
 	"lucy/types"
+
+	"github.com/urfave/cli/v3"
 )
 
 var subcmdStatus = &cli.Command{
@@ -163,10 +164,10 @@ func serverInfoToStatus(
 		}
 	}
 
-	if data.Mcdr != nil {
-		pluginNames := make([]string, 0, len(data.Mcdr.PluginList))
-		pluginPaths := make([]string, 0, len(data.Mcdr.PluginList))
-		for _, plugin := range data.Mcdr.PluginList {
+	if data.Environments.Mcdr != nil {
+		pluginNames := make([]string, 0, len(data.Environments.Mcdr.PluginList))
+		pluginPaths := make([]string, 0, len(data.Environments.Mcdr.PluginList))
+		for _, plugin := range data.Environments.Mcdr.PluginList {
 			pluginNames = append(
 				pluginNames,
 				tools.Ternary(

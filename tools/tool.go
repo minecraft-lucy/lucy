@@ -30,6 +30,8 @@ import (
 	"github.com/russross/blackfriday/v2"
 )
 
+const CRLF = "\r\n"
+
 // TernaryFunc gives a if expr == true, b if expr == false. For a simple
 // bool expression, use Ternary instead.
 func TernaryFunc[T any](expr func() bool, a T, b T) T {
@@ -46,6 +48,13 @@ func Ternary[T any](v bool, a T, b T) T {
 		return a
 	}
 	return b
+}
+
+func TernaryLazy[T any](v bool, a func() T, b func() T) T {
+	if v {
+		return a()
+	}
+	return b()
 }
 
 // Memoize is only used for functions that do not take any arguments and return

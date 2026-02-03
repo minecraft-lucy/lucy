@@ -38,7 +38,7 @@ import (
 	"lucy/types"
 )
 
-func PackageName(s string) types.ProjectName {
+func ToProjectName(s string) types.ProjectName {
 	return types.ProjectName(sanitize(s))
 }
 

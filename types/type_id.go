@@ -86,14 +86,17 @@ func (p Platform) Eq(other Platform) bool {
 // exist on a remote API or user's local files.
 type ProjectName string
 
+// ToProjectName converts a string to a ProjectName it does the following:
+//   - Converts all uppercase letters to lowercase
+//   - Replaces all separators (spaces and underlines) with hyphens ('-').
 func ToProjectName(s string) ProjectName {
 	var b strings.Builder
 	b.Grow(len(s))
 
 	for _, char := range s {
 		switch {
-		case char == '_':
-			b.WriteByte('-')
+		case char == '_' || char == ' ':
+			b.WriteRune('-')
 		case 'A' <= char && char <= 'Z':
 			b.WriteRune(char + 'a' - 'A')
 		default:

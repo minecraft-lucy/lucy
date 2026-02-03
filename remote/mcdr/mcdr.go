@@ -18,6 +18,7 @@ package mcdr
 
 import (
 	"lucy/remote"
+	"lucy/syntax"
 	"lucy/types"
 )
 
@@ -35,7 +36,7 @@ type mcdrSearchResult []string
 func (m mcdrSearchResult) ToSearchResults() types.SearchResults {
 	var res types.SearchResults
 	for _, id := range m {
-		res.Results = append(res.Results, types.ProjectName(id))
+		res.Results = append(res.Results, syntax.ToProjectName(id))
 	}
 	res.Source = types.McdrCatalogue
 	return res

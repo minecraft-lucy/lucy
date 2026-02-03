@@ -103,13 +103,13 @@ func DependencyToPackage(
 	} else if dependency.ProjectId != "" {
 		project, _ = getProjectById(dependency.ProjectId)
 		// This is not safe, TODO: use better inference method
-		version, _ = latestVersion(types.ProjectName(project.Slug))
+		version, _ = latestVersion(syntax.ToProjectName(project.Slug))
 		p.Version = types.LatestVersion
 	} else {
 		return p, ErrorInvalidDependency
 	}
 
-	p.Name = syntax.PackageName(project.Slug)
+	p.Name = syntax.ToProjectName(project.Slug)
 	p.Version = types.RawVersion(version.VersionNumber)
 
 	return p, nil

@@ -16,39 +16,39 @@ limitations under the License.
 
 package types
 
-type PackageUrlType uint8
+type UrlType uint8
 
 const (
-	FileUrl PackageUrlType = iota
-	HomepageUrl
-	SourceUrl
-	WikiUrl
-	ForumUrl
-	IssuesUrl
-	DonationUrl
-	OthersUrl
+	UrlFile UrlType = iota
+	UrlHome
+	UrlSource
+	UrlWiki
+	UrlForum
+	UrlIssues
+	UrlSponsor
+	UrlMisc
 )
 
-func (p PackageUrlType) String() string {
+func (p UrlType) String() string {
 	switch p {
-	case FileUrl:
+	case UrlFile:
 		return "File"
-	case HomepageUrl:
+	case UrlHome:
 		return "Homepage"
-	case SourceUrl:
+	case UrlSource:
 		return "Source"
-	case WikiUrl:
+	case UrlWiki:
 		return "Wiki"
-	case OthersUrl:
+	case UrlMisc:
 		return "URL"
 	default:
 		return "Unknown"
 	}
 }
 
-type PackageUrl struct {
+type Url struct {
 	Name string
-	Type PackageUrlType
+	Type UrlType
 	Url  string
 }
 
@@ -77,8 +77,8 @@ type Package struct {
 // a Package struct. It is usually used in any command that requires operating
 // local packages, such as `lucy install` or `lucy remove`.
 type PackageDependencies struct {
-	Dependencies []Dependency
-	Authentic    bool
+	Value     []Dependency
+	Authentic bool
 }
 
 // ProjectInformation is a struct that contains informational data about the
@@ -90,7 +90,7 @@ type ProjectInformation struct {
 	DescriptionUrl        string
 	DescriptionIsMarkdown bool
 	Authors               []Person
-	Urls                  []PackageUrl
+	Urls                  []Url
 	License               string
 }
 

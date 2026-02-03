@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"bufio"
 	"io"
 	"os"
 )
@@ -25,4 +26,24 @@ func CopyFile(src *os.File, dest string) (file *os.File, err error) {
 	}
 
 	return destFile, nil
+}
+
+func MoveReaderToLine(r io.Reader, line string) error {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		if scanner.Text() == line {
+			return nil
+		}
+	}
+	return scanner.Err()
+}
+
+func MoveReaderToLineWithPrefix(r io.Reader, prefix string) error {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		if len(scanner.Text()) >= len(prefix) && scanner.Text()[:len(prefix)] == prefix {
+			return nil
+		}
+	}
+	return scanner.Err()
 }

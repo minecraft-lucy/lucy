@@ -18,19 +18,20 @@ package types
 
 import (
 	"os/exec"
+
+	"lucy/externtype"
 )
 
 // ServerInfo components that do not exist, use an empty string. Note Executable
 // must exist, otherwise the program will exit; therefore, it is not a pointer.
 type ServerInfo struct {
-	WorkPath   string
-	SavePath   string
-	ModPath    string
-	Mods       []Package
-	HasLucy    bool
-	Mcdr       *McdrInstallation
-	Executable *ExecutableInfo
-	Activity   *Activity
+	WorkPath     string
+	SavePath     string
+	ModPath      string
+	Mods         []Package
+	Executable   *ExecutableInfo
+	Activity     *Activity
+	Environments EnvironmentInfo
 }
 
 type ExecutableInfo struct {
@@ -46,7 +47,17 @@ type Activity struct {
 	Pid    int
 }
 
-type McdrInstallation struct {
-	PluginPaths []string
-	PluginList  []Package
+type EnvironmentInfo struct {
+	Lucy *LucyEnv
+	Mcdr *McdrEnv
+}
+
+type McdrEnv struct {
+	ConfigPath string
+	Config     *externtype.McdrConfig
+	PluginList []Package
+}
+
+type LucyEnv struct {
+	ConfigPath string
 }

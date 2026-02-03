@@ -16,7 +16,11 @@ limitations under the License.
 
 package types
 
-import "strings"
+import (
+	"strings"
+
+	"lucy/tools"
+)
 
 // RawVersion is the version of a package. Here we expect mods and plugins
 // use semver (which they should). A known exception is Minecraft snapshots.
@@ -239,8 +243,12 @@ type VersionScheme uint8
 
 const (
 	Semver VersionScheme = iota
+
+	// Docs
+	// https://zh.minecraft.wiki/w/%E7%89%88%E6%9C%AC%E6%A0%BC%E5%BC%8F#%E5%BF%AB%E7%85%A7%EF%BC%88Snapshot%EF%BC%89
 	MinecraftSnapshot
 	MinecraftRelease
+
 	Invalid
 )
 
@@ -253,9 +261,9 @@ func (v ComparableVersion) Validate() bool {
 	case Semver:
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
-		return v.Major != 0 &&
-			v.Minor != 0 && v.Minor <= maxWeek &&
-			v.Patch >= minInWeekIndex && v.Patch <= maxInWeekIndex
+		return v.Major != 0 && // year
+			v.Minor > 0 && v.Minor <= maxWeek && // week (work cycle)
+			v.Patch >= minSnapshotIndex && v.Patch <= maxSnapshotIndex // in-week index (as ascii code)
 	case MinecraftRelease:
 		return v.Major != 0 && v.Minor != 0
 	case Invalid:
@@ -267,21 +275,59 @@ func (v ComparableVersion) Validate() bool {
 }
 
 const (
-	maxWeek        uint16 = 52 + 2
-	maxInWeekIndex        = uint16('h')
-	minInWeekIndex        = uint16('a')
+	maxWeek          uint16 = 52 + 2
+	maxSnapshotIndex        = uint16('h')
+	minSnapshotIndex        = uint16('a')
 )
 
 // Dependency represents a dependency requirement for a package.
-// DO NOT read the Id.Version field. It is supposed to be empty, either being an invalid value
+//
+// DO NOT read the Id.Version field. It is supposed to be empty.
+//
+// Dependency.Constraint is a 2d-array. The outer array were evaluated with OR,
+// while the inner array were evaluated with AND. While it is nil or empty, it
+// means there is no constraint (all versions are acceptable).
 type Dependency struct {
-	Id     PackageId
-	Bounds []DependencyExpression
+	Id         PackageId
+	Constraint VersionConstraintExpression
+	Mandatory  bool
 }
 
-type DependencyExpression struct {
+type VersionConstraintExpression [][]VersionConstraint
+
+type VersionConstraint struct {
 	Value    ComparableVersion
 	Operator VersionOperator
+}
+
+// Inverse inverts the version constraint expression.
+// This functions is in-place.
+func (exps VersionConstraintExpression) Inverse() VersionConstraintExpression {
+	tools.ForEachOnMatrix(
+		exps,
+		func(exp VersionConstraint) { exp.Inverse() })
+	return exps
+}
+
+// Inverse inverts the version constraint.
+// This function is in-place.
+func (exp *VersionConstraint) Inverse() {
+	switch exp.Operator {
+	case OpEq:
+		exp.Operator = OpNeq
+	case OpNeq:
+		exp.Operator = OpEq
+	case OpGt:
+		exp.Operator = OpLte
+	case OpWeakGt:
+		exp.Operator = OpLte
+	case OpGte:
+		exp.Operator = OpLt
+	case OpLt:
+		exp.Operator = OpGte
+	case OpLte:
+		exp.Operator = OpGt
+	}
 }
 
 func (d Dependency) Satisfy(
@@ -291,43 +337,40 @@ func (d Dependency) Satisfy(
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false
 	}
-	for _, req := range d.Bounds {
-		switch req.Operator {
-		case OpEq:
-			if !v.Eq(req.Value) {
-				return false
-			}
-		case OpNeq:
-			if !v.Neq(req.Value) {
-				return false
-			}
-		case OpGt:
-			if !v.Gt(req.Value) {
-				return false
-			}
-		case OpWeakGt:
-			if !v.WeakGt(req.Value) {
-				return false
-			}
-		case OpGeq:
-			if !v.Gte(req.Value) {
-				return false
-			}
-		case OpLt:
-			if !v.Lt(req.Value) {
-				return false
-			}
-		case OpLe:
-			if !v.Lte(req.Value) {
-				return false
-			}
-		}
+
+	if d.Constraint == nil || tools.IsEmptyVector(d.Constraint) {
+		return true
 	}
 
-	return true
+	for _, orStatements := range d.Constraint {
+		satisfied := true
+		for _, andStatements := range orStatements {
+			if !andStatements.Operator.Comparator()(v, andStatements.Value) {
+				satisfied = false
+				break
+			}
+		}
+		if satisfied {
+			return true
+		}
+	}
+	return false
 }
 
 type VersionOperator uint8
+
+type versionComparator func(p1, p2 ComparableVersion) bool
+
+var operatorFunctions = map[VersionOperator]versionComparator{
+	OpEq:     func(p1, p2 ComparableVersion) bool { return p1.Eq(p2) },
+	OpWeakEq: func(p1, p2 ComparableVersion) bool { return p1.WeakEq(p2) },
+	OpNeq:    func(p1, p2 ComparableVersion) bool { return p1.Neq(p2) },
+	OpGt:     func(p1, p2 ComparableVersion) bool { return p1.Gt(p2) },
+	OpWeakGt: func(p1, p2 ComparableVersion) bool { return p1.WeakGt(p2) },
+	OpGte:    func(p1, p2 ComparableVersion) bool { return p1.Gte(p2) },
+	OpLt:     func(p1, p2 ComparableVersion) bool { return p1.Lt(p2) },
+	OpLte:    func(p1, p2 ComparableVersion) bool { return p1.Lte(p2) },
+}
 
 const (
 	OpEq     VersionOperator = iota
@@ -335,9 +378,9 @@ const (
 	OpNeq
 	OpGt
 	OpWeakGt // for ^ operator in semver
-	OpGeq
+	OpGte
 	OpLt
-	OpLe
+	OpLte
 )
 
 func (op VersionOperator) String() string {
@@ -352,11 +395,11 @@ func (op VersionOperator) String() string {
 		return "greater than"
 	case OpWeakGt:
 		return "weak greater than"
-	case OpGeq:
+	case OpGte:
 		return "greater than or equal"
 	case OpLt:
 		return "less than"
-	case OpLe:
+	case OpLte:
 		return "less than or equal"
 	default:
 		return "unknown"
@@ -375,13 +418,38 @@ func (op VersionOperator) ToSign() string {
 		return ">"
 	case OpWeakGt:
 		return "^"
-	case OpGeq:
+	case OpGte:
 		return ">="
 	case OpLt:
 		return "<"
-	case OpLe:
+	case OpLte:
 		return "<="
 	default:
 		return "unknown"
 	}
+}
+
+func (op VersionOperator) Inverse() VersionOperator {
+	switch op {
+	case OpEq:
+		return OpNeq
+	case OpNeq:
+		return OpEq
+	case OpGt:
+		return OpLte
+	case OpWeakGt:
+		return OpLte
+	case OpGte:
+		return OpLt
+	case OpLt:
+		return OpGte
+	case OpLte:
+		return OpGt
+	default:
+		return op
+	}
+}
+
+func (op VersionOperator) Comparator() versionComparator {
+	return operatorFunctions[op]
 }

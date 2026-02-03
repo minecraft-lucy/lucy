@@ -46,6 +46,10 @@ type SourceHandler interface {
 	Name() types.Source
 }
 
+// Raw interfaces are designed for lazy evaluation and conversion to typed
+// structures only when necessary. More functionality can be added to these
+// interfaces as needed.
+
 type (
 	RawProjectSupport interface {
 		ToProjectSupport() types.PlatformSupport

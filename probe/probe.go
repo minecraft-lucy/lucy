@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package local provides functionality to gather and manage server information
+// Package probe provides functionality to gather and manage server information
 // for a Minecraft server. It includes methods to retrieve server configuration,
 // mod list, executable information, and other relevant details. The package
 // utilizes memoization to avoid redundant calculations and resolve any data
@@ -26,23 +26,17 @@ limitations under the License.
 package probe
 
 import (
-	"archive/zip"
-	"encoding/json"
 	"errors"
-	"io"
 	"os"
 	"path"
 	"sort"
-	"strings"
 	"sync"
 
-	"lucy/syntax"
-
-	"github.com/pelletier/go-toml"
+	"lucy/externtype"
+	"lucy/probe/internal/detector"
 
 	"gopkg.in/ini.v1"
 
-	"lucy/datatype"
 	"lucy/logger"
 	"lucy/tools"
 	"lucy/types"
@@ -63,28 +57,21 @@ func buildServerInfo() types.ServerInfo {
 	var mu sync.Mutex
 	var serverInfo types.ServerInfo
 
-	// MCDR Stage
+	// Environment stage
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		mcdrConfig := getMcdrConfig()
-		if mcdrConfig != nil {
-			mu.Lock()
-			serverInfo.Mcdr = &types.McdrInstallation{
-				PluginPaths: mcdrConfig.PluginDirectories,
-			}
-			mu.Unlock()
-		}
+		detector.Environment(".")
 	}()
 
 	// MCDR Plugins
-	if getMcdrConfig() != nil {
+	if detector.GetMcdrPlugins() != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			plugins := getMcdrPlugins()
+			plugins := detector.GetMcdrPlugins()
 			mu.Lock()
-			serverInfo.Mcdr.PluginList = plugins
+			serverInfo.Environments.Mcdr.PluginList = plugins
 			mu.Unlock()
 		}()
 	}
@@ -143,10 +130,11 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		hasLucy := checkHasLucy()
-		mu.Lock()
-		serverInfo.HasLucy = hasLucy
-		mu.Unlock()
+		if checkHasLucy() {
+			mu.Lock()
+			serverInfo.Environments.Lucy = &types.LucyEnv{}
+			mu.Unlock()
+		}
 	}()
 
 	// Check if the server is running
@@ -188,7 +176,7 @@ var getServerModPath = tools.Memoize(
 
 var getServerWorkPath = tools.Memoize(
 	func() string {
-		if mcdrConfig := getMcdrConfig(); mcdrConfig != nil {
+		if mcdrConfig := detector.GetMcdrConfig(); mcdrConfig != nil {
 			return mcdrConfig.WorkingDirectory
 		}
 		return "."
@@ -196,12 +184,12 @@ var getServerWorkPath = tools.Memoize(
 )
 
 var getServerDotProperties = tools.Memoize(
-	func() MinecraftServerDotProperties {
+	func() externtype.MinercaftServerProperties {
 		exec := getExecutableInfo()
 		propertiesPath := path.Join(getServerWorkPath(), "server.properties")
 		file, err := ini.Load(propertiesPath)
 		if err != nil {
-			if exec != UnknownExecutable {
+			if exec != detector.UnknownExecutable {
 				logger.Warn(errors.New("this server is missing a server.properties"))
 			}
 			return nil
@@ -247,11 +235,8 @@ var getMods = tools.Memoize(
 		}
 
 		for _, jarPath := range jarPaths {
-			jar, err := os.Open(jarPath)
-			if err != nil {
-				continue
-			}
-			analyzed := analyzeModJar(jar)
+			// Use the new detector-based approach
+			analyzed := detector.Mod(jarPath)
 			if analyzed != nil {
 				mods = append(mods, analyzed...)
 			}
@@ -264,160 +249,3 @@ var getMods = tools.Memoize(
 		return mods
 	},
 )
-
-const (
-	fabricModIdentifierFile   = "fabric.mod.json"
-	oldForgeModIdentifierFile = "META-INF/mcmod.info"
-	newForgeModIdentifierFile = "META-INF/mods.toml"
-)
-
-// analyzeModJar is now a single large function, but it will be later split into
-// smaller functions according to different mod loaders. This function will keep
-// serve as an entry point to the mod analysis process.
-//
-// According to current information, all mod analysis can be summarized into the
-// following process:
-// 1. Check for the identifier file
-// 2. Analyze informative files
-// 3. Fill in the Package struct
-func analyzeModJar(file *os.File) (packages []types.Package) {
-	stat, err := file.Stat()
-	if err != nil {
-		return nil
-	}
-	zipReader, err := zip.NewReader(file, stat.Size())
-	if err != nil {
-		return nil
-	}
-
-	packages = []types.Package{}
-
-	for _, f := range zipReader.File {
-		// fabric check
-		if f.Name == fabricModIdentifierFile {
-			rr, err := f.Open()
-			data, err := io.ReadAll(rr)
-			modInfo := &datatype.FabricModIdentifier{}
-			err = json.Unmarshal(data, modInfo)
-			if err != nil {
-				return nil
-			}
-
-			packages = append(
-				packages,
-				types.Package{
-					Id: types.PackageId{
-						Platform: types.Fabric,
-						Name:     syntax.PackageName(modInfo.Id),
-						Version:  types.RawVersion(modInfo.Version),
-					},
-					Local: &types.PackageInstallation{
-						Path: file.Name(),
-					},
-					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-				},
-			)
-
-			return packages
-		}
-
-		// check for old forge identifier
-		if f.Name == oldForgeModIdentifierFile {
-			rr, err := f.Open()
-			data, err := io.ReadAll(rr)
-			if err != nil {
-				return nil
-			}
-			modInfos := &datatype.ForgeModIdentifierOld{}
-			err = json.Unmarshal(data, modInfos)
-			if err != nil {
-				return nil
-			}
-
-			for _, modInfo := range *modInfos {
-				p := types.Package{
-					Id: types.PackageId{
-						Platform: types.Forge,
-						Name:     syntax.PackageName(modInfo.ModId),
-						Version:  types.RawVersion(modInfo.Version),
-					},
-					Local: &types.PackageInstallation{
-						Path: file.Name(),
-					},
-					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-				}
-				if p.Id.Version == "${file.jarVersion}" {
-					p.Id.Version = getForgeVariableVersion(zipReader)
-				}
-				packages = append(packages, p)
-			}
-
-			return packages
-		}
-
-		// check for new forge identifier
-		if f.Name == newForgeModIdentifierFile {
-			rr, err := f.Open()
-			data, err := io.ReadAll(rr)
-			if err != nil {
-				return nil
-			}
-			modInfo := &datatype.ForgeModIdentifierNew{}
-
-			err = toml.Unmarshal(data, modInfo)
-			if err != nil {
-				return nil
-			}
-
-			for _, mod := range modInfo.Mods {
-				p := types.Package{
-					Id: types.PackageId{
-						Platform: types.Forge,
-						Name:     types.ProjectName(mod.ModID),
-						Version:  types.RawVersion(mod.Version),
-					},
-					Local: &types.PackageInstallation{
-						Path: file.Name(),
-					},
-					Dependencies: nil, // TODO: This is not yet implemented, because the deps field is an expression, we need to parse it
-				}
-				if p.Id.Version == "${file.jarVersion}" {
-					p.Id.Version = getForgeVariableVersion(zipReader)
-				}
-				packages = append(packages, p)
-			}
-
-			return packages
-		}
-
-	}
-
-	return nil
-}
-
-func getForgeVariableVersion(zip *zip.Reader) types.RawVersion {
-	var r io.ReadCloser
-	var err error
-	for _, f := range zip.File {
-		if f.Name == javaManifest {
-			r, err = f.Open()
-			if err != nil {
-				return types.UnknownVersion
-			}
-		}
-	}
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return types.UnknownVersion
-	}
-	manifest := string(data)
-	const versionField = "Implementation-Version: "
-	i := strings.Index(manifest, versionField) + len(versionField)
-	if i == -1 {
-		return types.UnknownVersion
-	}
-	v := manifest[i:]
-	v = strings.Split(v, "\r")[0]
-	v = strings.Split(v, "\n")[0]
-	return types.RawVersion(v)
-}
