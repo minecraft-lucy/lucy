@@ -18,18 +18,24 @@ tasks:
       - GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -tags release -o release/lucy-darwin-amd64
       - GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -tags release -o release/lucy-darwin-arm64
     sources: [./**/*.go, go.mod, .go.sum]
-    generates: [dist/lucy-darwin-arm64-debug]
-  build-debug:
-    desc: Build a binary for debugging
+  build-dev:
+    desc: Build a binary for development purposes (on macOS)
     deps: [cleanup-dist]
     cmds:
-      - GOOS=darwin GOARCH=arm64 go build -tags debug -o dist/lucy-darwin-arm64-debug
+      - GOOS=darwin GOARCH=arm64 go build -tags debug -o dist/lucy-darwin-arm64-dev
     sources: [./**/*.go, ./go.mod, ./go.sum]
-    generates: [dist/lucy-darwin-arm64-debug]
+    generates: [dist/lucy-darwin-arm64-dev]
     vars:
       INTERVAL: 1s
       DELAY: 500ms
+  build-watch:
+    desc: Build a debug binary on file changes
+    deps: [build-dev]
+    cmds:
+      - task build-dev
+    watch: true
+    sources: ["./**/*.go", "./go.mod", "./go.sum"]
   run:
-    deps: [build-debug]
+    deps: [build-dev]
     cmds:
       - ./dist/lucy-darwin-arm64-debug
