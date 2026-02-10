@@ -2,9 +2,10 @@ package detector
 
 import (
 	"io"
-	"lucy/types"
 	"os"
 	"strings"
+
+	"lucy/types"
 )
 
 // analyzeForgeArgFile parses Forge argument files to extract version information

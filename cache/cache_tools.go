@@ -3,12 +3,13 @@ package cache
 import (
 	"crypto/md5"
 	"fmt"
-	"lucy/global"
-	"lucy/logger"
 	"os"
 	"path"
 	"slices"
 	"time"
+
+	"lucy/global"
+	"lucy/logger"
 )
 
 var hash = func(data []byte) string { return fmt.Sprintf("%x", md5.Sum(data)) }

@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+
 	"lucy/logger"
 	"lucy/tools"
-	"net/http"
 )
 
 func GetFileFromGitHub(apiEndpoint string) (

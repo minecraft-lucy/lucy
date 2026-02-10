@@ -22,8 +22,10 @@ MODE="${1:-add}"
 
 cd "$(dirname "$0")" || exit 1
 
-mapfile -t copyright_lines <<< "$COPYRIGHT"
-copyright_line_count=${#copyright_lines[@]}
+header_file="$(mktemp)"
+printf "%s" "$COPYRIGHT" > "$header_file"
+copyright_line_count=$(wc -l < "$header_file" | tr -d ' ')
+trap 'rm -f "$header_file"' EXIT
 
 apply_add() {
     local file="$1"
@@ -44,13 +46,9 @@ apply_remove() {
         return 0
     fi
 
-    mapfile -t file_head < <(head -n "$copyright_line_count" "$file")
-    local i
-    for i in "${!copyright_lines[@]}"; do
-        if [[ "${file_head[$i]:-}" != "${copyright_lines[$i]}" ]]; then
-            return 0
-        fi
-    done
+    if ! head -n "$copyright_line_count" "$file" | cmp -s - "$header_file"; then
+        return 0
+    fi
 
     tail -n +$((copyright_line_count + 1)) "$file" > "${file}.tmp"
     mv "${file}.tmp" "$file"

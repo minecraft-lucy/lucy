@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"lucy/logger"
-	"lucy/tools"
 	"os"
 	"path"
 	"time"
+
+	"lucy/logger"
+	"lucy/tools"
 )
 
 const (
@@ -131,7 +132,7 @@ func updateManifest(filepath string, manifest *manifest) (err error) {
 	}
 
 	// write to the tmp file
-	err = os.WriteFile(tempFile, data, 0600)
+	err = os.WriteFile(tempFile, data, 0o600)
 	if err != nil {
 		// remove the tmp file if write failed
 		logger.Warn(os.Remove(tempFile))

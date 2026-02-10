@@ -2,12 +2,13 @@ package cache
 
 import (
 	"fmt"
-	"lucy/global"
-	"lucy/logger"
-	"lucy/tools"
 	"os"
 	"path"
 	"time"
+
+	"lucy/global"
+	"lucy/logger"
+	"lucy/tools"
 )
 
 // This is traditional OOP

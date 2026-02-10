@@ -1,19 +1,3 @@
-/*
-Copyright 2024 4rcadia
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 // Package modrinth provides functions to interact with Modrinth API
 //
 // We here use Modrinth terms in private functions:
@@ -31,8 +15,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"lucy/tools"
 	"net/http"
+
+	"lucy/tools"
 
 	"lucy/remote"
 	"lucy/types"
@@ -53,8 +38,8 @@ var Self self
 // For Modrinth search API, see:
 // https://docs.modrinth.com/api/operations/searchprojects/
 func (s self) Search(
-query string,
-options types.SearchOptions,
+	query string,
+	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	var facets []facetItems
 	switch options.Platform {
@@ -100,8 +85,8 @@ options types.SearchOptions,
 }
 
 func (s self) Fetch(id types.PackageId) (
-remote remote.RawPackageRemote,
-err error,
+	remote remote.RawPackageRemote,
+	err error,
 ) {
 	id, err = s.ParseAmbiguousVersion(id)
 	version, err := getVersion(id)
@@ -112,8 +97,8 @@ err error,
 }
 
 func (s self) Information(name types.ProjectName) (
-info remote.RawProjectInformation,
-err error,
+	info remote.RawProjectInformation,
+	err error,
 ) {
 	project, err := getProjectByName(name)
 	if err != nil {
@@ -125,8 +110,8 @@ err error,
 // Support from Modrinth API is extremely unreliable. A local check (if any
 // files were downloaded) is recommended.
 func (s self) Support(name types.ProjectName) (
-supports remote.RawProjectSupport,
-err error,
+	supports remote.RawProjectSupport,
+	err error,
 ) {
 	project, err := getProjectByName(name)
 	if err != nil {
@@ -138,16 +123,16 @@ err error,
 var ErrInvalidAPIResponse = errors.New("invalid data from modrinth api")
 
 func (s self) Dependencies(id types.PackageId) (
-deps remote.RawPackageDependencies,
-err error,
+	deps remote.RawPackageDependencies,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(p types.PackageId) (
-parsed types.PackageId,
-err error,
+	parsed types.PackageId,
+	err error,
 ) {
 	parsed.Platform = p.Platform
 	parsed.Name = p.Name
