@@ -3,6 +3,14 @@
 version: "3"
 
 tasks:
+  copyright-add:
+    desc: Add missing copyright headers to Go files
+    cmds:
+      - ./copyright.sh add
+  copyright-remove:
+    desc: Remove copyright headers from Go files
+    cmds:
+      - ./copyright.sh remove
   cleanup-dist:
     cmds:
       - rm -rf dist

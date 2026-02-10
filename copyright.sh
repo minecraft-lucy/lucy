@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 COPYRIGHT='/*
 Copyright 2024 4rcadia
 
@@ -16,9 +18,55 @@ limitations under the License.
 */
 '
 
-cd $(dirname "$0") || exit 1
-find . -name "*.go" -type f -not -path "*/\.*" | xargs grep -L "Copyright 2024 4rcadia" | while read file; do
-    echo "$COPYRIGHT" >temp_file
-    cat "$file" >>temp_file
-    mv temp_file "$file"
+MODE="${1:-add}"
+
+cd "$(dirname "$0")" || exit 1
+
+mapfile -t copyright_lines <<< "$COPYRIGHT"
+copyright_line_count=${#copyright_lines[@]}
+
+apply_add() {
+    local file="$1"
+    if grep -q "Copyright 2024 4rcadia" "$file"; then
+        return 0
+    fi
+
+    {
+        printf "%s" "$COPYRIGHT"
+        cat "$file"
+    } > "${file}.tmp"
+    mv "${file}.tmp" "$file"
+}
+
+apply_remove() {
+    local file="$1"
+    if ! grep -q "Copyright 2024 4rcadia" "$file"; then
+        return 0
+    fi
+
+    mapfile -t file_head < <(head -n "$copyright_line_count" "$file")
+    local i
+    for i in "${!copyright_lines[@]}"; do
+        if [[ "${file_head[$i]:-}" != "${copyright_lines[$i]}" ]]; then
+            return 0
+        fi
+    done
+
+    tail -n +$((copyright_line_count + 1)) "$file" > "${file}.tmp"
+    mv "${file}.tmp" "$file"
+}
+
+find . -name "*.go" -type f -not -path "*/\.*" | while read -r file; do
+    case "$MODE" in
+        add)
+            apply_add "$file"
+            ;;
+        remove)
+            apply_remove "$file"
+            ;;
+        *)
+            echo "Usage: $0 [add|remove]" >&2
+            exit 2
+            ;;
+    esac
 done
