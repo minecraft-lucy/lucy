@@ -14,7 +14,7 @@ type ServerInfo struct {
 	ModPath      string
 	Packages     []Package
 	Executable   *ExecutableInfo
-	Activity     *Activity
+	Activity     *ServerActivity
 	Environments EnvironmentInfo
 }
 
@@ -26,7 +26,7 @@ type ExecutableInfo struct {
 	BootCommand    *exec.Cmd
 }
 
-type Activity struct {
+type ServerActivity struct {
 	Active bool
 	Pid    int
 }
@@ -36,11 +36,8 @@ type EnvironmentInfo struct {
 	Mcdr *McdrEnv
 }
 
-type McdrEnv struct {
-	ConfigPath string
-	Config     *exttype.FileMcdrConfig
-}
+type McdrEnv exttype.FileMcdrConfig
 
-type LucyEnv struct {
-	ConfigPath string
-}
+// LucyEnv is a placeholder for Lucy environment; currently just a boolean
+// indicating presence, but can be expanded with more details if needed
+type LucyEnv bool

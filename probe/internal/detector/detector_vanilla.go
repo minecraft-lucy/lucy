@@ -58,5 +58,5 @@ func (d *VanillaDetector) Detect(
 }
 
 func init() {
-	RegisterExecutableDetector(&VanillaDetector{})
+	registerExecutableDetector(&VanillaDetector{})
 }

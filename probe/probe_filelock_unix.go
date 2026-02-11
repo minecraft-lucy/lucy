@@ -36,13 +36,13 @@ import (
 )
 
 var checkServerFileLock = tools.Memoize(
-	func() *types.Activity {
-		if getSavePath() == "" {
+	func() *types.ServerActivity {
+		if savePath() == "" {
 			return nil
 		}
 
 		lockPath := path.Join(
-			getSavePath(),
+			savePath(),
 			"session.lock",
 		)
 		// Try lsof before using the file lock check. As the file lock check is
@@ -52,7 +52,7 @@ var checkServerFileLock = tools.Memoize(
 			return nil
 		}
 		if pid != 0 {
-			return &types.Activity{
+			return &types.ServerActivity{
 				Active: true,
 				Pid:    pid,
 			}
@@ -77,12 +77,12 @@ var checkServerFileLock = tools.Memoize(
 				fmt.Errorf("activity detected but cannot get pid: %w", err),
 			)
 			if err != nil {
-				return &types.Activity{
+				return &types.ServerActivity{
 					Active: true,
 					Pid:    0,
 				}
 			}
-			return &types.Activity{
+			return &types.ServerActivity{
 				Active: true,
 				Pid:    int(fl.Pid),
 			}
@@ -95,7 +95,7 @@ var checkServerFileLock = tools.Memoize(
 			logger.Warn(err)
 		}
 
-		return &types.Activity{
+		return &types.ServerActivity{
 			Active: false,
 			Pid:    0,
 		}

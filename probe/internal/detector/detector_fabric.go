@@ -284,7 +284,7 @@ func (d *fabricModDetector) buildDependency(
 }
 
 func init() {
-	RegisterExecutableDetector(&fabricServerSingleFileDetector{})
-	RegisterExecutableDetector(&fabricServerLauncherDetector{})
-	RegisterModDetector(&fabricModDetector{})
+	registerExecutableDetector(&fabricServerSingleFileDetector{})
+	registerExecutableDetector(&fabricServerLauncherDetector{})
+	registerModDetector(&fabricModDetector{})
 }

@@ -4,14 +4,13 @@
 // utilizes memoization to avoid redundant calculations and resolve any data
 // dependencies issues. Therefore, all probe functions are 100% concurrent-safe.
 //
-// The main exposed function is GetServerInfo, which returns a comprehensive
+// The main exposed function is ServerInfo, which returns a comprehensive
 // ServerInfo struct containing all the gathered information. To avoid side
 // effects, the ServerInfo struct is returned as a copy, rather than reference.
 package probe
 
 import (
 	"errors"
-	"os"
 	"path"
 	"sort"
 	"sync"
@@ -26,11 +25,11 @@ import (
 	"lucy/types"
 )
 
-// GetServerInfo is the exposed function for external packages to get serverInfo.
+// ServerInfo is the exposed function for external packages to get serverInfo.
 // As we can assume that the environment does not change while the program is
 // running, a sync.Once is used to prevent further calls to this function. Rather,
 // the cached serverInfo is used as the return value.
-var GetServerInfo = tools.Memoize(buildServerInfo)
+var ServerInfo = tools.Memoize(buildServerInfo)
 
 // buildServerInfo builds the server information by performing several checks
 // and gathering data from various sources. It uses goroutines to perform these
@@ -45,14 +44,17 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		detector.Environment(".")
+		env := getEnvironment()
+		mu.Lock()
+		serverInfo.Environments = env
+		mu.Unlock()
 	}()
 
 	// Server Work Path
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		workPath := getServerWorkPath()
+		workPath := workPath()
 		mu.Lock()
 		serverInfo.WorkPath = workPath
 		mu.Unlock()
@@ -72,7 +74,7 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		modPath := getServerModPath()
+		modPath := modPaths()
 		mu.Lock()
 		serverInfo.ModPath = modPath
 		mu.Unlock()
@@ -82,7 +84,7 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		packages := getMods()
+		packages := installedPackages()
 		mu.Lock()
 		serverInfo.Packages = packages
 		mu.Unlock()
@@ -92,22 +94,15 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		savePath := getSavePath()
+		savePath := savePath()
 		mu.Lock()
 		serverInfo.SavePath = savePath
 		mu.Unlock()
 	}()
 
-	// Check for Lucy installation
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if checkHasLucy() {
-			mu.Lock()
-			serverInfo.Environments.Lucy = &types.LucyEnv{}
-			mu.Unlock()
-		}
-	}()
+	// TODO: Check for .lucy path
+	// However, the local installation method is not determined yet, so this is
+	// just a placeholder for now.
 
 	// Check if the server is running
 	wg.Add(1)
@@ -123,7 +118,7 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		modPath := getServerModPath()
+		modPath := modPaths()
 		mu.Lock()
 		serverInfo.ModPath = modPath
 		mu.Unlock()
@@ -134,31 +129,38 @@ func buildServerInfo() types.ServerInfo {
 }
 
 // Some functions that gets a single piece of information. They are not exported,
-// as GetServerInfo() applies a memoization mechanism. Every time a serverInfo
-// is needed, just call GetServerInfo() without the concern of redundant calculation.
+// as ServerInfo() applies a memoization mechanism. Every time a serverInfo
+// is needed, just call ServerInfo() without the concern of redundant calculation.
 
-var getServerModPath = tools.Memoize(
+var modPaths = tools.Memoize(
 	func() string {
 		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == types.Fabric || exec.LoaderPlatform == types.Forge) {
-			return path.Join(getServerWorkPath(), "mods")
+			return path.Join(workPath(), "mods")
 		}
 		return ""
 	},
 )
 
-var getServerWorkPath = tools.Memoize(
+var getEnvironment = tools.Memoize(
+	func() types.EnvironmentInfo {
+		return detector.Environment(".")
+	},
+)
+
+var workPath = tools.Memoize(
 	func() string {
-		if mcdrConfig := detector.GetMcdrConfig(); mcdrConfig != nil {
-			return mcdrConfig.WorkingDirectory
+		env := getEnvironment()
+		if env.Mcdr != nil {
+			return env.Mcdr.WorkingDirectory
 		}
 		return "."
 	},
 )
 
-var getServerDotProperties = tools.Memoize(
+var serverProperties = tools.Memoize(
 	func() exttype.FileMinercaftServerProperties {
 		exec := getExecutableInfo()
-		propertiesPath := path.Join(getServerWorkPath(), "server.properties")
+		propertiesPath := path.Join(workPath(), "server.properties")
 		file, err := ini.Load(propertiesPath)
 		if err != nil {
 			if exec != UnknownExecutable {
@@ -178,27 +180,20 @@ var getServerDotProperties = tools.Memoize(
 	},
 )
 
-var getSavePath = tools.Memoize(
+var savePath = tools.Memoize(
 	func() string {
-		serverProperties := getServerDotProperties()
+		serverProperties := serverProperties()
 		if serverProperties == nil {
 			return ""
 		}
 		levelName := serverProperties["level-name"]
-		return path.Join(getServerWorkPath(), levelName)
+		return path.Join(workPath(), levelName)
 	},
 )
 
-var checkHasLucy = tools.Memoize(
-	func() bool {
-		_, err := os.Stat(".lucy")
-		return err == nil
-	},
-)
-
-var getMods = tools.Memoize(
+var installedPackages = tools.Memoize(
 	func() (mods []types.Package) {
-		path := getServerModPath()
+		path := modPaths()
 		jarPaths, err := findJar(path)
 		if err != nil {
 			logger.Warn(err)

@@ -257,6 +257,6 @@ func (d *forgeModDetector) Detect(
 // }
 
 func init() {
-	RegisterExecutableDetector(&forgeServerDetector{})
-	RegisterModDetector(&forgeModDetector{})
+	registerExecutableDetector(&forgeServerDetector{})
+	registerModDetector(&forgeModDetector{})
 }

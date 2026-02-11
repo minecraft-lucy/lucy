@@ -51,7 +51,7 @@ var actionAdd cli.ActionFunc = func(
 	id := syntax.Parse(cmd.Args().First())
 
 	// probe server info
-	serverInfo := probe.GetServerInfo()
+	serverInfo := probe.ServerInfo()
 
 	// ensure we are in a lucy-managed server
 	// TODO: Disabled for now, the part for building the program directory is not done
@@ -84,7 +84,7 @@ var actionAdd cli.ActionFunc = func(
 	case types.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
 	case types.Mcdr:
-		dir = serverInfo.Environments.Mcdr.Config.PluginDirectories[0]
+		dir = serverInfo.Environments.Mcdr.PluginDirectories[0]
 	case types.Forge, types.Fabric:
 		dir = serverInfo.ModPath
 	default:
@@ -159,7 +159,4 @@ var actionAdd cli.ActionFunc = func(
 		logger.ErrorNow(fmt.Errorf("download failed: %w", err))
 	}
 	return nil
-}
-
-func cmdAddInstall() {
 }

@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"os"
+	"path"
 
 	"lucy/logger"
 	"lucy/tools"
@@ -36,7 +37,7 @@ func Executable(filePath string) *types.ExecutableInfo {
 	}
 
 	var candidates []*types.ExecutableInfo
-	detectors := GetExecutableDetectors()
+	detectors := getExecutableDetectors()
 
 	for _, detector := range detectors {
 		result, err := detector.Detect(filePath, zipReader, file)
@@ -59,7 +60,7 @@ func Executable(filePath string) *types.ExecutableInfo {
 	return candidates[0]
 }
 
-// Mod analyzes a JAR file for mods using all registered mod detectors
+// Mod analyzes a mod/plugin file
 func Mod(filePath string) (res []types.Package) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -72,35 +73,42 @@ func Mod(filePath string) (res []types.Package) {
 		return nil
 	}
 
-	zipReader, err := zip.NewReader(file, stat.Size())
-	if err != nil {
-		return nil
-	}
-
-	detectors := GetModDetectors()
-
-	for _, detector := range detectors {
-		packages, err := detector.Detect(zipReader, file)
-		if err != nil || packages == nil {
-			continue
+	switch path.Ext(filePath) {
+	case ".jar", ".zip":
+		zipReader, err := zip.NewReader(file, stat.Size())
+		if err != nil {
+			return nil
 		}
-		res = append(res, packages...)
+		for _, detector := range getModDetectors() {
+			result, err := detector.Detect(zipReader, file)
+			if err != nil || result == nil {
+				continue
+			}
+			res = append(res, result...)
+		}
+	case ".pyz", ".mcdr":
+		zipReader, err := zip.NewReader(file, stat.Size())
+		if err != nil {
+			return nil
+		}
+		detector := getOtherPackageDetectors()["mcdr plugin"]
+		result, err := detector.Detect(zipReader, file)
+		if err != nil || result == nil {
+			return nil
+		}
+		res = append(res, result...)
+	default:
+		return nil
 	}
 
 	return
 }
 
 // Environment checks for environment indicators (like MCDR)
-func Environment(workDir string) (env types.EnvironmentInfo) {
-	detectors := GetEnvironmentDetectors()
+func Environment(dir string) (env types.EnvironmentInfo) {
+	detectors := getEnvironmentDetectors()
 	for _, detector := range detectors {
-		data := detector.Detect(workDir)
-		if detector.Name() == "mcdr" && data != nil {
-			env.Mcdr = data.(*types.McdrEnv)
-		}
-		if detector.Name() == "lucy" && data != nil {
-			env.Lucy = data.(*types.LucyEnv)
-		}
+		detector.Detect(dir, &env)
 	}
 	return
 }

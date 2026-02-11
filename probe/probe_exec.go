@@ -19,7 +19,7 @@ var UnknownExecutable = detector.UnknownExecutable
 var getExecutableInfo = tools.Memoize(
 	func() *types.ExecutableInfo {
 		var valid []*types.ExecutableInfo
-		workPath := getServerWorkPath()
+		workPath := workPath()
 
 		// Layered search
 		// 1. pwd

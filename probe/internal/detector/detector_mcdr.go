@@ -26,18 +26,18 @@ func (d *McdrDetector) Name() string {
 	return "mcdr"
 }
 
-func (d *McdrDetector) Detect(workDir string) any {
-	configPath := path.Join(workDir, mcdrConfigFileName)
+func (d *McdrDetector) Detect(dir string, env *types.EnvironmentInfo) {
+	configPath := path.Join(dir, mcdrConfigFileName)
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil
+		return
 	}
 
 	// File exists, try to read it
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		logger.Warn(err)
-		return nil
+		return
 	}
 	defer func(configFile io.ReadCloser) {
 		err := configFile.Close()
@@ -49,113 +49,20 @@ func (d *McdrDetector) Detect(workDir string) any {
 	configData, err := io.ReadAll(configFile)
 	if err != nil {
 		logger.Warn(err)
-		return nil
+		return
 	}
 
 	config := &exttype.FileMcdrConfig{}
 	if err := yaml.Unmarshal(configData, config); err != nil {
 		logger.Warn(err)
-		return nil
+		return
 	}
-
-	return config
+	env.Mcdr = (*types.McdrEnv)(config)
 }
 
 func init() {
-	RegisterEnvironmentDetector(&McdrDetector{})
-	RegisterModDetector(&McdrPluginDetector{})
-}
-
-// GetMcdrConfig uses the new environment detector to check for MCDR installation
-var GetMcdrConfig = tools.Memoize(
-	func() (config *exttype.FileMcdrConfig) {
-		environment := Environment(".")
-
-		if environment.Mcdr != nil {
-			return environment.Mcdr.Config
-		}
-
-		return nil
-	},
-)
-
-var GetMcdrPlugins = tools.Memoize(
-	func() (plugins []types.Package) {
-		plugins = make([]types.Package, 0)
-		// Remember that MCDR can have multiple plugin directories
-		pluginDirectories := GetMcdrConfig().PluginDirectories
-		if pluginDirectories == nil {
-			return plugins
-		}
-		for _, pluginDirectory := range pluginDirectories {
-			pluginEntry, _ := os.ReadDir(pluginDirectory)
-			for _, pluginPath := range pluginEntry {
-				if path.Ext(pluginPath.Name()) != ".mcdr" {
-					continue
-				}
-				pluginFile, err := os.Open(
-					path.Join(
-						pluginDirectory,
-						pluginPath.Name(),
-					),
-				)
-				defer tools.CloseReader(pluginFile, logger.Warn)
-				if err != nil {
-					logger.Warn(err)
-					continue
-				}
-				plugin, err := analyzeMcdrPlugin(pluginFile)
-				if err != nil {
-					logger.Warn(err)
-					continue
-				}
-				plugins = append(plugins, *plugin)
-			}
-		}
-		return plugins
-	},
-)
-
-func analyzeMcdrPlugin(file *os.File) (
-	plugin *types.Package,
-	err error,
-) {
-	stat, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	r, err := zip.NewReader(file, stat.Size())
-	if err != nil {
-		return nil, err
-	}
-
-	for _, f := range r.File {
-		if f.Name == "mcdreforged.plugin.json" {
-			rr, err := f.Open()
-			data, err := io.ReadAll(rr)
-			if err != nil {
-				return nil, err
-			}
-			pluginInfo := &exttype.FileMcdrPluginIdentifier{}
-			err = json.Unmarshal(data, pluginInfo)
-			if err != nil {
-				return nil, err
-			}
-			return &types.Package{
-				Id: types.PackageId{
-					Platform: types.Mcdr,
-					Name:     syntax.ToProjectName(pluginInfo.Id),
-					Version:  types.RawVersion(pluginInfo.Version),
-				},
-				Local: &types.PackageInstallation{
-					Path: file.Name(),
-				},
-				Dependencies: nil, // TODO: This is not yet implemented, mcdr includes external (python packages) dependencies
-			}, nil
-		}
-	}
-
-	return
+	registerEnvironmentDetector(&McdrDetector{})
+	registerOtherPackageDetector(&McdrPluginDetector{})
 }
 
 type McdrPluginDetector struct{}

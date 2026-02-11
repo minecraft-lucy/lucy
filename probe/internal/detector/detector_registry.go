@@ -2,53 +2,63 @@ package detector
 
 // detectorRegistry manages registered detectors
 type detectorRegistry struct {
-	executableDetectors  []ExecutableDetector
-	modDetectors         []ModDetector
-	environmentDetectors []EnvironmentDetector
+	executableDetectors   []ExecutableDetector
+	jarPackageDetectors   []PackageDetector
+	otherPackageDetectors map[string]PackageDetector
+	environmentDetectors  []EnvironmentDetector
 }
 
 // Global registry instance
 var registry = &detectorRegistry{
-	executableDetectors:  make([]ExecutableDetector, 0),
-	modDetectors:         make([]ModDetector, 0),
-	environmentDetectors: make([]EnvironmentDetector, 0),
+	executableDetectors:   make([]ExecutableDetector, 0),
+	jarPackageDetectors:   make([]PackageDetector, 0),
+	otherPackageDetectors: make(map[string]PackageDetector),
+	environmentDetectors:  make([]EnvironmentDetector, 0),
 }
 
-// RegisterExecutableDetector adds a new executable detector to the registry
-func RegisterExecutableDetector(detector ExecutableDetector) {
+// registerExecutableDetector adds a new executable detector to the registry
+func registerExecutableDetector(detector ExecutableDetector) {
 	registry.executableDetectors = append(
 		registry.executableDetectors,
 		detector,
 	)
-	// Priority mechanism removed: retain insertion order
 }
 
-// RegisterModDetector adds a new mod detector to the registry
-func RegisterModDetector(detector ModDetector) {
-	registry.modDetectors = append(registry.modDetectors, detector)
-	// Priority mechanism removed: retain insertion order
+// registerModDetector adds a new mod detector to the registry
+func registerModDetector(detector PackageDetector) {
+	registry.jarPackageDetectors = append(
+		registry.jarPackageDetectors,
+		detector,
+	)
 }
 
-// RegisterEnvironmentDetector adds a new environment detector to the registry
-func RegisterEnvironmentDetector(detector EnvironmentDetector) {
+func registerOtherPackageDetector(detector PackageDetector) {
+	registry.otherPackageDetectors[detector.Name()] = detector
+}
+
+// registerEnvironmentDetector adds a new environment detector to the registry
+func registerEnvironmentDetector(detector EnvironmentDetector) {
 	registry.environmentDetectors = append(
 		registry.environmentDetectors,
 		detector,
 	)
-	// Priority mechanism removed: retain insertion order
 }
 
-// GetExecutableDetectors returns all registered executable detectors
-func GetExecutableDetectors() []ExecutableDetector {
+// getExecutableDetectors returns all registered executable detectors
+func getExecutableDetectors() []ExecutableDetector {
 	return registry.executableDetectors
 }
 
-// GetModDetectors returns all registered mod detectors
-func GetModDetectors() []ModDetector {
-	return registry.modDetectors
+// getModDetectors returns all registered mod detectors
+func getModDetectors() []PackageDetector {
+	return registry.jarPackageDetectors
 }
 
-// GetEnvironmentDetectors returns all registered environment detectors
-func GetEnvironmentDetectors() []EnvironmentDetector {
+func getOtherPackageDetectors() map[string]PackageDetector {
+	return registry.otherPackageDetectors
+}
+
+// getEnvironmentDetectors returns all registered environment detectors
+func getEnvironmentDetectors() []EnvironmentDetector {
 	return registry.environmentDetectors
 }

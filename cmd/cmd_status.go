@@ -29,7 +29,7 @@ var actionStatus cli.ActionFunc = func(
 	_ context.Context,
 	cmd *cli.Command,
 ) error {
-	serverInfo := probe.GetServerInfo()
+	serverInfo := probe.ServerInfo()
 	if cmd.Bool("json") {
 		tools.PrintAsJson(serverInfo)
 	} else {

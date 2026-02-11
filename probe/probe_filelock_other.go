@@ -20,6 +20,6 @@ package probe
 
 import "lucy/types"
 
-func checkServerFileLock() *types.Activity {
+func checkServerFileLock() *types.ServerActivity {
 	return nil
 }

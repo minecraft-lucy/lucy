@@ -32,9 +32,9 @@ import (
 // This is AI generated code, please check it before use. I have no knowledge to
 // Windows syscall.
 var checkServerFileLock = tools.Memoize(
-	func() *types.Activity {
+	func() *types.ServerActivity {
 		lockPath := path.Join(
-			getSavePath(),
+			savePath(),
 			"session.lock",
 		)
 		file, err := os.OpenFile(lockPath, os.O_RDWR, 0o666)
@@ -59,7 +59,7 @@ var checkServerFileLock = tools.Memoize(
 				&info,
 			)
 			if err == nil {
-				return &types.Activity{
+				return &types.ServerActivity{
 					Active: true,
 					Pid:    int(info.VolumeSerialNumber),
 				}
@@ -76,7 +76,7 @@ var checkServerFileLock = tools.Memoize(
 			return nil
 		}
 
-		return &types.Activity{
+		return &types.ServerActivity{
 			Active: false,
 			Pid:    0,
 		}
