@@ -45,9 +45,9 @@ func (d *VanillaDetector) Detect(
 			}
 
 			exec := &types.ExecutableInfo{
-				Path:           filePath,
-				LoaderPlatform: types.Minecraft,
-				GameVersion:    types.RawVersion(obj.Id),
+				Path:        filePath,
+				ModLoader:   types.Minecraft,
+				GameVersion: types.RawVersion(obj.Id),
 			}
 
 			return exec, nil

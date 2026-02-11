@@ -1,8 +1,10 @@
 package probe
 
 import (
+	"fmt"
 	"os"
 	"path"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -15,6 +17,8 @@ import (
 
 var UnknownExecutable = detector.UnknownExecutable
 
+const multiThreadThreshold = 10
+
 // getExecutableInfo uses the new detector-based architecture to find server executables
 var getExecutableInfo = tools.Memoize(
 	func() *types.ExecutableInfo {
@@ -26,8 +30,7 @@ var getExecutableInfo = tools.Memoize(
 		// Proceed to step 2 no matter the result
 		jars, err := findJar(workPath)
 		if err != nil {
-			logger.Warn(err)
-			logger.Info("cannot read the current directory")
+			logger.Warn(fmt.Errorf("cannot read server directory: %w", err))
 		}
 		for _, jar := range jars {
 			exec := detector.Executable(jar)
@@ -39,42 +42,69 @@ var getExecutableInfo = tools.Memoize(
 
 		// 2. Forge/Fabric installation paths
 		// Will break after found
+		fabricLib := path.Join(workPath, "libraries", "net", "fabricmc")
+		forgeLib := path.Join(workPath, "libraries", "net", "minecraftforge")
+		var forgeJars, fabricJars []string
+
+		if stat, err := os.Stat(fabricLib); err == nil && stat.IsDir() {
+			fabricJars, err = findJar(fabricLib)
+			if err != nil {
+				logger.Warn(fmt.Errorf("cannot read fabric libraries: %w", err))
+			}
+		}
+
+		if stat, err := os.Stat(forgeLib); err == nil && stat.IsDir() {
+			forgeJars, err = findJar(forgeLib)
+			if err != nil {
+				logger.Warn(fmt.Errorf("cannot read forge libraries: %w", err))
+			}
+		}
+		jars = slices.Concat(forgeJars, fabricJars)
+
+		for _, jar := range jars {
+			exec := detector.Executable(jar)
+			if exec == nil {
+				continue
+			}
+			valid = append(valid, exec)
+		}
 
 		// 3. Everything under libraries
 		if len(valid) == 0 {
-			logger.Info("no server jar found, trying to find under libraries")
+			logger.Info("no valid jar found yet, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
-			if len(jarPaths) == 0 {
-				// The following code is commented out due to the aggressive search
-				// being too slow and inaccurate. It is kept here for future reference.
-				//
-				// logger.Info("still no server jar found, attempting even more aggressive search")
-				// logger.Info("note that this may take a long time, and the accuracy is not guaranteed")
-				// jarPaths = findJarRecursive(workPath)
-
-				return nil
-			}
-			mu := sync.Mutex{}
-			wg := sync.WaitGroup{}
-			for _, jarPath := range jarPaths {
-				wg.Add(1)
-				go func(jarPath string) {
+			if len(jarPaths) >= multiThreadThreshold {
+				mu := sync.Mutex{}
+				wg := sync.WaitGroup{}
+				for _, jarPath := range jarPaths {
+					wg.Add(1)
+					go func(jarPath string) {
+						exec := detector.Executable(jarPath)
+						if exec == nil {
+							wg.Done()
+							return
+						}
+						mu.Lock()
+						valid = append(valid, exec)
+						mu.Unlock()
+						wg.Done()
+					}(jarPath)
+				}
+				wg.Wait()
+			} else {
+				for _, jarPath := range jarPaths {
 					exec := detector.Executable(jarPath)
 					if exec == nil {
-						wg.Done()
-						return
+						continue
 					}
-					mu.Lock()
 					valid = append(valid, exec)
-					mu.Unlock()
-					wg.Done()
-				}(jarPath)
+				}
 			}
-			wg.Wait()
 		}
 
 		// 4. pwd, recursively
 		// Prompt before do so due to the potential large number of files
+		// TODO: Implement after transferring to `github.com/charmbracelet/bubbletea`.
 
 		switch len(valid) {
 		case 0:
@@ -92,8 +122,20 @@ var getExecutableInfo = tools.Memoize(
 	},
 )
 
-func findJar(dir string) (jarFiles []string, err error) {
+func findJar(dir ...string) (jarFiles []string, err error) {
 	jarFiles = []string{}
+	for _, d := range dir {
+		files, err := findFileWithExt(d, ".jar")
+		if err != nil {
+			return nil, err
+		}
+		jarFiles = append(jarFiles, files...)
+	}
+	return jarFiles, nil
+}
+
+func findFileWithExt(dir string, ext ...string) (files []string, err error) {
+	files = []string{}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -103,12 +145,12 @@ func findJar(dir string) (jarFiles []string, err error) {
 		if entry.IsDir() {
 			continue
 		}
-		if path.Ext(entry.Name()) == ".jar" {
-			jarFiles = append(jarFiles, path.Join(dir, entry.Name()))
+		if tools.Exists(ext, path.Ext(entry.Name())) {
+			files = append(files, path.Join(dir, entry.Name()))
 		}
 	}
 
-	return jarFiles, nil
+	return files, nil
 }
 
 const fileCountThreshold = 50000

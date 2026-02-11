@@ -33,12 +33,12 @@ var actionStatus cli.ActionFunc = func(
 	if cmd.Bool("json") {
 		tools.PrintAsJson(serverInfo)
 	} else {
-		tui.Flush(serverInfoToStatus(&serverInfo, cmd.Bool("long")))
+		tui.Flush(generateStatusOutput(&serverInfo, cmd.Bool("long")))
 	}
 	return nil
 }
 
-func serverInfoToStatus(
+func generateStatusOutput(
 	data *types.ServerInfo,
 	longOutput bool,
 ) (status *tui.Data) {
@@ -65,11 +65,11 @@ func serverInfoToStatus(
 		},
 	)
 
-	if data.Executable.LoaderPlatform != types.Minecraft {
+	if data.Executable.ModLoader != types.Minecraft {
 		status.Fields = append(
 			status.Fields, &tui.FieldAnnotatedShortText{
 				Title:      "Modding",
-				Text:       data.Executable.LoaderPlatform.Title(),
+				Text:       data.Executable.ModLoader.Title(),
 				Annotation: data.Executable.LoaderVersion.String(),
 				NoTab:      true,
 			},
@@ -103,33 +103,35 @@ func serverInfoToStatus(
 	}
 
 	// Modding related fields only shown when modding platform detected
-	if data.Executable.LoaderPlatform != types.Minecraft {
+	if data.Executable.ModLoader != types.Vanilla {
 		if len(data.Packages) > 0 {
 			modNames := make([]string, 0, len(data.Packages))
 			modPaths := make([]string, 0, len(modNames))
 			for _, mod := range data.Packages {
-				modNames = append(
-					modNames,
-					tools.Ternary(
-						longOutput,
-						mod.Id.StringFull(),
-						mod.Id.StringNameVersion(),
-					),
-				)
-				modPaths = append(modPaths, mod.Local.Path)
+				if mod.Id.Platform == types.Forge || mod.Id.Platform == types.Fabric {
+					modNames = append(
+						modNames,
+						tools.Ternary(
+							longOutput,
+							mod.Id.StringFull(),
+							mod.Id.StringNameVersion(),
+						),
+					)
+					modPaths = append(modPaths, mod.Local.Path)
+				}
 			}
 			status.Fields = append(
 				status.Fields,
 				tools.Ternary[tui.Field](
 					longOutput,
 					&tui.FieldMultiAnnotatedShortText{
-						Title:     "Packages",
+						Title:     "Mods",
 						Texts:     modNames,
 						Annots:    modPaths,
 						ShowTotal: true,
 					},
 					&tui.FieldDynamicColumnLabels{
-						Title:     "Packages",
+						Title:     "Mods",
 						Labels:    modNames,
 						MaxLines:  0,
 						ShowTotal: true,
@@ -139,13 +141,31 @@ func serverInfoToStatus(
 		} else {
 			status.Fields = append(
 				status.Fields, &tui.FieldMultiAnnotatedShortText{
-					Title:     "Packages",
+					Title:     "Mods",
 					Texts:     []string{tools.Dim("(None)")},
 					Annots:    nil,
 					ShowTotal: false,
 				},
 			)
 		}
+	}
+
+	// List MCDR plugins if MCDR environment detected
+	if data.Environments.Mcdr != nil {
+		var mcdrPlugins []string
+		for _, pkg := range data.Packages {
+			if pkg.Id.Platform == types.Mcdr {
+				mcdrPlugins = append(mcdrPlugins, pkg.Id.StringNameVersion())
+			}
+		}
+		status.Fields = append(
+			status.Fields, &tui.FieldDynamicColumnLabels{
+				Title:     "MCDR Plugins",
+				Labels:    mcdrPlugins,
+				MaxLines:  0,
+				ShowTotal: true,
+			},
+		)
 	}
 
 	return status

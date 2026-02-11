@@ -67,11 +67,11 @@ func (d *fabricServerSingleFileDetector) Detect(
 	}
 
 	exec = &types.ExecutableInfo{
-		Path:           filePath,
-		GameVersion:    gameVersion,
-		LoaderPlatform: types.Fabric,
-		LoaderVersion:  loaderVersion,
-		BootCommand:    nil,
+		Path:          filePath,
+		GameVersion:   gameVersion,
+		ModLoader:     types.Fabric,
+		LoaderVersion: loaderVersion,
+		BootCommand:   nil,
 	}
 
 	return exec, nil
@@ -176,11 +176,11 @@ func (d *fabricServerLauncherDetector) Detect(
 			}
 
 			exec = &types.ExecutableInfo{
-				Path:           filePath,
-				GameVersion:    gameVersion,
-				LoaderPlatform: types.Fabric,
-				LoaderVersion:  loaderVersion,
-				BootCommand:    nil,
+				Path:          filePath,
+				GameVersion:   gameVersion,
+				ModLoader:     types.Fabric,
+				LoaderVersion: loaderVersion,
+				BootCommand:   nil,
 			}
 
 			return exec, nil

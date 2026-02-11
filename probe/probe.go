@@ -133,11 +133,11 @@ func buildServerInfo() types.ServerInfo {
 // is needed, just call ServerInfo() without the concern of redundant calculation.
 
 var modPaths = tools.Memoize(
-	func() string {
-		if exec := getExecutableInfo(); exec != nil && (exec.LoaderPlatform == types.Fabric || exec.LoaderPlatform == types.Forge) {
-			return path.Join(workPath(), "mods")
+	func() (paths []string) {
+		if exec := getExecutableInfo(); exec != nil && (exec.ModLoader == types.Fabric || exec.ModLoader == types.Forge) {
+			paths = append(paths, path.Join(workPath(), "mods"))
 		}
-		return ""
+		return
 	},
 )
 
@@ -193,19 +193,37 @@ var savePath = tools.Memoize(
 
 var installedPackages = tools.Memoize(
 	func() (mods []types.Package) {
-		path := modPaths()
-		jarPaths, err := findJar(path)
-		if err != nil {
-			logger.Warn(err)
-			logger.Info("this server might not have a mod folder")
-			return nil
+		paths := modPaths()
+		for _, modPath := range paths {
+			jarFiles, err := findJar(modPath)
+			if err != nil {
+				logger.Warn(err)
+				logger.Info("cannot read the mod directory")
+				continue
+			}
+			for _, jarPath := range jarFiles {
+				analyzed := detector.Packages(jarPath)
+				if analyzed != nil {
+					mods = append(mods, analyzed...)
+				}
+			}
 		}
 
-		for _, jarPath := range jarPaths {
-			// Use the new detector-based approach
-			analyzed := detector.Mod(jarPath)
-			if analyzed != nil {
-				mods = append(mods, analyzed...)
+		env := getEnvironment()
+		if env.Mcdr != nil {
+			for _, dir := range env.Mcdr.PluginDirectories {
+				pluginFiles, err := findFileWithExt(dir, ".pyz", ".mcdr")
+				if err != nil {
+					logger.Warn(err)
+					logger.Info("cannot read the MCDR plugin directory")
+					continue
+				}
+				for _, pluginFile := range pluginFiles {
+					analyzed := detector.McdrPlugin(pluginFile)
+					if analyzed != nil {
+						mods = append(mods, analyzed...)
+					}
+				}
 			}
 		}
 

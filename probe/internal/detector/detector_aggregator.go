@@ -60,8 +60,8 @@ func Executable(filePath string) *types.ExecutableInfo {
 	return candidates[0]
 }
 
-// Mod analyzes a mod/plugin file
-func Mod(filePath string) (res []types.Package) {
+// Packages analyzes a mod/plugin file
+func Packages(filePath string) (res []types.Package) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil
@@ -87,19 +87,37 @@ func Mod(filePath string) (res []types.Package) {
 			res = append(res, result...)
 		}
 	case ".pyz", ".mcdr":
-		zipReader, err := zip.NewReader(file, stat.Size())
-		if err != nil {
-			return nil
-		}
-		detector := getOtherPackageDetectors()["mcdr plugin"]
-		result, err := detector.Detect(zipReader, file)
-		if err != nil || result == nil {
-			return nil
-		}
-		res = append(res, result...)
+		McdrPlugin(filePath)
 	default:
 		return nil
 	}
+
+	return
+}
+
+func McdrPlugin(filePath string) (res []types.Package) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil
+	}
+	defer tools.CloseReader(file, logger.Warn)
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil
+	}
+
+	zipReader, err := zip.NewReader(file, stat.Size())
+	if err != nil {
+		return nil
+	}
+
+	detector := getOtherPackageDetectors()["mcdr plugin"]
+	result, err := detector.Detect(zipReader, file)
+	if err != nil || result == nil {
+		return nil
+	}
+	res = append(res, result...)
 
 	return
 }

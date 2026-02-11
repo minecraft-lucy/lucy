@@ -73,11 +73,11 @@ func (d *forgeServerDetector) Detect(
 
 			if forgeVersion != types.UnknownVersion && gameVersion != types.UnknownVersion {
 				exec := &types.ExecutableInfo{
-					Path:           filePath,
-					GameVersion:    gameVersion,
-					LoaderPlatform: types.Forge,
-					LoaderVersion:  forgeVersion,
-					BootCommand:    nil,
+					Path:          filePath,
+					GameVersion:   gameVersion,
+					ModLoader:     types.Forge,
+					LoaderVersion: forgeVersion,
+					BootCommand:   nil,
 				}
 				return exec, nil
 			}

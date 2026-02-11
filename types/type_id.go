@@ -16,6 +16,7 @@ type Platform string
 const (
 	AllPlatform     Platform = ""
 	Minecraft       Platform = "minecraft"
+	Vanilla         Platform = Minecraft
 	Fabric          Platform = "fabric"
 	Forge           Platform = "forge"
 	Neoforge        Platform = "neoforge"

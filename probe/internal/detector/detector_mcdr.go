@@ -75,6 +75,7 @@ func (d *McdrPluginDetector) Detect(
 	zipReader *zip.Reader,
 	fileHandle *os.File,
 ) (packages []types.Package, err error) {
+	var pkg types.Package
 	for _, f := range zipReader.File {
 		if f.Name == "mcdreforged.plugin.json" {
 			r, err := f.Open()
@@ -92,7 +93,7 @@ func (d *McdrPluginDetector) Detect(
 				return nil, err
 			}
 
-			pkg := types.Package{
+			pkg = types.Package{
 				Id: types.PackageId{
 					Platform: types.Mcdr,
 					Name:     syntax.ToProjectName(pluginInfo.Id),
@@ -142,5 +143,6 @@ func (d *McdrPluginDetector) Detect(
 		}
 	}
 
+	packages = append(packages, pkg)
 	return packages, nil
 }

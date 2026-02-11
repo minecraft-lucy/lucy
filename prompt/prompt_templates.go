@@ -15,7 +15,7 @@ var (
 	promptInactiveIcon       = func() string { return tools.Blue('○') }
 	promptExecutablePath     = func() string { return tools.Bold("{{ .Path }}") }
 	promptGameInfoAnnotation = func() string {
-		return tools.Dim(`(Minecraft {{ .GameVersion }}, {{ if eq .LoaderPlatform "minecraft" }}Vanilla{{ else }}{{ .LoaderPlatform }} {{ .LoaderVersion }}{{ end }})`)
+		return tools.Dim(`(Minecraft {{ .GameVersion }}, {{ if eq .ModLoader "minecraft" }}Vanilla{{ else }}{{ .ModLoader }} {{ .LoaderVersion }}{{ end }})`)
 	}
 	promptSelectContent = func() string { return promptExecutablePath() + " " + promptGameInfoAnnotation() }
 )

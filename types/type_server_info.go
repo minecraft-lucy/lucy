@@ -11,7 +11,7 @@ import (
 type ServerInfo struct {
 	WorkPath     string
 	SavePath     string
-	ModPath      string
+	ModPath      []string
 	Packages     []Package
 	Executable   *ExecutableInfo
 	Activity     *ServerActivity
@@ -19,11 +19,11 @@ type ServerInfo struct {
 }
 
 type ExecutableInfo struct {
-	Path           string
-	GameVersion    RawVersion
-	LoaderPlatform Platform
-	LoaderVersion  RawVersion
-	BootCommand    *exec.Cmd
+	Path          string
+	GameVersion   RawVersion
+	ModLoader     Platform
+	LoaderVersion RawVersion
+	BootCommand   *exec.Cmd
 }
 
 type ServerActivity struct {

@@ -70,7 +70,7 @@ var actionAdd cli.ActionFunc = func(
 			if serverInfo.Environments.Mcdr == nil {
 				return errors.New("mcdr not found")
 			}
-		} else if id.Platform != serverInfo.Executable.LoaderPlatform {
+		} else if id.Platform != serverInfo.Executable.ModLoader {
 			return errors.New("platform mismatch")
 		}
 	}
@@ -84,9 +84,10 @@ var actionAdd cli.ActionFunc = func(
 	case types.AllPlatform:
 		logger.InfoNow("no platform specified, attempting to infer")
 	case types.Mcdr:
-		dir = serverInfo.Environments.Mcdr.PluginDirectories[0]
+		dir = serverInfo.Environments.Mcdr.PluginDirectories[0] // TODO: Change this
 	case types.Forge, types.Fabric:
-		dir = serverInfo.ModPath
+		// TODO: This is a temporary solution, we should have a more robust way to determine the mod directory
+		dir = serverInfo.ModPath[0]
 	default:
 		return errors.New("unsupported platform")
 	}
