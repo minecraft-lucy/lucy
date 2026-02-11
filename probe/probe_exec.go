@@ -20,13 +20,15 @@ var getExecutableInfo = tools.Memoize(
 	func() *types.ExecutableInfo {
 		var valid []*types.ExecutableInfo
 		workPath := getServerWorkPath()
+
+		// Layered search
+		// 1. pwd
+		// Proceed to step 2 no matter the result
 		jars, err := findJar(workPath)
 		if err != nil {
 			logger.Warn(err)
-			logger.Info("cannot read the current directory, most features will be disabled")
+			logger.Info("cannot read the current directory")
 		}
-
-		// Use the new detector-based approach
 		for _, jar := range jars {
 			exec := detector.Executable(jar)
 			if exec == nil {
@@ -35,6 +37,10 @@ var getExecutableInfo = tools.Memoize(
 			valid = append(valid, exec)
 		}
 
+		// 2. Forge/Fabric installation paths
+		// Will break after found
+
+		// 3. Everything under libraries
 		if len(valid) == 0 {
 			logger.Info("no server jar found, trying to find under libraries")
 			jarPaths := findJarRecursive(path.Join(workPath, "libraries"))
@@ -67,29 +73,22 @@ var getExecutableInfo = tools.Memoize(
 			wg.Wait()
 		}
 
-		if len(valid) == 0 {
-			logger.Info("no server under current directory")
-			return UnknownExecutable
-		} else if len(valid) == 1 {
-			return valid[0]
-		}
+		// 4. pwd, recursively
+		// Prompt before do so due to the potential large number of files
 
-		var choice int
-		noExecUnderCd := true
-		for _, exec := range valid {
-			if tools.UnderCd(exec.Path) {
-				noExecUnderCd = false
-			}
-		}
-		if noExecUnderCd {
-			choice = prompt.SelectExecutable(
+		switch len(valid) {
+		case 0:
+			logger.Info("no server executable found")
+			return UnknownExecutable
+		case 1:
+			return valid[0]
+		default:
+			choice := prompt.SelectExecutable(
 				valid,
 				[]prompt.Note{prompt.NoteSuspectPrePackagedServer},
 			)
-		} else {
-			choice = prompt.SelectExecutable(valid, nil)
+			return valid[choice]
 		}
-		return valid[choice]
 	},
 )
 

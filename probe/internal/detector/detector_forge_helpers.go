@@ -47,7 +47,7 @@ func getForgeModVersion(zip *zip.Reader) types.RawVersion {
 	return types.RawVersion(v)
 }
 
-// parseMavenVersionInterval parses Maven version range strings into 2D constraint arrays.
+// parseMavenVersionRange parses Maven version range strings into 2D constraint arrays.
 //
 // Maven version range format (per Maven POM specification):
 // - [1.0,2.0] - inclusive range (>=1.0 AND <=2.0)
@@ -70,7 +70,7 @@ func getForgeModVersion(zip *zip.Reader) types.RawVersion {
 // Version compatibility:
 // - Standard Maven syntax: All Maven versions
 // - Operator extensions (>=, >, etc.): Primarily used by Forge/NeoForge mods
-func parseMavenVersionInterval(interval string) [][]types.VersionConstraint {
+func parseMavenVersionRange(interval string) [][]types.VersionConstraint {
 	interval = strings.TrimSpace(interval)
 	if interval == "" || interval == "*" {
 		return nil

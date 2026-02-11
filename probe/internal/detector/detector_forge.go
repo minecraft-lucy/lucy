@@ -38,38 +38,36 @@ func (d *forgeServerDetector) Detect(
 			}
 			defer tools.CloseReader(r, logger.Warn)
 
-			err = tools.MoveReaderToLineWithPrefix(r, "Implementation-Title: net.minecraftforge")
-			if err != nil {
-				continue
-			}
-
-			// Read the next line for forge version
-			scanner := bufio.NewScanner(r)
-			if scanner.Scan() {
-				line := scanner.Text()
-				if after, found := strings.CutPrefix(line, "Implementation-Version: "); found {
-					forgeVersion = types.RawVersion(after)
+			s := bufio.NewScanner(r)
+			for s.Scan() {
+				line := s.Text()
+				if line == "Implementation-Title: net.minecraftforge" {
+					if !s.Scan() {
+						continue
+					}
+					line := s.Text()
+					if after, found := strings.CutPrefix(
+						line,
+						"Implementation-Version: ",
+					); found {
+						forgeVersion = types.RawVersion(after)
+					}
 				}
-			}
-
-			// New reader to find game version
-			r2, err := f.Open()
-			if err != nil {
-				continue
-			}
-			defer tools.CloseReader(r2, logger.Warn)
-			err = tools.MoveReaderToLineWithPrefix(r2, "Specification-Title: Minecraft")
-			if err != nil {
-				continue
-			}
-
-			// Read the n+2 line for game version
-			scanner2 := bufio.NewScanner(r2)
-			scanner2.Scan() // Skip one line
-			if scanner2.Scan() {
-				line := scanner2.Text()
-				if after, found := strings.CutPrefix(line, "Specification-Version: "); found {
-					gameVersion = types.RawVersion(after)
+				if line == "Specification-Title: Minecraft" {
+					// the n+2 line contains the version
+					if !s.Scan() {
+						continue
+					}
+					if !s.Scan() {
+						continue
+					}
+					line := s.Text()
+					if after, found := strings.CutPrefix(
+						line,
+						"Specification-Version: ",
+					); found {
+						gameVersion = types.RawVersion(after)
+					}
 				}
 			}
 
@@ -81,7 +79,6 @@ func (d *forgeServerDetector) Detect(
 					LoaderVersion:  forgeVersion,
 					BootCommand:    nil,
 				}
-
 				return exec, nil
 			}
 		}
@@ -163,7 +160,7 @@ func (d *forgeModDetector) Detect(
 								Platform: types.Forge,
 								Name:     syntax.ToProjectName(dep.ModID),
 							},
-							Constraint: parseMavenVersionInterval(dep.VersionRange),
+							Constraint: parseMavenVersionRange(dep.VersionRange),
 						},
 					)
 				}
@@ -196,7 +193,7 @@ func (d *forgeModDetector) Detect(
 	return packages, nil
 }
 
-// TODO: Old forge is not yet supported. The detoctor was vibe-coded and needs
+// TODO: Old forge is not yet supported. The detector was vibe-coded and needs
 // more research.
 
 // ForgeModDetectorOld detects old Forge mods (pre-1.13)

@@ -10,12 +10,10 @@ type FileMcdrPluginIdentifier struct {
 		EnUs string `json:"en_us"`
 		ZhCn string `json:"zh_cn"`
 	} `json:"description"`
-	Author       tools.StringOrStringSlice `json:"author"`
-	Link         string                    `json:"link"`
-	Dependencies struct {
-		Mcdreforged string `json:"mcdreforged"`
-	} `json:"dependencies"`
-	Resources []string `json:"resources"`
+	Author       tools.OneOrMore[string] `json:"author"`
+	Link         string                  `json:"link"`
+	Dependencies map[string]string       `json:"dependencies"`
+	Resources    []string                `json:"-"`
 }
 
 type FileMcdrConfig struct {

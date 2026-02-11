@@ -40,12 +40,10 @@ func Executable(filePath string) *types.ExecutableInfo {
 
 	for _, detector := range detectors {
 		result, err := detector.Detect(filePath, zipReader, file)
-		if err != nil {
+		if err != nil || result == nil {
 			continue
 		}
-		if result != nil {
-			candidates = append(candidates, result)
-		}
+		candidates = append(candidates, result)
 	}
 
 	if len(candidates) == 0 {

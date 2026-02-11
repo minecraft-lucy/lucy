@@ -104,10 +104,10 @@ func serverInfoToStatus(
 
 	// Modding related fields only shown when modding platform detected
 	if data.Executable.LoaderPlatform != types.Minecraft {
-		if len(data.Mods) > 0 {
-			modNames := make([]string, 0, len(data.Mods))
+		if len(data.Packages) > 0 {
+			modNames := make([]string, 0, len(data.Packages))
 			modPaths := make([]string, 0, len(modNames))
-			for _, mod := range data.Mods {
+			for _, mod := range data.Packages {
 				modNames = append(
 					modNames,
 					tools.Ternary(
@@ -123,13 +123,13 @@ func serverInfoToStatus(
 				tools.Ternary[tui.Field](
 					longOutput,
 					&tui.FieldMultiAnnotatedShortText{
-						Title:     "Mods",
+						Title:     "Packages",
 						Texts:     modNames,
 						Annots:    modPaths,
 						ShowTotal: true,
 					},
 					&tui.FieldDynamicColumnLabels{
-						Title:     "Mods",
+						Title:     "Packages",
 						Labels:    modNames,
 						MaxLines:  0,
 						ShowTotal: true,
@@ -139,41 +139,13 @@ func serverInfoToStatus(
 		} else {
 			status.Fields = append(
 				status.Fields, &tui.FieldMultiAnnotatedShortText{
-					Title:     "Mods",
+					Title:     "Packages",
 					Texts:     []string{tools.Dim("(None)")},
 					Annots:    nil,
 					ShowTotal: false,
 				},
 			)
 		}
-	}
-
-	if data.Environments.Mcdr != nil {
-		pluginNames := make([]string, 0, len(data.Environments.Mcdr.PluginList))
-		pluginPaths := make([]string, 0, len(data.Environments.Mcdr.PluginList))
-		for _, plugin := range data.Environments.Mcdr.PluginList {
-			pluginNames = append(
-				pluginNames,
-				tools.Ternary(
-					longOutput,
-					plugin.Id.StringFull(),
-					plugin.Id.StringNameVersion(),
-				),
-			)
-			pluginPaths = append(
-				pluginPaths,
-				tools.Ternary(longOutput, plugin.Local.Path, ""),
-			)
-		}
-		status.Fields = append(
-			status.Fields, &tui.FieldMultiAnnotatedShortText{
-				Title:     "MCDR Plugins",
-				Texts:     pluginNames,
-				Annots:    pluginPaths,
-				ShowTotal: true,
-			},
-		)
-
 	}
 
 	return status

@@ -83,11 +83,11 @@ var GetMcdrPlugins = tools.Memoize(
 	func() (plugins []types.Package) {
 		plugins = make([]types.Package, 0)
 		// Remember that MCDR can have multiple plugin directories
-		PluginDirectories := GetMcdrConfig().PluginDirectories
-		if PluginDirectories == nil {
+		pluginDirectories := GetMcdrConfig().PluginDirectories
+		if pluginDirectories == nil {
 			return plugins
 		}
-		for _, pluginDirectory := range PluginDirectories {
+		for _, pluginDirectory := range pluginDirectories {
 			pluginEntry, _ := os.ReadDir(pluginDirectory)
 			for _, pluginPath := range pluginEntry {
 				if path.Ext(pluginPath.Name()) != ".mcdr" {
@@ -116,8 +116,6 @@ var GetMcdrPlugins = tools.Memoize(
 	},
 )
 
-const mcdrPluginIdentifierFile = "mcdreforged.plugin.json"
-
 func analyzeMcdrPlugin(file *os.File) (
 	plugin *types.Package,
 	err error,
@@ -132,7 +130,7 @@ func analyzeMcdrPlugin(file *os.File) (
 	}
 
 	for _, f := range r.File {
-		if f.Name == mcdrPluginIdentifierFile {
+		if f.Name == "mcdreforged.plugin.json" {
 			rr, err := f.Open()
 			data, err := io.ReadAll(rr)
 			if err != nil {
@@ -158,4 +156,84 @@ func analyzeMcdrPlugin(file *os.File) (
 	}
 
 	return
+}
+
+type McdrPluginDetector struct{}
+
+func (d *McdrPluginDetector) Name() string {
+	return "mcdr plugin"
+}
+
+func (d *McdrPluginDetector) Detect(
+	zipReader *zip.Reader,
+	fileHandle *os.File,
+) (packages []types.Package, err error) {
+	for _, f := range zipReader.File {
+		if f.Name == "mcdreforged.plugin.json" {
+			r, err := f.Open()
+			if err != nil {
+				return nil, err
+			}
+			defer tools.CloseReader(r, logger.Warn)
+
+			data, err := io.ReadAll(r)
+			if err != nil {
+				return nil, err
+			}
+			pluginInfo := &exttype.FileMcdrPluginIdentifier{}
+			if err := json.Unmarshal(data, pluginInfo); err != nil {
+				return nil, err
+			}
+
+			pkg := types.Package{
+				Id: types.PackageId{
+					Platform: types.Mcdr,
+					Name:     syntax.ToProjectName(pluginInfo.Id),
+					Version:  types.RawVersion(pluginInfo.Version),
+				},
+				Local: &types.PackageInstallation{
+					Path: fileHandle.Name(),
+				},
+				Dependencies: &types.PackageDependencies{},
+				Information:  &types.ProjectInformation{},
+			}
+
+			// Parse dependencies
+			for key, value := range pluginInfo.Dependencies {
+				pkg.Dependencies.Value = append(
+					pkg.Dependencies.Value,
+					types.Dependency{
+						Id: types.PackageId{
+							Platform: types.Mcdr,
+							Name:     syntax.ToProjectName(key),
+						},
+						Constraint: parseNpmVersionRange(value),
+						Mandatory:  true,
+					},
+				)
+			}
+
+			// Parse info
+			pkg.Information.Authors = make(
+				[]types.Person,
+				len(pluginInfo.Author),
+			)
+			for i, author := range pluginInfo.Author {
+				pkg.Information.Authors[i] = types.Person{
+					Name: author,
+				}
+			}
+			pkg.Information.Title = pluginInfo.Name
+			pkg.Information.Brief = pluginInfo.Description.EnUs
+			pkg.Information.Urls = []types.Url{
+				{
+					Name: "Link",
+					Type: types.UrlSource,
+					Url:  pluginInfo.Link,
+				},
+			}
+		}
+	}
+
+	return packages, nil
 }

@@ -48,18 +48,6 @@ func buildServerInfo() types.ServerInfo {
 		detector.Environment(".")
 	}()
 
-	// MCDR Plugins
-	if detector.GetMcdrPlugins() != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			plugins := detector.GetMcdrPlugins()
-			mu.Lock()
-			serverInfo.Environments.Mcdr.PluginList = plugins
-			mu.Unlock()
-		}()
-	}
-
 	// Server Work Path
 	wg.Add(1)
 	go func() {
@@ -94,9 +82,9 @@ func buildServerInfo() types.ServerInfo {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		modList := getMods()
+		packages := getMods()
 		mu.Lock()
-		serverInfo.Mods = modList
+		serverInfo.Packages = packages
 		mu.Unlock()
 	}()
 

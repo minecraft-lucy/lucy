@@ -12,7 +12,7 @@ type ServerInfo struct {
 	WorkPath     string
 	SavePath     string
 	ModPath      string
-	Mods         []Package
+	Packages     []Package
 	Executable   *ExecutableInfo
 	Activity     *Activity
 	Environments EnvironmentInfo
@@ -39,7 +39,6 @@ type EnvironmentInfo struct {
 type McdrEnv struct {
 	ConfigPath string
 	Config     *exttype.FileMcdrConfig
-	PluginList []Package
 }
 
 type LucyEnv struct {

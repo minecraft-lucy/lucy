@@ -37,13 +37,3 @@ func MoveReaderToLine(r io.Reader, line string) error {
 	}
 	return scanner.Err()
 }
-
-func MoveReaderToLineWithPrefix(r io.Reader, prefix string) error {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		if len(scanner.Text()) >= len(prefix) && scanner.Text()[:len(prefix)] == prefix {
-			return nil
-		}
-	}
-	return scanner.Err()
-}

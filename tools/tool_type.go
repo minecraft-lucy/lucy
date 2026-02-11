@@ -2,25 +2,21 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
-type StringOrStringSlice struct {
-	Value []string
-}
+type OneOrMore[T any] []T
 
-func (s *StringOrStringSlice) UnmarshalJSON(data []byte) error {
-	var singleString string
-	if err := json.Unmarshal(data, &singleString); err == nil {
-		s.Value = []string{singleString}
+func (s *OneOrMore[T]) UnmarshalJSON(data []byte) error {
+	var single T
+	if err := json.Unmarshal(data, &single); err == nil {
+		*s = []T{single}
 		return nil
 	}
 
-	var stringSlice []string
-	if err := json.Unmarshal(data, &stringSlice); err == nil {
-		s.Value = stringSlice
-		return nil
+	var multiple []T
+	if err := json.Unmarshal(data, &multiple); err != nil {
+		return err
 	}
-
-	return fmt.Errorf("invalid data for StringOrStringSlice: %s", data)
+	*s = multiple
+	return nil
 }

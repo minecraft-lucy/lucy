@@ -43,9 +43,15 @@ func (d *fabricServerSingleFileDetector) Detect(
 			scanner := bufio.NewScanner(r)
 			for scanner.Scan() {
 				line := scanner.Text()
-				if after, found := strings.CutPrefix(line, "fabric-loader-version="); found {
+				if after, found := strings.CutPrefix(
+					line,
+					"fabric-loader-version=",
+				); found {
 					loaderVersion = types.RawVersion(after)
-				} else if after, found := strings.CutPrefix(line, "game-version="); found {
+				} else if after, found := strings.CutPrefix(
+					line,
+					"game-version=",
+				); found {
 					gameVersion = types.RawVersion(after)
 				}
 			}
@@ -74,9 +80,9 @@ func (d *fabricServerSingleFileDetector) Detect(
 // fabricServerLauncherDetector detects Fabric server launchers
 // This is one of the two methods of Fabric installation. A lightweight
 // launcher .jar file is placed at the root of the server directory. It only
-// record the paths to the required libraries.
+// records the paths to the required libraries.
 //
-// The detection porcess is rather complicated.
+// The detection process is rather complicated.
 type fabricServerLauncherDetector struct{}
 
 func (d *fabricServerLauncherDetector) Name() string {
@@ -122,18 +128,23 @@ func (d *fabricServerLauncherDetector) Detect(
 			}
 			defer tools.CloseReader(r, logger.Warn)
 
-			err = tools.MoveReaderToLineWithPrefix(r, "Main-Class: ")
-			if err != nil {
-				continue
+			var classPaths []string
+			s := bufio.NewScanner(r)
+			for s.Scan() {
+				line := s.Text()
+				if after, found := strings.CutPrefix(
+					line,
+					"Class-Path: ",
+				); found {
+					classPathsStr := after
+					for s.Scan() && !strings.Contains(s.Text(), ":") {
+						line := s.Text()
+						line = strings.TrimSpace(line)
+						classPathsStr += line
+					}
+					classPaths = strings.Split(classPathsStr, " ")
+				}
 			}
-
-			line := bufio.NewScanner(r)
-			line.Scan()
-			mainClassPaths := strings.Split(
-				strings.ReplaceAll(
-					line.Text()[len("Main-Class: "):],
-					tools.CRLF+" ", ""),
-				" ")
 
 			// Here we just parse the paths to find the versions.
 			//
@@ -142,13 +153,21 @@ func (d *fabricServerLauncherDetector) Detect(
 			// specify anything but only the paths to the libraries(classes).
 			// Besides, it is the user's responsibility to ensure the presence
 			// of the required libraries.
-			for _, path := range mainClassPaths {
-				if after, found := strings.CutPrefix(path, "libraries/net/fabricmc/fabric-loader/"); found {
+			for _, path := range classPaths {
+				if after, found := strings.CutPrefix(
+					path,
+					"libraries/net/fabricmc/fabric-loader/",
+				); found {
 					loaderVersion = types.RawVersion(
-						strings.Split(after, "/")[0])
-				} else if after, found := strings.CutPrefix(path, "libraries/net/fabricmc/intermediary/"); found {
+						strings.Split(after, "/")[0],
+					)
+				} else if after, found := strings.CutPrefix(
+					path,
+					"libraries/net/fabricmc/intermediary/",
+				); found {
 					gameVersion = types.RawVersion(
-						strings.Split(after, "/")[0])
+						strings.Split(after, "/")[0],
+					)
 				}
 			}
 
@@ -171,14 +190,14 @@ func (d *fabricServerLauncherDetector) Detect(
 	return nil, nil
 }
 
-// FabricModDetector detects Fabric mods in JAR files
-type FabricModDetector struct{}
+// fabricModDetector detects Fabric mods in JAR files
+type fabricModDetector struct{}
 
-func (d *FabricModDetector) Name() string {
+func (d *fabricModDetector) Name() string {
 	return "fabric mod"
 }
 
-func (d *FabricModDetector) Detect(
+func (d *fabricModDetector) Detect(
 	zipReader *zip.Reader,
 	fileHandle *os.File,
 ) (packages []types.Package, err error) {
@@ -242,7 +261,7 @@ func (d *FabricModDetector) Detect(
 	return packages, nil
 }
 
-func (d *FabricModDetector) buildDependency(
+func (d *fabricModDetector) buildDependency(
 	pkg *types.Package,
 	deps map[string]string,
 	mandatory bool,
@@ -267,5 +286,5 @@ func (d *FabricModDetector) buildDependency(
 func init() {
 	RegisterExecutableDetector(&fabricServerSingleFileDetector{})
 	RegisterExecutableDetector(&fabricServerLauncherDetector{})
-	RegisterModDetector(&FabricModDetector{})
+	RegisterModDetector(&fabricModDetector{})
 }
