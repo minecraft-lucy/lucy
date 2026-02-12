@@ -228,7 +228,7 @@ type VersionScheme uint8
 const (
 	Semver VersionScheme = iota
 
-	// Docs
+	// MinecraftSnapshot Docs
 	// https://zh.minecraft.wiki/w/%E7%89%88%E6%9C%AC%E6%A0%BC%E5%BC%8F#%E5%BF%AB%E7%85%A7%EF%BC%88Snapshot%EF%BC%89
 	MinecraftSnapshot
 	MinecraftRelease
@@ -246,8 +246,8 @@ func (v ComparableVersion) Validate() bool {
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
 		return v.Major != 0 && // year
-			v.Minor > 0 && v.Minor <= maxWeek && // week (work cycle)
-			v.Patch >= minSnapshotIndex && v.Patch <= maxSnapshotIndex // in-week index (as ascii code)
+		v.Minor > 0 && v.Minor <= maxWeek && // week (work cycle)
+		v.Patch >= minSnapshotIndex && v.Patch <= maxSnapshotIndex // in-week index (as ascii code)
 	case MinecraftRelease:
 		return v.Major != 0 && v.Minor != 0
 	case Invalid:
@@ -289,7 +289,8 @@ type VersionConstraint struct {
 func (exps VersionConstraintExpression) Inverse() VersionConstraintExpression {
 	tools.ForEachOnMatrix(
 		exps,
-		func(exp VersionConstraint) { exp.Inverse() })
+		func(exp VersionConstraint) { exp.Inverse() },
+	)
 	return exps
 }
 
@@ -315,8 +316,8 @@ func (exp *VersionConstraint) Inverse() {
 }
 
 func (d Dependency) Satisfy(
-	id PackageId,
-	v ComparableVersion,
+id PackageId,
+v ComparableVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false

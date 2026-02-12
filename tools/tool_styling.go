@@ -43,6 +43,8 @@ var (
 	Cyan      func(any) string
 )
 
+var stylesEnabled = true
+
 func renewStyleFunctions() {
 	Bold = styleFactory(styleBold)
 	Dim = styleFactory(styleDim)
@@ -57,6 +59,7 @@ func renewStyleFunctions() {
 }
 
 func TurnOffStyles() {
+	stylesEnabled = false
 	styleFactory = func(i int) func(any) string {
 		return func(v any) string {
 			switch v := v.(type) {
@@ -68,6 +71,10 @@ func TurnOffStyles() {
 		}
 	}
 	renewStyleFunctions()
+}
+
+func StylesEnabled() bool {
+	return stylesEnabled
 }
 
 var styleFactory = func(i int) func(any) string {

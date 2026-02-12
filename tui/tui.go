@@ -84,8 +84,9 @@ func (f *FieldShortText) Output() {
 type FieldMarkdown FieldLongText
 
 func (f *FieldMarkdown) Output() {
-	f.Text = tools.MarkdownToPlainText(f.Text)
+	f.Text = tools.MarkdownToAnsi(f.Text, f.MaxColumns)
 	long := FieldLongText(*f)
+	long.LineWrap = false
 	long.Output()
 }
 
