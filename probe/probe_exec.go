@@ -5,17 +5,21 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 
 	"lucy/logger"
 	"lucy/probe/internal/detector"
-	"lucy/prompt"
 	"lucy/tools"
 	"lucy/types"
+
+	"github.com/charmbracelet/huh"
 )
 
 var UnknownExecutable = detector.UnknownExecutable
+
+const noteSuspectPrePackagedServer = "This is likely a pre-packaged server. Therefore, you might want to ignore the paths, and only look for the executable with your expected game version and mod loader."
 
 const multiThreadThreshold = 10
 
@@ -113,14 +117,69 @@ var getExecutableInfo = tools.Memoize(
 		case 1:
 			return valid[0]
 		default:
-			choice := prompt.SelectExecutable(
+			choice := selectExecutable(
 				valid,
-				[]prompt.Note{prompt.NoteSuspectPrePackagedServer},
+				[]string{noteSuspectPrePackagedServer},
 			)
 			return valid[choice]
 		}
 	},
 )
+
+func selectExecutable(
+	executables []*types.ExecutableInfo,
+	notes []string,
+) int {
+	selection := 0
+	title := "Multiple possible executables detected, select one"
+	noteText := strings.TrimSpace(generateNotes(notes...))
+	if noteText != "" {
+		title = title + "\n" + noteText
+	}
+
+	options := make([]huh.Option[int], 0, len(executables))
+	for i, exec := range executables {
+		options = append(options, huh.NewOption(executableLabel(exec), i))
+	}
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[int]().
+				Title(title).
+				Options(options...).
+				Value(&selection),
+		),
+	)
+	if err := form.Run(); err != nil {
+		logger.WarnNow(err)
+	}
+	return selection
+}
+
+func generateNotes(notes ...string) string {
+	var note string
+	for _, n := range notes {
+		note += tools.Cyan("*") + " " + n + "\n"
+	}
+	return note
+}
+
+func executableLabel(executable *types.ExecutableInfo) string {
+	return tools.Bold(executable.Path) + " " + tools.Dim(executableAnnotation(executable))
+}
+
+func executableAnnotation(executable *types.ExecutableInfo) string {
+	gameVersion := executable.GameVersion.String()
+	if executable.ModLoader == types.Minecraft {
+		return fmt.Sprintf("(Minecraft %s, Vanilla)", gameVersion)
+	}
+	return fmt.Sprintf(
+		"(Minecraft %s, %s %s)",
+		gameVersion,
+		executable.ModLoader.Title(),
+		executable.LoaderVersion.String(),
+	)
+}
 
 func findJar(dir ...string) (jarFiles []string, err error) {
 	jarFiles = []string{}
