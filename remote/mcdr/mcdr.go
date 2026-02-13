@@ -1,6 +1,8 @@
 package mcdr
 
 import (
+	"fmt"
+	"lucy/probe"
 	"lucy/remote"
 	"lucy/syntax"
 	"lucy/types"
@@ -29,23 +31,30 @@ func (m mcdrSearchResult) ToSearchResults() types.SearchResults {
 // TODO: handle search options
 
 func (s self) Search(
-	query string,
-	options types.SearchOptions,
+query string,
+options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	res, err = searchPlugin(query)
 	return
 }
 
 func (s self) Fetch(id types.PackageId) (
-	rem remote.RawPackageRemote,
-	err error,
+rem remote.RawPackageRemote,
+err error,
 ) {
-	return getRelease(id.Name.Pep8String(), id.Version)
+	if id.Version.NeedsInfer() {
+		id, err = s.ParseAmbiguousVersion(id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	rem, err = getRelease(id.Name.Pep8String(), id.Version)
+	return
 }
 
 func (s self) Information(name types.ProjectName) (
-	info remote.RawProjectInformation,
-	err error,
+info remote.RawProjectInformation,
+err error,
 ) {
 	plugin, err := getPluginInfo(name.Pep8String())
 	if err != nil {
@@ -70,32 +79,41 @@ func (s self) Information(name types.ProjectName) (
 }
 
 func (s self) Dependencies(id types.PackageId) (
-	remote.RawPackageDependencies,
-	error,
+remote.RawPackageDependencies,
+error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Support(name types.ProjectName) (
-	supports remote.RawProjectSupport,
-	err error,
+supports remote.RawProjectSupport,
+err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(id types.PackageId) (
-	parsed types.PackageId,
-	err error,
+parsed types.PackageId,
+err error,
 ) {
 	var rel *release
 	switch id.Version {
-	case types.LatestVersion:
-		rel, err = getRelease(id.Name.Pep8String(), id.Version)
+	case types.LatestVersion, types.AllVersion:
+		rel, err = getLatestRelease(id.Name.Pep8String())
 		if err != nil {
 			return id, err
 		}
+	case types.LatestCompatibleVersion:
+		_ = probe.ServerInfo()
+		panic("implement me")
+	default:
+		return id, fmt.Errorf(
+			"cannot parse version %s for package %s",
+			id.Version,
+			id.Name,
+		)
 	}
 	parsed = types.PackageId{
 		Platform: types.Mcdr,

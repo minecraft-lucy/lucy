@@ -60,6 +60,12 @@ func getPluginInfo(id string) (*pluginInfo, error) {
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
 
+	var res github.GhItem
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+
 	var info pluginInfo
 	err = json.Unmarshal(data, &info)
 	if err != nil {
@@ -111,6 +117,14 @@ func getRelease(id string, version types.RawVersion) (*release, error) {
 		id,
 		version,
 	)
+}
+
+func getLatestRelease(id string) (*release, error) {
+	history, err := getReleaseHistory(id)
+	if err != nil {
+		return nil, err
+	}
+	return &history.Releases[history.LatestVersionIndex], nil
 }
 
 func getReleaseHistory(id string) (*pluginRelease, error) {
