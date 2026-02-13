@@ -43,7 +43,3 @@ tasks:
       - task build-dev
     watch: true
     sources: ["./**/*.go", "./go.mod", "./go.sum"]
-  run:
-    deps: [build-dev]
-    cmds:
-      - ./dist/lucy-darwin-arm64-debug
