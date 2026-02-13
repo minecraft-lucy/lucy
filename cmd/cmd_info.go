@@ -195,7 +195,6 @@ func infoOutput(p *types.Package) *tui.Data {
 			Title:      "Download",
 			Text:       tools.Underline(p.Remote.FileUrl),
 			Annotation: p.Remote.Filename,
-			NoTab:      true,
 		},
 	)
 

@@ -61,7 +61,6 @@ func generateStatusOutput(
 			Title:      "Game",
 			Text:       data.Executable.GameVersion.String(),
 			Annotation: data.Executable.Path,
-			NoTab:      true,
 		},
 	)
 
@@ -71,7 +70,6 @@ func generateStatusOutput(
 				Title:      "Modding",
 				Text:       data.Executable.ModLoader.Title(),
 				Annotation: data.Executable.LoaderVersion.String(),
-				NoTab:      true,
 			},
 		)
 	}
@@ -90,7 +88,6 @@ func generateStatusOutput(
 					fmt.Sprintf("PID %d", data.Activity.Pid),
 					"",
 				),
-				NoTab: true,
 			},
 		)
 	} else {

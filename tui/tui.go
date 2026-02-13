@@ -1,14 +1,19 @@
 // Package tui is a key-value based commandline output framework.
 //
-// The core of this package it the lucytypes.OutputData struct. It is an array
-// of different types of fields that defines different types of output formats.
-// The OutputData struct can be simply passed to the Flush function to output
-// to the commandline.
+// The core of this package is the Data struct, which holds an array of Field
+// values representing different types of output formats. Each Field implements
+// the Render() method that returns a formatted string. The Data struct can be
+// passed to Flush to print the composed output.
 //
-// Note the field will not show if its content is empty
+// Rendering uses lipgloss-based styling instead of raw ANSI codes, and
+// fixed-width key columns instead of tabwriter for simpler, more predictable
+// layout.
+//
+// Note: a field will not show if its content is empty.
 package tui
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -17,84 +22,64 @@ import (
 	"lucy/tools"
 )
 
+// Data is a collection of Field values to be rendered together.
 type Data struct {
 	Fields []Field
 }
 
+// Field is the interface for all renderable output elements. Each
+// implementation returns its formatted string representation from Render.
 type Field interface {
-	Output()
+	Render() string
 }
 
-func SourceInfo(source string) {
-	annot("(Source: " + tools.Underline(source) + ")")
-	newLine()
-}
-
-// separator prints a separator line. A length of 0 will print a line of 66%
-// terminal width.
-//
-// separator also adjusts itself so it does not exceed the terminal width.
-//
-// Use dim to control whether the separator is dimmed.
-func separator(len int, dim bool) {
-	if len == 0 {
-		len = tools.TermWidth() * 3 / 4
-	} else if len > tools.TermWidth() {
-		len = tools.TermWidth()
-	}
-
-	sep := strings.Repeat("-", len)
-	if dim {
-		annot(sep)
-	} else {
-		value(sep)
-	}
-	newLine()
-}
-
+// FieldSeparator renders a horizontal separator line. A Length of 0 produces
+// a line spanning 75% of the terminal width.
 type FieldSeparator struct {
 	Length int
 	Dim    bool
 }
 
-func (f *FieldSeparator) Output() {
-	separator(f.Length, f.Dim)
+func (f *FieldSeparator) Render() string {
+	return renderSeparator(f.Length, f.Dim)
 }
 
+// FieldAnnotation renders a single line of dimmed annotation text.
 type FieldAnnotation struct {
 	Annotation string
 }
 
-func (f *FieldAnnotation) Output() {
-	annot(f.Annotation)
-	newLine()
+func (f *FieldAnnotation) Render() string {
+	return renderDim(f.Annotation) + "\n"
 }
 
+// FieldShortText renders a key-value pair on one line.
 type FieldShortText struct {
 	Title string
 	Text  string
 }
 
-func (f *FieldShortText) Output() {
-	key(f.Title)
-	value(f.Text)
-	newLine()
+func (f *FieldShortText) Render() string {
+	return renderKey(f.Title) + f.Text + "\n"
 }
 
+// FieldMarkdown renders markdown content as styled ANSI terminal output.
 type FieldMarkdown FieldLongText
 
-func (f *FieldMarkdown) Output() {
-	f.Text = tools.MarkdownToAnsi(f.Text, f.MaxColumns)
+func (f *FieldMarkdown) Render() string {
 	long := FieldLongText(*f)
+	long.Text = tools.MarkdownToAnsi(f.Text, f.MaxColumns)
 	long.LineWrap = false
-	long.Output()
+	return long.Render()
 }
 
+// FieldLongText renders multi-line text content with optional word-wrapping
+// and line count truncation.
 type FieldLongText struct {
 	Title string
 	Text  string
 
-	Padding bool // Padding is turned off if alternative text is used
+	Padding bool // Padding adds a short separator before the text body
 
 	LineWrap   bool
 	MaxColumns int
@@ -104,65 +89,69 @@ type FieldLongText struct {
 	AlternateText string
 }
 
-func (f *FieldLongText) Output() {
+func (f *FieldLongText) Render() string {
+	text := f.Text
 	if f.LineWrap {
-		f.Text = wrap.String(f.Text, f.MaxColumns)
+		text = wrap.String(text, f.MaxColumns)
 	}
-	separatedText := strings.Split(f.Text, "\n")
-	if f.MaxLines != 0 && len(separatedText) > f.MaxLines {
+	lines := strings.Split(text, "\n")
+	if f.MaxLines != 0 && len(lines) > f.MaxLines {
 		if f.UseAlternate {
 			if f.AlternateText == "" {
-				return
+				return ""
 			}
 			o := FieldShortText{
 				Title: f.Title,
-				Text:  f.Text,
+				Text:  f.AlternateText,
 			}
-			o.Output()
-			return
+			return o.Render()
 		}
-		separatedText = separatedText[:f.MaxLines]
+		lines = lines[:f.MaxLines]
 	}
 
-	key(f.Title)
-	annot("(" + strconv.Itoa(len(separatedText)) + " lines)")
-	newLine()
+	var sb strings.Builder
+	sb.WriteString(renderKey(f.Title))
+	sb.WriteString(renderDim("(" + strconv.Itoa(len(lines)) + " lines)"))
+	sb.WriteString("\n")
 	if f.Padding {
-		separator(5, false)
-		newLine()
+		sb.WriteString(renderSeparator(5, false))
 	}
-	for _, line := range separatedText {
-		value(line)
-		newLine()
+	for _, line := range lines {
+		sb.WriteString(line)
+		sb.WriteString("\n")
 	}
+	return sb.String()
 }
 
+// FieldAnnotatedShortText renders a key-value pair with a dimmed annotation
+// placed inline after the value.
 type FieldAnnotatedShortText struct {
 	Title      string
 	Text       string
 	Annotation string
-	NoTab      bool
 }
 
-func (f *FieldAnnotatedShortText) Output() {
-	key(f.Title)
-	value(f.Text)
-	if f.NoTab {
-		value("  " + tools.Dim(f.Annotation))
-	} else {
-		inlineAnnot(f.Annotation)
+func (f *FieldAnnotatedShortText) Render() string {
+	var sb strings.Builder
+	sb.WriteString(renderKey(f.Title))
+	sb.WriteString(f.Text)
+	if f.Annotation != "" {
+		sb.WriteString(renderAnnot(f.Annotation))
 	}
-	newLine()
+	sb.WriteString("\n")
+	return sb.String()
 }
 
+// FieldNil is a no-op field that renders nothing.
 var FieldNil = &fieldNil{}
 
 type fieldNil struct{}
 
-func (f *fieldNil) Output() {}
+func (f *fieldNil) Render() string { return "" }
 
-// FieldLabels is a field that contains a title and a list of labels. If the
-// maxWidth is 0, it defaults to max(33% of terminal width, 40)
+// FieldLabels renders a title followed by a comma-separated list of labels
+// that wraps across lines. If MaxWidth is 0, it defaults to
+// max(33% of terminal width, 40).
 type FieldLabels struct {
 	Title    string
 	Labels   []string
@@ -170,42 +159,49 @@ type FieldLabels struct {
 	MaxLines int
 }
 
-func (f *FieldLabels) Output() {
+func (f *FieldLabels) Render() string {
 	if len(f.Labels) == 0 {
-		return
+		return ""
 	}
 
-	key(f.Title)
-	if f.MaxWidth == 0 {
-		f.MaxWidth = max(33*tools.TermWidth()/100, 40)
+	var sb strings.Builder
+	sb.WriteString(renderKey(f.Title))
+
+	maxW := f.MaxWidth
+	if maxW == 0 {
+		maxW = max(33*tools.TermWidth()/100, 40)
 	}
 
 	width := 0
 	lines := 1
 	for i, label := range f.Labels {
-		value(label)
+		sb.WriteString(label)
 		if i != len(f.Labels)-1 {
-			value(", ")
+			sb.WriteString(", ")
 		}
 		width += len(label) + 2
-		if width >= f.MaxWidth && i != len(f.Labels)-1 {
-			newLine()
-			tab()
+		if width >= maxW && i != len(f.Labels)-1 {
+			sb.WriteString("\n")
+			sb.WriteString(renderTab())
 			width = 0
 			lines++
 			if f.MaxLines != 0 && lines > f.MaxLines {
-				annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more, use -e to show all)")
-				newLine()
-				break
+				sb.WriteString(renderDim("(" + strconv.Itoa(len(f.Labels)-i-1) + " more, use -e to show all)"))
+				sb.WriteString("\n")
+				return sb.String()
 			}
 		}
 	}
 
 	if width != 0 {
-		newLine()
+		sb.WriteString("\n")
 	}
+
+	return sb.String()
 }
 
+// FieldDynamicColumnLabels renders labels in a dynamic grid whose column
+// count is derived from the terminal width and longest label length.
 type FieldDynamicColumnLabels struct {
 	Title     string
 	Labels    []string
@@ -213,17 +209,14 @@ type FieldDynamicColumnLabels struct {
 	ShowTotal bool
 }
 
-func (f *FieldDynamicColumnLabels) Output() {
+func (f *FieldDynamicColumnLabels) Render() string {
 	if len(f.Labels) == 0 {
-		return
+		return ""
 	}
 
-	// This field should have a unique indent size so it's predictable. Therefore
-	// we call flush() before output.
-	flush()
-	key(f.Title)
+	var sb strings.Builder
+	sb.WriteString(renderKey(f.Title))
 
-	lines := 1
 	maxLabelLen := 0
 	for _, label := range f.Labels {
 		if len(label) > maxLabelLen {
@@ -231,50 +224,56 @@ func (f *FieldDynamicColumnLabels) Output() {
 		}
 	}
 
-	columns := (tools.TermWidth() - 4) / (maxLabelLen + 2)
+	colWidth := maxLabelLen + 2
+	columns := (tools.TermWidth() - keyColumnWidth) / colWidth
 	if columns <= 0 {
 		columns = 1
 	}
 
+	lines := 1
 	for i, label := range f.Labels {
 		lastInRow := (i+1)%columns == 0
 		lastAmongAll := i == len(f.Labels)-1
-		value(label)
+
+		padded := label + strings.Repeat(" ", colWidth-len(label))
+		sb.WriteString(padded)
 
 		if f.MaxLines != 0 && lines == f.MaxLines && lastInRow {
-			newLine()
-			tab()
+			sb.WriteString("\n")
+			sb.WriteString(renderTab())
 			if f.ShowTotal {
-				annot("(" + strconv.Itoa(len(f.Labels)) + "in total, " + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+				sb.WriteString(renderDim(fmt.Sprintf("(%d in total, %d more)", len(f.Labels), len(f.Labels)-i-1)))
 			} else {
-				annot("(" + strconv.Itoa(len(f.Labels)-i-1) + " more)")
+				sb.WriteString(renderDim(fmt.Sprintf("(%d more)", len(f.Labels)-i-1)))
 			}
-			break
+			sb.WriteString("\n")
+			return sb.String()
 		}
 
-		if lastAmongAll && f.ShowTotal {
-			if lastInRow {
-				newLine()
+		if lastAmongAll {
+			if f.ShowTotal {
+				if lastInRow {
+					sb.WriteString("\n")
+					sb.WriteString(renderTab())
+				}
+				sb.WriteString(renderDim(fmt.Sprintf("(%d total)", len(f.Labels))))
 			}
-			tab()
-			annot("(" + strconv.Itoa(len(f.Labels)) + " total)")
-			newLine()
-			break
+			sb.WriteString("\n")
+			return sb.String()
 		}
 
-		if lastInRow || lastAmongAll {
-			newLine()
+		if lastInRow {
+			sb.WriteString("\n")
 			lines++
+			sb.WriteString(renderTab())
 		}
-		tab()
 	}
 
-	// After output, we call flush() to reset the indent size.
-	flush()
+	return sb.String()
 }
 
-// FieldMultiAnnotatedShortText accepts 2 arrays, Texts and Annots. len(Texts) determines
-// the length of the output. Any content in Annots after len(Texts) will be omitted.
+// FieldMultiAnnotatedShortText renders multiple annotated lines under one key.
+// len(Texts) determines the number of lines; extra entries in Annots are ignored.
 type FieldMultiAnnotatedShortText struct {
 	Title     string
 	Texts     []string
@@ -282,62 +281,68 @@ type FieldMultiAnnotatedShortText struct {
 	ShowTotal bool
 }
 
-func (f *FieldMultiAnnotatedShortText) Output() {
+func (f *FieldMultiAnnotatedShortText) Render() string {
 	if len(f.Texts) == 0 {
-		return
+		return ""
 	}
 
+	var sb strings.Builder
 	for i, t := range f.Texts {
-		// key() has a tab() at the beginning, so we skip the first tab
 		if i == 0 {
-			key(f.Title)
+			sb.WriteString(renderKey(f.Title))
 		} else {
-			tab()
+			sb.WriteString(renderTab())
 		}
-		value(t)
+		sb.WriteString(t)
 		if f.Annots != nil && i < len(f.Annots) {
-			inlineAnnot(f.Annots[i])
+			sb.WriteString(renderAnnot(f.Annots[i]))
 		}
-		newLine()
+		sb.WriteString("\n")
 	}
 
 	if f.ShowTotal {
-		tab()
-		annot("(" + strconv.Itoa(len(f.Texts)) + " total)")
-		newLine()
+		sb.WriteString(renderTab())
+		sb.WriteString(renderDim("(" + strconv.Itoa(len(f.Texts)) + " total)"))
+		sb.WriteString("\n")
 	}
+
+	return sb.String()
 }
 
+// FieldMultiShortText renders multiple values under a single key, one per line.
 type FieldMultiShortText struct {
 	Title     string
 	Texts     []string
 	ShowTotal bool
 }
 
-func (f *FieldMultiShortText) Output() {
+func (f *FieldMultiShortText) Render() string {
 	if len(f.Texts) == 0 {
-		return
+		return ""
 	}
 
+	var sb strings.Builder
 	for i, t := range f.Texts {
 		if i == 0 {
-			key(f.Title)
+			sb.WriteString(renderKey(f.Title))
 		} else {
-			tab()
+			sb.WriteString(renderTab())
 		}
-		value(t)
-		newLine()
+		sb.WriteString(t)
+		sb.WriteString("\n")
 	}
 
 	if f.ShowTotal {
-		tab()
-		annot("(" + strconv.Itoa(len(f.Texts)) + " total)")
-		newLine()
+		sb.WriteString(renderTab())
+		sb.WriteString(renderDim("(" + strconv.Itoa(len(f.Texts)) + " total)"))
+		sb.WriteString("\n")
 	}
+
+	return sb.String()
 }
 
-// FieldCheckBox defaults to a red cross and green check when TrueText and
-// FalseText is not specified.
+// FieldCheckBox renders a boolean value as a check mark (✓) or cross (✗).
+// Custom TrueText/FalseText override the defaults.
 type FieldCheckBox struct {
 	Title     string
 	Boolean   bool
@@ -345,29 +350,35 @@ type FieldCheckBox struct {
 	FalseText string
 }
 
-func (f *FieldCheckBox) Output() {
-	key(f.Title)
-
-	if f.TrueText == "" {
-		f.TrueText = tools.Green("\u2713") // Check
+func (f *FieldCheckBox) Render() string {
+	trueText := f.TrueText
+	if trueText == "" {
+		trueText = tools.Green("\u2713") // ✓
 	}
-	if f.FalseText == "" {
-		f.FalseText = tools.Red("\u2717") // X
+	falseText := f.FalseText
+	if falseText == "" {
+		falseText = tools.Red("\u2717") // ✗
 	}
 
+	var sb strings.Builder
+	sb.WriteString(renderKey(f.Title))
 	if f.Boolean {
-		value(f.TrueText)
+		sb.WriteString(trueText)
 	} else {
-		value(f.FalseText)
+		sb.WriteString(falseText)
 	}
+	sb.WriteString("\n")
+	return sb.String()
 }
 
+// Flush renders all fields in data and prints the composed output.
 func Flush(data *Data) {
+	var sb strings.Builder
 	for _, field := range data.Fields {
 		if field != nil {
-			field.Output()
+			sb.WriteString(field.Render())
 		}
 	}
-	newLine()
-	flush()
+	sb.WriteString("\n")
+	fmt.Print(sb.String())
 }

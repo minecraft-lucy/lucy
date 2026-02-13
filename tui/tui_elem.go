@@ -1,48 +1,55 @@
 package tui
 
 import (
-	"fmt"
-	"os"
-	"text/tabwriter"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 
 	"lucy/tools"
 )
 
-const tabWriterDebug = false
+// keyColumnWidth is the fixed width for the key column in key-value output.
+// This replaces the dynamic tabwriter alignment with a predictable layout.
+const keyColumnWidth = 16
 
-var keyValueWriter = tabwriter.NewWriter(
-	os.Stdout,
-	0,
-	0,
-	2,
-	' ',
-	tools.Ternary(tabWriterDebug, tabwriter.Debug, 0),
-)
-
-func key(title string) {
-	_, _ = fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta(title)))
+// renderKey renders a styled key label with fixed-width padding for alignment.
+func renderKey(title string) string {
+	styled := tools.Bold(tools.Magenta(title))
+	visualWidth := lipgloss.Width(styled)
+	padding := keyColumnWidth - visualWidth
+	if padding < 2 {
+		padding = 2
+	}
+	return styled + strings.Repeat(" ", padding)
 }
 
-func value(value string) {
-	_, _ = fmt.Fprintf(keyValueWriter, "%s", value)
+// renderDim renders text with a dimmed/faint style.
+func renderDim(text string) string {
+	return tools.Dim(text)
 }
 
-func inlineAnnot(annotation string) {
-	_, _ = fmt.Fprintf(keyValueWriter, "\t%s", tools.Dim(annotation))
+// renderAnnot renders an inline annotation (dimmed, with leading spacing).
+func renderAnnot(annotation string) string {
+	return "  " + tools.Dim(annotation)
 }
 
-func annot(value string) {
-	_, _ = fmt.Fprintf(keyValueWriter, "%s", tools.Dim(value))
+// renderTab returns whitespace matching the key column width, used for
+// continuation lines that need to align with the value column.
+func renderTab() string {
+	return strings.Repeat(" ", keyColumnWidth)
 }
 
-func newLine() {
-	_, _ = fmt.Fprintf(keyValueWriter, "\n")
-}
-
-func tab() {
-	_, _ = fmt.Fprintf(keyValueWriter, "%s\t", tools.Bold(tools.Magenta("")))
-}
-
-func flush() {
-	_ = keyValueWriter.Flush()
+// renderSeparator returns a horizontal separator line. A length of 0 produces
+// a line spanning 75% of the terminal width.
+func renderSeparator(length int, dim bool) string {
+	if length == 0 {
+		length = tools.TermWidth() * 3 / 4
+	} else if length > tools.TermWidth() {
+		length = tools.TermWidth()
+	}
+	sep := strings.Repeat("-", length)
+	if dim {
+		return renderDim(sep) + "\n"
+	}
+	return sep + "\n"
 }

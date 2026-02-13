@@ -246,8 +246,8 @@ func (v ComparableVersion) Validate() bool {
 		return v.Major != 0 || v.Minor != 0 || v.Patch != 0
 	case MinecraftSnapshot:
 		return v.Major != 0 && // year
-		v.Minor > 0 && v.Minor <= maxWeek && // week (work cycle)
-		v.Patch >= minSnapshotIndex && v.Patch <= maxSnapshotIndex // in-week index (as ascii code)
+			v.Minor > 0 && v.Minor <= maxWeek && // week (work cycle)
+			v.Patch >= minSnapshotIndex && v.Patch <= maxSnapshotIndex // in-week index (as ascii code)
 	case MinecraftRelease:
 		return v.Major != 0 && v.Minor != 0
 	case Invalid:
@@ -316,8 +316,8 @@ func (exp *VersionConstraint) Inverse() {
 }
 
 func (d Dependency) Satisfy(
-id PackageId,
-v ComparableVersion,
+	id PackageId,
+	v ComparableVersion,
 ) bool {
 	if (id.Platform != d.Id.Platform) || (id.Name != d.Id.Name) {
 		return false
