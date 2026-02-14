@@ -63,7 +63,7 @@ func (f *FieldShortText) Render() string {
 	return renderKey(f.Title) + f.Text + "\n"
 }
 
-// FieldMarkdown renders markdown content as styled ANSI terminal output.
+// FieldMarkdown renders Markdown content as styled ANSI terminal output.
 type FieldMarkdown FieldLongText
 
 func (f *FieldMarkdown) Render() string {
@@ -87,6 +87,7 @@ type FieldLongText struct {
 	MaxLines      int
 	UseAlternate  bool
 	AlternateText string
+	FoldNotice    string
 }
 
 func (f *FieldLongText) Render() string {
@@ -95,7 +96,8 @@ func (f *FieldLongText) Render() string {
 		text = wrap.String(text, f.MaxColumns)
 	}
 	lines := strings.Split(text, "\n")
-	if f.MaxLines != 0 && len(lines) > f.MaxLines {
+	truncated := f.MaxLines != 0 && len(lines) > f.MaxLines
+	if truncated {
 		if f.UseAlternate {
 			if f.AlternateText == "" {
 				return ""
@@ -104,7 +106,11 @@ func (f *FieldLongText) Render() string {
 				Title: f.Title,
 				Text:  f.AlternateText,
 			}
-			return o.Render()
+			rendered := o.Render()
+			if f.FoldNotice != "" {
+				rendered += renderTab() + renderDim(f.FoldNotice) + "\n"
+			}
+			return rendered
 		}
 		lines = lines[:f.MaxLines]
 	}
@@ -118,6 +124,11 @@ func (f *FieldLongText) Render() string {
 	}
 	for _, line := range lines {
 		sb.WriteString(line)
+		sb.WriteString("\n")
+	}
+	if truncated && f.FoldNotice != "" {
+		sb.WriteString(renderTab())
+		sb.WriteString(renderDim(f.FoldNotice))
 		sb.WriteString("\n")
 	}
 	return sb.String()
@@ -242,9 +253,24 @@ func (f *FieldDynamicColumnLabels) Render() string {
 			sb.WriteString("\n")
 			sb.WriteString(renderTab())
 			if f.ShowTotal {
-				sb.WriteString(renderDim(fmt.Sprintf("(%d in total, %d more)", len(f.Labels), len(f.Labels)-i-1)))
+				sb.WriteString(
+					renderDim(
+						fmt.Sprintf(
+							"(%d in total, %d more)",
+							len(f.Labels),
+							len(f.Labels)-i-1,
+						),
+					),
+				)
 			} else {
-				sb.WriteString(renderDim(fmt.Sprintf("(%d more)", len(f.Labels)-i-1)))
+				sb.WriteString(
+					renderDim(
+						fmt.Sprintf(
+							"(%d more)",
+							len(f.Labels)-i-1,
+						),
+					),
+				)
 			}
 			sb.WriteString("\n")
 			return sb.String()
@@ -256,7 +282,14 @@ func (f *FieldDynamicColumnLabels) Render() string {
 					sb.WriteString("\n")
 					sb.WriteString(renderTab())
 				}
-				sb.WriteString(renderDim(fmt.Sprintf("(%d total)", len(f.Labels))))
+				sb.WriteString(
+					renderDim(
+						fmt.Sprintf(
+							"(%d total)",
+							len(f.Labels),
+						),
+					),
+				)
 			}
 			sb.WriteString("\n")
 			return sb.String()
