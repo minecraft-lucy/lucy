@@ -122,10 +122,6 @@ func infoOutput(p *types.Package, longOutput bool) *tui.Data {
 		tools.TermHeight()*3/2,
 	)
 	useAlternate := !longOutput
-	foldNotice := ""
-	if !longOutput {
-		foldNotice = "Full markdown is folded; expand the terminal or use --long."
-	}
 	o := &tui.Data{
 		Fields: []tui.Field{
 			&tui.FieldAnnotation{
@@ -150,7 +146,7 @@ func infoOutput(p *types.Package, longOutput bool) *tui.Data {
 					MaxLines:      maxLines,
 					UseAlternate:  useAlternate,
 					AlternateText: tools.Underline(p.Information.DescriptionUrl),
-					FoldNotice:    foldNotice,
+					FoldNotice:    "",
 				},
 				&tui.FieldLongText{
 					Title:         "Information",
@@ -176,10 +172,10 @@ func infoOutput(p *types.Package, longOutput bool) *tui.Data {
 	o.Fields = append(
 		o.Fields,
 		&tui.FieldMultiAnnotatedShortText{
-			Title:     "Authors",
-			Texts:     authorNames,
-			Annots:    authorLinks,
-			ShowTotal: false,
+			Title:       "Authors",
+			Texts:       authorNames,
+			Annotations: authorLinks,
+			ShowTotal:   false,
 		},
 	)
 

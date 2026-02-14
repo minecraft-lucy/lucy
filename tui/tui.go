@@ -70,7 +70,7 @@ func (f *FieldMarkdown) Render() string {
 	long := FieldLongText(*f)
 	long.Text = tools.MarkdownToAnsi(f.Text, f.MaxColumns)
 	long.LineWrap = false
-	return long.Render()
+	return long.Render() + "\n"
 }
 
 // FieldLongText renders multi-line text content with optional word-wrapping
@@ -79,15 +79,14 @@ type FieldLongText struct {
 	Title string
 	Text  string
 
-	Padding bool // Padding adds a short separator before the text body
-
+	Padding    bool // Padding adds a short separator before the text body
 	LineWrap   bool
 	MaxColumns int
+	MaxLines   int
 
-	MaxLines      int
-	UseAlternate  bool
-	AlternateText string
-	FoldNotice    string
+	UseAlternate  bool   // UseAlternate shows AlternateText instead of the text body if it is truncated
+	AlternateText string // AlternateText is shown instead of the text body if it is truncated
+	FoldNotice    string // FoldNotice is a dimmed message shown after the text body if it is truncated, left empty for default message
 }
 
 func (f *FieldLongText) Render() string {
@@ -96,23 +95,41 @@ func (f *FieldLongText) Render() string {
 		text = wrap.String(text, f.MaxColumns)
 	}
 	lines := strings.Split(text, "\n")
+	lineNumber := len(lines)
+
+	// If MaxLines is set and the text exceeds it, truncate or show alternate text.
 	truncated := f.MaxLines != 0 && len(lines) > f.MaxLines
 	if truncated {
 		if f.UseAlternate {
 			if f.AlternateText == "" {
 				return ""
 			}
-			o := FieldShortText{
+			lineNumberAnnotation := renderDim(
+				fmt.Sprintf(" (%d lines)", lineNumber),
+			)
+			alternateText := FieldShortText{
 				Title: f.Title,
-				Text:  f.AlternateText,
+				Text:  f.AlternateText + lineNumberAnnotation,
 			}
-			rendered := o.Render()
-			if f.FoldNotice != "" {
-				rendered += renderTab() + renderDim(f.FoldNotice) + "\n"
+			rendered := alternateText.Render()
+
+			// If FoldNotice is empty, use a default message
+			if f.FoldNotice == "" {
+				f.FoldNotice = renderDim(fmt.Sprintf("full text not shown, use --long or expand the terminal"))
 			}
+			rendered += renderTab() + renderDim(f.FoldNotice)
 			return rendered
 		}
+
+		if f.FoldNotice == "" {
+			f.FoldNotice = fmt.Sprintf(
+				"...\n%d lines left, use --long or expand the terminal",
+				lineNumber-f.MaxLines,
+			)
+		}
+		f.FoldNotice = renderDim(f.FoldNotice)
 		lines = lines[:f.MaxLines]
+		lines = append(lines, f.FoldNotice)
 	}
 
 	var sb strings.Builder
@@ -197,7 +214,7 @@ func (f *FieldLabels) Render() string {
 			width = 0
 			lines++
 			if f.MaxLines != 0 && lines > f.MaxLines {
-				sb.WriteString(renderDim("(" + strconv.Itoa(len(f.Labels)-i-1) + " more, use -e to show all)"))
+				sb.WriteString(renderDim("(" + strconv.Itoa(len(f.Labels)-i-1) + " more, use --long to show all)"))
 				sb.WriteString("\n")
 				return sb.String()
 			}
@@ -306,12 +323,12 @@ func (f *FieldDynamicColumnLabels) Render() string {
 }
 
 // FieldMultiAnnotatedShortText renders multiple annotated lines under one key.
-// len(Texts) determines the number of lines; extra entries in Annots are ignored.
+// len(Texts) determines the number of lines; extra entries in Annotations are ignored.
 type FieldMultiAnnotatedShortText struct {
-	Title     string
-	Texts     []string
-	Annots    []string
-	ShowTotal bool
+	Title       string
+	Texts       []string
+	Annotations []string
+	ShowTotal   bool
 }
 
 func (f *FieldMultiAnnotatedShortText) Render() string {
@@ -327,8 +344,8 @@ func (f *FieldMultiAnnotatedShortText) Render() string {
 			sb.WriteString(renderTab())
 		}
 		sb.WriteString(t)
-		if f.Annots != nil && i < len(f.Annots) {
-			sb.WriteString(renderAnnot(f.Annots[i]))
+		if f.Annotations != nil && i < len(f.Annotations) {
+			sb.WriteString(renderAnnot(f.Annotations[i]))
 		}
 		sb.WriteString("\n")
 	}

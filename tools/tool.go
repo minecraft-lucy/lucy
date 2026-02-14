@@ -148,6 +148,7 @@ func MarkdownToAnsi(md string, maxWidth int) string {
 	}
 
 	renderer, err := glamour.NewTermRenderer(options...)
+	defer CloseReader(renderer, func(err error) {})
 	if err != nil {
 		return trimmed
 	}

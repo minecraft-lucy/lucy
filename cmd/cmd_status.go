@@ -122,10 +122,10 @@ func generateStatusOutput(
 				tools.Ternary[tui.Field](
 					longOutput,
 					&tui.FieldMultiAnnotatedShortText{
-						Title:     "Mods",
-						Texts:     modNames,
-						Annots:    modPaths,
-						ShowTotal: true,
+						Title:       "Mods",
+						Texts:       modNames,
+						Annotations: modPaths,
+						ShowTotal:   true,
 					},
 					&tui.FieldDynamicColumnLabels{
 						Title:     "Mods",
@@ -138,10 +138,10 @@ func generateStatusOutput(
 		} else {
 			status.Fields = append(
 				status.Fields, &tui.FieldMultiAnnotatedShortText{
-					Title:     "Mods",
-					Texts:     []string{tools.Dim("(None)")},
-					Annots:    nil,
-					ShowTotal: false,
+					Title:       "Mods",
+					Texts:       []string{tools.Dim("(None)")},
+					Annotations: nil,
+					ShowTotal:   false,
 				},
 			)
 		}
