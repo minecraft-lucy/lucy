@@ -145,7 +145,7 @@ func (r rawProjectInformation) ToProjectInformation() types.ProjectInformation {
 			Type: types.UrlHome,
 			Url:  r.Meta.Link,
 		}, types.Url{
-			Name: "GitHub Repository",
+			Name: "GitHub Repo",
 			Type: types.UrlSource,
 			Url:  r.Info.Repository,
 		},

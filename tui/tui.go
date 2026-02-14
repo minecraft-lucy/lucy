@@ -96,24 +96,26 @@ func (f *FieldLongText) Render() string {
 	}
 	lines := strings.Split(text, "\n")
 	lineNumber := len(lines)
+	// lineNumberAnnotation shows the full line count, regardless of truncation.
+	lineNumberAnnotation := renderDim(
+		fmt.Sprintf("(total %d lines)", lineNumber),
+	)
 
 	// If MaxLines is set and the text exceeds it, truncate or show alternate text.
 	truncated := f.MaxLines != 0 && len(lines) > f.MaxLines
 	if truncated {
+		// If UseAlternate is true, show AlternateText instead of the truncated text body.
 		if f.UseAlternate {
 			if f.AlternateText == "" {
 				return ""
 			}
-			lineNumberAnnotation := renderDim(
-				fmt.Sprintf(" (%d lines)", lineNumber),
-			)
 			alternateText := FieldShortText{
 				Title: f.Title,
-				Text:  f.AlternateText + lineNumberAnnotation,
+				Text:  f.AlternateText + " " + lineNumberAnnotation,
 			}
 			rendered := alternateText.Render()
 
-			// If FoldNotice is empty, use a default message
+			// Use default fold notice if FoldNotice is empty
 			if f.FoldNotice == "" {
 				f.FoldNotice = renderDim(fmt.Sprintf("full text not shown, use --long or expand the terminal"))
 			}
@@ -121,31 +123,29 @@ func (f *FieldLongText) Render() string {
 			return rendered
 		}
 
+		// Use default fold notice if FoldNotice is empty
 		if f.FoldNotice == "" {
 			f.FoldNotice = fmt.Sprintf(
-				"...\n%d lines left, use --long or expand the terminal",
+				"...\n%d lines left, use --long or expand the terminal\n",
 				lineNumber-f.MaxLines,
 			)
 		}
 		f.FoldNotice = renderDim(f.FoldNotice)
+		// Truncate to MaxLines
 		lines = lines[:f.MaxLines]
+		// Append fold notice after truncated text
 		lines = append(lines, f.FoldNotice)
 	}
 
 	var sb strings.Builder
 	sb.WriteString(renderKey(f.Title))
-	sb.WriteString(renderDim("(" + strconv.Itoa(len(lines)) + " lines)"))
+	sb.WriteString(lineNumberAnnotation)
 	sb.WriteString("\n")
 	if f.Padding {
 		sb.WriteString(renderSeparator(5, false))
 	}
 	for _, line := range lines {
 		sb.WriteString(line)
-		sb.WriteString("\n")
-	}
-	if truncated && f.FoldNotice != "" {
-		sb.WriteString(renderTab())
-		sb.WriteString(renderDim(f.FoldNotice))
 		sb.WriteString("\n")
 	}
 	return sb.String()

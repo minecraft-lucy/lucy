@@ -9,7 +9,7 @@ import (
 )
 
 // keyColumnWidth is the fixed width for the key column in key-value output.
-// This replaces the dynamic tabwriter alignment with a predictable layout.
+// This replaces the dynamic tab writer alignment with a predictable layout.
 const keyColumnWidth = 16
 
 // renderKey renders a styled key label with fixed-width padding for alignment.
