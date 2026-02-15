@@ -159,7 +159,7 @@ func Fatal(content error) {
 // intentional so that the dump provides a complete, uninterrupted
 // chronological view.
 func DumpHistory() {
-	if !verboseWrite || len(history) == 0 {
+	if !dumpHistory || len(history) == 0 {
 		return
 	}
 	_, _ = fmt.Fprintln(os.Stderr)

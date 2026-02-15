@@ -13,6 +13,7 @@ func init() {
 var (
 	debug        bool // when true, Debug() entries are recorded
 	verboseWrite bool // when true, file-only entries are also printed to console
+	dumpHistory  bool // when true, DumpHistory() will print the history to console
 )
 
 var (
@@ -25,8 +26,10 @@ var (
 // that all entries are visible.
 var VerboseLevel Level
 
-// EnableVerboseWrite enables echoing of file-only log entries to the console.
-func EnableVerboseWrite() { verboseWrite = true }
+// EnablePrintLogs enables echoing of file-only log entries to the console.
+func EnablePrintLogs() { verboseWrite = true }
 
 // EnableDebug enables Debug-level logging
 func EnableDebug() { debug = true }
+
+func EnableDumpHistory() { dumpHistory = true }
