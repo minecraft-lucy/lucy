@@ -85,7 +85,7 @@ var actionSearch cli.ActionFunc = func(
 			for _, sourceHandler := range source.All {
 				res, err = remote.Search(sourceHandler, p.Name, options)
 				if err != nil {
-					logger.WarnNow(
+					logger.ReportWarn(
 						fmt.Errorf(
 							"search on %s failed: %w",
 							sourceHandler.Name().Title(),
@@ -148,7 +148,7 @@ var actionSearch cli.ActionFunc = func(
 	}
 
 	if errors.Is(err, remote.ErrorNoResults) {
-		logger.InfoNow("no results found")
+		logger.ShowInfo("no results found")
 	}
 
 	tui.Flush(out)

@@ -150,7 +150,7 @@ func selectExecutable(
 		),
 	)
 	if err := form.Run(); err != nil {
-		logger.WarnNow(err)
+		logger.ShowWarn(err)
 	}
 	return selection
 }

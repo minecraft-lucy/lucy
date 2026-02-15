@@ -82,7 +82,7 @@ var actionAdd cli.ActionFunc = func(
 	var dir string
 	switch id.Platform {
 	case types.AllPlatform:
-		logger.InfoNow("no platform specified, attempting to infer")
+		logger.ShowInfo("no platform specified, attempting to infer")
 	case types.Mcdr:
 		dir = serverInfo.Environments.Mcdr.PluginDirectories[0] // TODO: Change this
 	case types.Forge, types.Fabric:
@@ -111,7 +111,7 @@ var actionAdd cli.ActionFunc = func(
 		for _, src = range source.All {
 			remoteData, err = src.Fetch(id)
 			if err != nil {
-				logger.InfoNow(err)
+				logger.ShowInfo(err)
 				err = nil // prevent error got printed twice in the last iteration
 				continue
 			}
@@ -134,7 +134,7 @@ var actionAdd cli.ActionFunc = func(
 		return fmt.Errorf("unknown source: %s", cmd.String("source"))
 	}
 	if err != nil {
-		logger.WarnNow(err)
+		logger.ReportWarn(err)
 	}
 	if remoteData != nil {
 		r := remoteData.ToPackageRemote()
@@ -157,7 +157,7 @@ var actionAdd cli.ActionFunc = func(
 	// TODO: util.DownloadFile is a temporary solution
 	_, _, err = util.DownloadFile(p.Remote.FileUrl, dir)
 	if err != nil {
-		logger.ErrorNow(fmt.Errorf("download failed: %w", err))
+		logger.ReportError(fmt.Errorf("download failed: %w", err))
 	}
 	return nil
 }

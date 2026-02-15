@@ -8,7 +8,6 @@ require (
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
-	github.com/emirpasic/gods v1.18.1
 	github.com/muesli/reflow v0.3.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sahilm/fuzzy v0.1.1

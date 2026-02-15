@@ -3,6 +3,5 @@
 package logger
 
 func init() {
-	UseConsoleOutput()
-	UseDebug()
+	SetDebug()
 }
