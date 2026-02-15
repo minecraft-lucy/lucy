@@ -5,30 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
-
-func init() {
-	renewStyleFunctions()
-}
-
-const (
-	styleReset = iota
-	styleBold
-	styleDim
-	styleItalic
-	styleUnderline
-	styleBlackText = iota + 25
-	styleRedText
-	styleGreenText
-	styleYellowText
-	styleBlueText
-	styleMagentaText
-	styleCyanText
-	styleWhiteText
-)
-
-const esc = '\u001B'
 
 var (
 	Bold      func(any) string
@@ -43,22 +22,15 @@ var (
 	Cyan      func(any) string
 )
 
-func renewStyleFunctions() {
-	Bold = styleFactory(styleBold)
-	Dim = styleFactory(styleDim)
-	Italic = styleFactory(styleItalic)
-	Underline = styleFactory(styleUnderline)
-	Red = styleFactory(styleRedText)
-	Green = styleFactory(styleGreenText)
-	Yellow = styleFactory(styleYellowText)
-	Blue = styleFactory(styleBlueText)
-	Magenta = styleFactory(styleMagentaText)
-	Cyan = styleFactory(styleCyanText)
+var stylesEnabled = true
+
+func init() {
+	renewStyleFunctions()
 }
 
-func TurnOffStyles() {
-	styleFactory = func(i int) func(any) string {
-		return func(v any) string {
+func renewStyleFunctions() {
+	if !stylesEnabled {
+		noStyle := func(v any) string {
 			switch v := v.(type) {
 			case rune:
 				return string(v)
@@ -66,21 +38,51 @@ func TurnOffStyles() {
 				return fmt.Sprintf("%v", v)
 			}
 		}
+		Bold = noStyle
+		Dim = noStyle
+		Italic = noStyle
+		Underline = noStyle
+		Red = noStyle
+		Green = noStyle
+		Yellow = noStyle
+		Blue = noStyle
+		Magenta = noStyle
+		Cyan = noStyle
+		return
 	}
+
+	Bold = lsStyle(lipgloss.NewStyle().Bold(true))
+	Dim = lsStyle(lipgloss.NewStyle().Faint(true))
+	Italic = lsStyle(lipgloss.NewStyle().Italic(true))
+	Underline = lsStyle(lipgloss.NewStyle().Underline(true))
+	Red = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("1")))
+	Green = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("2")))
+	Yellow = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("3")))
+	Blue = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("4")))
+	Magenta = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("5")))
+	Cyan = lsStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("6")))
+}
+
+// lsStyle wraps a lipgloss.Style into a func(any) string, matching the
+// existing tools.Bold / tools.Dim / ... signature.
+func lsStyle(s lipgloss.Style) func(any) string {
+	return func(v any) string {
+		switch v := v.(type) {
+		case rune:
+			return s.Render(string(v))
+		default:
+			return s.Render(fmt.Sprintf("%v", v))
+		}
+	}
+}
+
+func TurnOffStyles() {
+	stylesEnabled = false
 	renewStyleFunctions()
 }
 
-var styleFactory = func(i int) func(any) string {
-	return func(v any) string {
-		var s string
-		switch v := v.(type) {
-		case rune:
-			s = string(v)
-		default:
-			s = fmt.Sprintf("%v", v)
-		}
-		return fmt.Sprintf("%c[%dm%s%c[%dm", esc, i, s, esc, styleReset)
-	}
+func StylesEnabled() bool {
+	return stylesEnabled
 }
 
 // PrintAsJson is usually used for debugging purposes

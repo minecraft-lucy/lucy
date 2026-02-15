@@ -23,6 +23,7 @@ var subcmdInfo = &cli.Command{
 	Flags: []cli.Flag{
 		flagSource,
 		flagJsonOutput,
+		flagLongOutput,
 		flagNoStyle,
 	},
 	Action: tools.Decorate(
@@ -57,7 +58,7 @@ var actionInfo cli.ActionFunc = func(
 				continue
 			}
 			p.Remote = &remote
-			out = infoOutput(p)
+			out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
 			break
 		}
 
@@ -74,7 +75,7 @@ var actionInfo cli.ActionFunc = func(
 			logger.ErrorNow(err)
 			return err
 		}
-		out = infoOutput(p)
+		out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
 	case types.Mcdr:
 		info, err := remote.Information(
 			source.Mcdr,
@@ -90,7 +91,7 @@ var actionInfo cli.ActionFunc = func(
 			break
 		}
 		p.Information, p.Remote = &info, &remote
-		out = infoOutput(p)
+		out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
 	}
 
 	if err != nil {
@@ -114,7 +115,13 @@ var actionInfo cli.ActionFunc = func(
 // TODO: Link to latest compatible version
 // TODO: Generate `lucy add` command
 
-func infoOutput(p *types.Package) *tui.Data {
+func infoOutput(p *types.Package, longOutput bool) *tui.Data {
+	maxLines := tools.Ternary[int](
+		longOutput,
+		0,
+		tools.TermHeight()*3/2,
+	)
+	useAlternate := !longOutput
 	o := &tui.Data{
 		Fields: []tui.Field{
 			&tui.FieldAnnotation{
@@ -136,9 +143,10 @@ func infoOutput(p *types.Package) *tui.Data {
 					Padding:       true,
 					LineWrap:      true,
 					MaxColumns:    tools.TermWidth() * 8 / 10,
-					MaxLines:      tools.TermHeight() * 3 / 2,
-					UseAlternate:  true,
+					MaxLines:      maxLines,
+					UseAlternate:  useAlternate,
 					AlternateText: tools.Underline(p.Information.DescriptionUrl),
+					FoldNotice:    "",
 				},
 				&tui.FieldLongText{
 					Title:         "Information",
@@ -146,8 +154,8 @@ func infoOutput(p *types.Package) *tui.Data {
 					Padding:       true,
 					LineWrap:      true,
 					MaxColumns:    tools.TermWidth() * 8 / 10,
-					MaxLines:      tools.TermHeight() * 3 / 2,
-					UseAlternate:  true,
+					MaxLines:      maxLines,
+					UseAlternate:  useAlternate,
 					AlternateText: tools.Underline(p.Information.DescriptionUrl),
 				},
 			),
@@ -164,10 +172,10 @@ func infoOutput(p *types.Package) *tui.Data {
 	o.Fields = append(
 		o.Fields,
 		&tui.FieldMultiAnnotatedShortText{
-			Title:     "Authors",
-			Texts:     authorNames,
-			Annots:    authorLinks,
-			ShowTotal: false,
+			Title:       "Authors",
+			Texts:       authorNames,
+			Annotations: authorLinks,
+			ShowTotal:   false,
 		},
 	)
 
@@ -195,7 +203,6 @@ func infoOutput(p *types.Package) *tui.Data {
 			Title:      "Download",
 			Text:       tools.Underline(p.Remote.FileUrl),
 			Annotation: p.Remote.Filename,
-			NoTab:      true,
 		},
 	)
 
