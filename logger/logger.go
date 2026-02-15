@@ -19,103 +19,12 @@ package logger
 import (
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"lucy/tools"
 )
 
-// Level represents the severity of a log entry.
-// Levels are ordered from least to most severe: Debug < Info < Warn < Error < Fatal.
-type Level uint8
-
-const (
-	LevelDebug Level = iota
-	LevelInfo
-	LevelWarn
-	LevelError
-	LevelFatal
-)
-
-func (l Level) String() string {
-	switch l {
-	case LevelDebug:
-		return "DEBUG"
-	case LevelInfo:
-		return "INFO"
-	case LevelWarn:
-		return "WARN"
-	case LevelError:
-		return "ERROR"
-	case LevelFatal:
-		return "FATAL"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-// levelColor maps each level to a styling function.
-var levelColor = map[Level]func(any) string{
-	LevelDebug: tools.Green,
-	LevelInfo:  tools.Cyan,
-	LevelWarn:  tools.Yellow,
-	LevelError: tools.Red,
-	LevelFatal: tools.Red,
-}
-
-// prefix returns the bracketed level tag, optionally colored.
-func (l Level) prefix(colored bool) string {
-	if colored {
-		return "[" + levelColor[l](l.String()) + "]"
-	}
-	return "[" + l.String() + "]"
-}
-
-// Entry represents a single log item with its timestamp, level, and content. This is used internally for recording history and is not exposed to users of the logger package.
-type entry struct {
-	Time    time.Time
-	Level   Level
-	Content any
-}
-
-var (
-	verbose bool // when true, file-only entries are also printed to console
-	debug   bool // when true, Debug() entries are recorded
-
-	mu      sync.Mutex // write lock for history
-	history []*entry
-)
-
-// VerboseLevel controls which levels are echoed to the console in verbose
-// mode. Everything at or above this level is shown. Set to LevelDebug so
-// that all entries are visible.
-const VerboseLevel = LevelDebug
-
-// SetVerbose enables echoing of file-only log entries to the console.
-func SetVerbose() { verbose = true }
-
-// SetDebug enables Debug-level logging and implies verbose.
-func SetDebug() {
-	debug = true
-	verbose = true
-}
-
-// IO
-
-func writeToFile(e *entry) {
-	timestamp := e.Time.Format("2006-01-02 15:04:05")
-	_, _ = fmt.Fprintln(LogFile, timestamp, e.Level.prefix(false), e.Content)
-}
-
-func writeToConsole(e *entry) {
-	_, _ = fmt.Fprintln(os.Stderr, e.Level.prefix(true), e.Content)
-}
-
-func record(e *entry) {
-	mu.Lock()
-	history = append(history, e)
-	mu.Unlock()
-}
+// Logging only functions
 
 // Info logs an informational entry to the log file.
 // In verbose mode the entry is also printed to the console.
@@ -170,9 +79,7 @@ func Debug(content any) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// User-display only (console, no file)
-// ---------------------------------------------------------------------------
+// User-display only functions
 
 // ShowInfo displays an informational message to the user on stderr.
 // The message is NOT written to the log file.
@@ -192,9 +99,7 @@ func ShowError(content error) {
 	writeToConsole(&entry{Time: time.Now(), Level: LevelError, Content: content})
 }
 
-// ---------------------------------------------------------------------------
-// Both file + user-display
-// ---------------------------------------------------------------------------
+// Both file and user-display functions
 
 // ReportInfo logs an informational message to the file AND displays it to
 // the user on stderr.
@@ -229,9 +134,7 @@ func ReportError(content error) {
 	writeToConsole(e)
 }
 
-// ---------------------------------------------------------------------------
-// Fatal
-// ---------------------------------------------------------------------------
+// Fatal logs a fatal error to the file, displays it to the user, then
 
 // Fatal logs a fatal error to the file, displays it to the user, then
 // calls os.Exit(1). Pending history is dumped before exit.
@@ -243,10 +146,6 @@ func Fatal(content error) {
 	DumpHistory()
 	os.Exit(1)
 }
-
-// ---------------------------------------------------------------------------
-// History
-// ---------------------------------------------------------------------------
 
 // DumpHistory replays all recorded log entries to the console. This is
 // intended to be called from a deferred function in main for post-mortem
