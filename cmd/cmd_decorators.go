@@ -34,7 +34,7 @@ func decoratorGlobalFlags(f cli.ActionFunc) cli.ActionFunc {
 		if cmd.Bool("debug") {
 			logger.EnableDebug()
 		}
-		if cmd.Bool("dump-history") {
+		if cmd.Bool("dump-logs") {
 			logger.EnableDumpHistory()
 		}
 		if cmd.Bool("no-style") {
