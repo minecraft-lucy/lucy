@@ -228,7 +228,7 @@ type VersionScheme uint8
 const (
 	Semver VersionScheme = iota
 
-	// Docs
+	// MinecraftSnapshot Docs
 	// https://zh.minecraft.wiki/w/%E7%89%88%E6%9C%AC%E6%A0%BC%E5%BC%8F#%E5%BF%AB%E7%85%A7%EF%BC%88Snapshot%EF%BC%89
 	MinecraftSnapshot
 	MinecraftRelease
@@ -289,7 +289,8 @@ type VersionConstraint struct {
 func (exps VersionConstraintExpression) Inverse() VersionConstraintExpression {
 	tools.ForEachOnMatrix(
 		exps,
-		func(exp VersionConstraint) { exp.Inverse() })
+		func(exp VersionConstraint) { exp.Inverse() },
+	)
 	return exps
 }
 

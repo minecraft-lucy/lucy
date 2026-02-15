@@ -67,7 +67,7 @@ type asset struct {
 	HashSha256         string    `json:"hash_sha256"`
 }
 
-// GitHub API file ref: https://api.github.com/repos/MCDReforged/PluginCatalogue/{plugin_name}/meta.json?ref=meta
+// GitHub API file ref: https://api.github.com/repos/MCDReforged/PluginCatalogue/contents/{plugin_name}/meta.json?ref=meta
 type pluginMeta struct {
 	SchemaVersion int               `json:"schema_version"`
 	Id            string            `json:"id"`
@@ -83,6 +83,7 @@ type pluginMeta struct {
 	} `json:"description"`
 }
 
+// GitHub API file ref: https://api.github.com/repos/MCDReforged/PluginCatalogue/contents/{plugin_name}/repository.json?ref=meta
 type pluginRepo struct {
 	Url             string `json:"url"`
 	Name            string `json:"name"`
@@ -115,7 +116,7 @@ func (r rawProjectInformation) ToProjectInformation() types.ProjectInformation {
 		Title:                 r.Meta.Name,
 		Brief:                 r.Meta.Description.EnUs,
 		Description:           r.Repository.Readme,
-		DescriptionUrl:        r.Repository.ReadmeUrl,
+		DescriptionUrl:        r.Repository.HtmlUrl,
 		DescriptionIsMarkdown: true,
 		Authors:               nil,
 		Urls:                  nil,
@@ -144,7 +145,7 @@ func (r rawProjectInformation) ToProjectInformation() types.ProjectInformation {
 			Type: types.UrlHome,
 			Url:  r.Meta.Link,
 		}, types.Url{
-			Name: "GitHub Repository",
+			Name: "GitHub Repo",
 			Type: types.UrlSource,
 			Url:  r.Info.Repository,
 		},

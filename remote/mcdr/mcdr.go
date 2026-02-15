@@ -2,6 +2,7 @@ package mcdr
 
 import (
 	"fmt"
+
 	"lucy/probe"
 	"lucy/remote"
 	"lucy/syntax"
@@ -31,16 +32,16 @@ func (m mcdrSearchResult) ToSearchResults() types.SearchResults {
 // TODO: handle search options
 
 func (s self) Search(
-query string,
-options types.SearchOptions,
+	query string,
+	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
 	res, err = searchPlugin(query)
 	return
 }
 
 func (s self) Fetch(id types.PackageId) (
-rem remote.RawPackageRemote,
-err error,
+	rem remote.RawPackageRemote,
+	err error,
 ) {
 	if id.Version.NeedsInfer() {
 		id, err = s.ParseAmbiguousVersion(id)
@@ -53,8 +54,8 @@ err error,
 }
 
 func (s self) Information(name types.ProjectName) (
-info remote.RawProjectInformation,
-err error,
+	info remote.RawProjectInformation,
+	err error,
 ) {
 	plugin, err := getPluginInfo(name.Pep8String())
 	if err != nil {
@@ -79,24 +80,24 @@ err error,
 }
 
 func (s self) Dependencies(id types.PackageId) (
-remote.RawPackageDependencies,
-error,
+	remote.RawPackageDependencies,
+	error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) Support(name types.ProjectName) (
-supports remote.RawProjectSupport,
-err error,
+	supports remote.RawProjectSupport,
+	err error,
 ) {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (s self) ParseAmbiguousVersion(id types.PackageId) (
-parsed types.PackageId,
-err error,
+	parsed types.PackageId,
+	err error,
 ) {
 	var rel *release
 	switch id.Version {
