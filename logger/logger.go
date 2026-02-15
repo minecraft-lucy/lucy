@@ -6,7 +6,7 @@
 //
 // There are three tiers of logging functions plus a fatal shortcut:
 //
-//	File-only      Info  Warn  Error  Debug   → written to log file; echoed on console only in verbose mode
+//	File-only      Info  Warn  Error  Debug   → written to log file; echoed on console only in verboseWrite mode
 //	User-display   ShowInfo  ShowWarn  ShowError   → printed to stderr for the user; NOT persisted to log file
 //	Both           ReportInfo  ReportWarn  ReportError → written to log file AND printed to stderr
 //	Fatal          Fatal   → logged + displayed + os.Exit(1)
@@ -27,18 +27,18 @@ import (
 // Logging only functions
 
 // Info logs an informational entry to the log file.
-// In verbose mode the entry is also printed to the console.
+// In verboseWrite mode the entry is also printed to the console.
 func Info(content any) {
 	e := &entry{Time: time.Now(), Level: LevelInfo, Content: content}
 	record(e)
 	writeToFile(e)
-	if verbose && LevelInfo >= VerboseLevel {
+	if verboseWrite && LevelInfo >= VerboseLevel {
 		writeToConsole(e)
 	}
 }
 
 // Warn logs a warning to the log file.
-// In verbose mode the entry is also printed to the console.
+// In verboseWrite mode the entry is also printed to the console.
 func Warn(content error) {
 	if content == nil {
 		return
@@ -46,13 +46,13 @@ func Warn(content error) {
 	e := &entry{Time: time.Now(), Level: LevelWarn, Content: content}
 	record(e)
 	writeToFile(e)
-	if verbose && LevelWarn >= VerboseLevel {
+	if verboseWrite && LevelWarn >= VerboseLevel {
 		writeToConsole(e)
 	}
 }
 
 // Error logs an error to the log file.
-// In verbose mode the entry is also printed to the console.
+// In verboseWrite mode the entry is also printed to the console.
 func Error(content error) {
 	if content == nil {
 		return
@@ -60,13 +60,13 @@ func Error(content error) {
 	e := &entry{Time: time.Now(), Level: LevelError, Content: content}
 	record(e)
 	writeToFile(e)
-	if verbose && LevelError >= VerboseLevel {
+	if verboseWrite && LevelError >= VerboseLevel {
 		writeToConsole(e)
 	}
 }
 
 // Debug logs a debug entry to the log file. No-op unless debug mode is on.
-// In verbose mode (implied by debug) the entry is also printed to the console.
+// In verboseWrite mode (implied by debug) the entry is also printed to the console.
 func Debug(content any) {
 	if !debug {
 		return
@@ -74,7 +74,7 @@ func Debug(content any) {
 	e := &entry{Time: time.Now(), Level: LevelDebug, Content: content}
 	record(e)
 	writeToFile(e)
-	if verbose {
+	if verboseWrite {
 		writeToConsole(e)
 	}
 }
@@ -96,7 +96,11 @@ func ShowWarn(content error) {
 // ShowError displays an error to the user on stderr.
 // The message is NOT written to the log file.
 func ShowError(content error) {
-	writeToConsole(&entry{Time: time.Now(), Level: LevelError, Content: content})
+	writeToConsole(
+		&entry{
+			Time: time.Now(), Level: LevelError, Content: content,
+		},
+	)
 }
 
 // Both file and user-display functions
@@ -149,19 +153,27 @@ func Fatal(content error) {
 
 // DumpHistory replays all recorded log entries to the console. This is
 // intended to be called from a deferred function in main for post-mortem
-// inspection in verbose/debug mode.
+// inspection in verboseWrite/debug mode.
 //
-// Entries already shown via verbose mode will appear again — this is
+// Entries already shown via verboseWrite mode will appear again — this is
 // intentional so that the dump provides a complete, uninterrupted
 // chronological view.
 func DumpHistory() {
-	if !verbose || len(history) == 0 {
+	if !verboseWrite || len(history) == 0 {
 		return
 	}
 	_, _ = fmt.Fprintln(os.Stderr)
-	_, _ = fmt.Fprintln(os.Stderr, tools.Dim("── Log history ("+LogFile.Name()+") ──"))
+	_, _ = fmt.Fprintln(
+		os.Stderr,
+		tools.Dim("── Log history ("+LogFile.Name()+") ──"),
+	)
 	for _, e := range history {
 		timestamp := tools.Dim(e.Time.Format("15:04:05"))
-		_, _ = fmt.Fprintln(os.Stderr, timestamp, e.Level.prefix(true), e.Content)
+		_, _ = fmt.Fprintln(
+			os.Stderr,
+			timestamp,
+			e.Level.prefix(true),
+			e.Content,
+		)
 	}
 }

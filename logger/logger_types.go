@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"sync"
 	"time"
 
 	"lucy/tools"
@@ -59,11 +58,3 @@ type entry struct {
 	Level   Level
 	Content any
 }
-
-var (
-	verbose bool // when true, file-only entries are also printed to console
-	debug   bool // when true, Debug() entries are recorded
-
-	mu      sync.Mutex // write lock for history
-	history []*entry
-)

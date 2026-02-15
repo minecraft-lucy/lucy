@@ -3,5 +3,5 @@
 package logger
 
 func init() {
-	SetDebug()
+	EnableDebug()
 }

@@ -29,10 +29,10 @@ func decoratorBaseCommandFlags(f cli.ActionFunc) cli.ActionFunc {
 func decoratorGlobalFlags(f cli.ActionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
 		if cmd.Bool("verbose") {
-			logger.SetVerbose()
+			logger.EnableVerboseWrite()
 		}
 		if cmd.Bool("debug") {
-			logger.SetDebug()
+			logger.EnableDebug()
 		}
 		if cmd.Bool("no-style") {
 			tools.TurnOffStyles()
