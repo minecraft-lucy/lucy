@@ -2,6 +2,7 @@ package mcdr
 
 import (
 	"fmt"
+	"lucy/logger"
 
 	"lucy/probe"
 	"lucy/remote"
@@ -35,7 +36,14 @@ func (s self) Search(
 	query string,
 	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
-	res, err = searchPlugin(query)
+	if options.Platform != types.Mcdr && options.Platform != types.AllPlatform {
+		return nil, fmt.Errorf(
+			"invalid search platform: expected %s, got %s",
+			types.Mcdr,
+			options.Platform,
+		)
+	}
+	res, err = search(query, options.IndexBy)
 	return
 }
 
@@ -57,7 +65,7 @@ func (s self) Information(name types.ProjectName) (
 	info remote.RawProjectInformation,
 	err error,
 ) {
-	plugin, err := getPluginInfo(name.Pep8String())
+	plugin, err := getInfo(name.Pep8String())
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +73,7 @@ func (s self) Information(name types.ProjectName) (
 	if err != nil {
 		return nil, err
 	}
-	repo, err := getRepositoryInfo(name.Pep8String())
+	repo, err := getRepository(name.Pep8String())
 	if err != nil {
 		return nil, err
 	}
@@ -121,5 +129,6 @@ func (s self) ParseAmbiguousVersion(id types.PackageId) (
 		Name:     id.Name,
 		Version:  types.RawVersion(rel.Meta.Version),
 	}
+	logger.Debug("parsed from" + id.StringFull() + " to " + parsed.StringFull())
 	return parsed, nil
 }

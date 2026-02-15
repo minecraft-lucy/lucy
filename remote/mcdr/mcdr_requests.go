@@ -17,7 +17,7 @@ const (
 	branchMeta                  = "?ref=meta"
 )
 
-func searchPlugin(query string) (mcdrSearchResult, error) {
+func search(query string) (mcdrSearchResult, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + ("plugins/") + branchCatalogue
 	err, msg, items := github.GetDirectoryFromGitHub(ghEndpoint)
 	if err != nil {
@@ -40,7 +40,7 @@ func searchPlugin(query string) (mcdrSearchResult, error) {
 	return result, nil
 }
 
-func getPluginInfo(id string) (*pluginInfo, error) {
+func getInfo(id string) (*pluginInfo, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + ("plugins/") + id + "/plugin_info.json" + branchMaster
 	var data []byte
 	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
@@ -49,7 +49,7 @@ func getPluginInfo(id string) (*pluginInfo, error) {
 	}
 	if msg != nil && msg.Message != "" {
 		if msg.Status == "404" {
-			return nil, ErrPluginNotFound
+			return nil, ErrPluginNotFound(id)
 		}
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
@@ -70,14 +70,13 @@ func getPluginInfo(id string) (*pluginInfo, error) {
 
 func getMeta(id string) (*pluginMeta, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + id + "/meta.json" + branchMeta
-	var data []byte
 	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
 	if err != nil {
 		return nil, err
 	}
 	if msg != nil && msg.Message != "" {
 		if msg.Status == "404" {
-			return nil, ErrPluginNotFound
+			return nil, ErrPluginNotFound(id)
 		}
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
@@ -123,14 +122,13 @@ func getLatestRelease(id string) (*release, error) {
 
 func getReleaseHistory(id string) (*pluginRelease, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + id + "/release.json" + branchMeta
-	var data []byte
 	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
 	if err != nil {
 		return nil, err
 	}
 	if msg != nil && msg.Message != "" {
 		if msg.Status == "404" {
-			return nil, ErrPluginNotFound
+			return nil, ErrPluginNotFound(id)
 		}
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
@@ -143,16 +141,15 @@ func getReleaseHistory(id string) (*pluginRelease, error) {
 	return &releaseHistory, nil
 }
 
-func getRepositoryInfo(id string) (*pluginRepo, error) {
+func getRepository(id string) (*pluginRepo, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + id + "/repository.json" + branchMeta
-	var data []byte
 	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
 	if err != nil {
 		return nil, err
 	}
 	if msg != nil && msg.Message != "" {
 		if msg.Status == "404" {
-			return nil, ErrPluginNotFound
+			return nil, ErrPluginNotFound(id)
 		}
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
