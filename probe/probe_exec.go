@@ -108,8 +108,7 @@ var getExecutableInfo = tools.Memoize(
 
 		// 4. pwd, recursively
 		// Prompt before do so due to the potential large number of files
-		// TODO: Implement after transferring to `github.com/charmbracelet/bubbletea`.
-
+		// TODO: Implement
 		switch len(valid) {
 		case 0:
 			logger.Info("no server executable found")
