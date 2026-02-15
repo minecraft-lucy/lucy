@@ -25,10 +25,6 @@ import (
 	"lucy/tools"
 )
 
-// ---------------------------------------------------------------------------
-// Level
-// ---------------------------------------------------------------------------
-
 // Level represents the severity of a log entry.
 // Levels are ordered from least to most severe: Debug < Info < Warn < Error < Fatal.
 type Level uint8
@@ -75,25 +71,18 @@ func (l Level) prefix(colored bool) string {
 	return "[" + l.String() + "]"
 }
 
-// ---------------------------------------------------------------------------
-// Entry
-// ---------------------------------------------------------------------------
-
+// Entry represents a single log item with its timestamp, level, and content. This is used internally for recording history and is not exposed to users of the logger package.
 type entry struct {
 	Time    time.Time
 	Level   Level
 	Content any
 }
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-
 var (
 	verbose bool // when true, file-only entries are also printed to console
 	debug   bool // when true, Debug() entries are recorded
 
-	mu      sync.Mutex
+	mu      sync.Mutex // write lock for history
 	history []*entry
 )
 
@@ -111,9 +100,7 @@ func SetDebug() {
 	verbose = true
 }
 
-// ---------------------------------------------------------------------------
-// Core I/O
-// ---------------------------------------------------------------------------
+// IO
 
 func writeToFile(e *entry) {
 	timestamp := e.Time.Format("2006-01-02 15:04:05")
@@ -129,10 +116,6 @@ func record(e *entry) {
 	history = append(history, e)
 	mu.Unlock()
 }
-
-// ---------------------------------------------------------------------------
-// File-only logging (+ console in verbose mode)
-// ---------------------------------------------------------------------------
 
 // Info logs an informational entry to the log file.
 // In verbose mode the entry is also printed to the console.
