@@ -10,10 +10,21 @@ import (
 	"lucy/tools"
 )
 
+// checkGitHubMessage checks if the response data is a GitHub API error message
+// Returns the parsed message if it is an error message, nil otherwise
+func checkGitHubMessage(data []byte) *GhApiMessage {
+	var msg *GhApiMessage
+	err := json.Unmarshal(data, &msg)
+	if err == nil && msg != nil && msg.Message != "" {
+		return msg
+	}
+	return nil
+}
+
 func GetFileFromGitHub(apiEndpoint string) (
-	err error,
-	msg *GhApiMessage,
-	data []byte,
+err error,
+msg *GhApiMessage,
+data []byte,
 ) {
 	resp, err := http.Get(apiEndpoint)
 	if err != nil {
@@ -26,8 +37,7 @@ func GetFileFromGitHub(apiEndpoint string) (
 	}
 
 	// Check if the response is an error message from GitHub API
-	err = json.Unmarshal(data, &msg)
-	if err == nil && msg != nil && msg.Message != "" {
+	if msg := checkGitHubMessage(data); msg != nil {
 		return nil, msg, data
 	}
 
@@ -47,4 +57,32 @@ func GetFileFromGitHub(apiEndpoint string) (
 	}
 
 	return nil, nil, data
+}
+
+func GetDirectoryFromGitHub(apiEndpoint string) (
+err error,
+msg *GhApiMessage,
+items []GhItem,
+) {
+	resp, err := http.Get(apiEndpoint)
+	if err != nil {
+		return err, nil, nil
+	}
+	defer tools.CloseReader(resp.Body, logger.Warn)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err, nil, nil
+	}
+
+	// Check if the response is an error message from GitHub API
+	if msg := checkGitHubMessage(data); msg != nil {
+		return nil, msg, nil
+	}
+
+	var res []GhItem
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrCannotDecode, err), nil, nil
+	}
+	return nil, nil, res
 }

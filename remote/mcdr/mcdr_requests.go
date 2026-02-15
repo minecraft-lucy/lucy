@@ -19,7 +19,7 @@ const (
 
 func searchPlugin(query string) (mcdrSearchResult, error) {
 	ghEndpoint := pluginCatalogueRepoEndpoint + ("plugins/") + branchCatalogue
-	err, msg, data := github.GetFileFromGitHub(ghEndpoint)
+	err, msg, items := github.GetDirectoryFromGitHub(ghEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -27,14 +27,8 @@ func searchPlugin(query string) (mcdrSearchResult, error) {
 		return nil, fmt.Errorf("%w: %s", ErrorGhApi, msg.Message)
 	}
 
-	var ghFiles []github.GhItem
-	err = json.Unmarshal(data, &ghFiles)
-	if err != nil {
-		return nil, err
-	}
-
 	pluginIds := make([]string, 0)
-	for _, file := range ghFiles {
+	for _, file := range items {
 		pluginIds = append(pluginIds, file.Name)
 	}
 
