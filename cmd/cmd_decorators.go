@@ -28,11 +28,14 @@ func decoratorBaseCommandFlags(f cli.ActionFunc) cli.ActionFunc {
 // to the action function.
 func decoratorGlobalFlags(f cli.ActionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
-		if cmd.Bool("verbose") {
-			logger.UseConsoleOutput()
+		if cmd.Bool("print-logs") {
+			logger.EnablePrintLogs()
 		}
 		if cmd.Bool("debug") {
-			logger.UseDebug()
+			logger.EnableDebug()
+		}
+		if cmd.Bool("dump-history") {
+			logger.EnableDumpHistory()
 		}
 		if cmd.Bool("no-style") {
 			tools.TurnOffStyles()
@@ -71,7 +74,7 @@ func decoratorLogAndExitOnError(f cli.ActionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
 		err := f(ctx, cmd)
 		if err != nil {
-			logger.ErrorNow(err)
+			logger.ReportError(err)
 			return err
 		}
 		return nil

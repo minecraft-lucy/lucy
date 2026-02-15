@@ -65,14 +65,14 @@ var actionInfo cli.ActionFunc = func(
 	case types.Fabric, types.Forge:
 		info, err := remote.Information(source.Modrinth, id.Name)
 		if err != nil {
-			logger.ErrorNow(err)
+			logger.ReportError(err)
 		}
 		p.Information = &info
 
 		remote, err := remote.Fetch(source.Modrinth, id)
 		p.Remote = &remote
 		if err != nil {
-			logger.ErrorNow(err)
+			logger.ReportError(err)
 			return err
 		}
 		out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
@@ -82,12 +82,12 @@ var actionInfo cli.ActionFunc = func(
 			id.Name,
 		)
 		if err != nil {
-			logger.WarnNow(err)
+			logger.ReportWarn(err)
 			break
 		}
 		remote, err := remote.Fetch(source.Mcdr, id)
 		if err != nil {
-			logger.WarnNow(err)
+			logger.ReportWarn(err)
 			break
 		}
 		p.Information, p.Remote = &info, &remote
@@ -100,7 +100,7 @@ var actionInfo cli.ActionFunc = func(
 	}
 	if out == nil {
 		err = fmt.Errorf("%w: %s", remote.ErrorNoPackage, id.StringFull())
-		logger.ErrorNow(err)
+		logger.ReportError(err)
 		return err
 	}
 	if cmd.Bool(flagJsonOutput.Name) {

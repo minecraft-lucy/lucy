@@ -11,10 +11,8 @@ import (
 )
 
 func main() {
-	defer func() {
-		logger.WriteAll()
-	}()
+	defer logger.DumpHistory() // Whether DumpHistory actually does anything depend on the flag.
 	if err := cmd.Cli.Run(context.Background(), os.Args); err != nil {
-		logger.ErrorNow(err)
+		logger.ReportError(err)
 	}
 }
