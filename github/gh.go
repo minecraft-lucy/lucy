@@ -22,9 +22,9 @@ func checkGitHubMessage(data []byte) *GhApiMessage {
 }
 
 func GetFileFromGitHub(apiEndpoint string) (
-err error,
-msg *GhApiMessage,
-data []byte,
+	err error,
+	msg *GhApiMessage,
+	data []byte,
 ) {
 	resp, err := http.Get(apiEndpoint)
 	if err != nil {
@@ -60,9 +60,9 @@ data []byte,
 }
 
 func GetDirectoryFromGitHub(apiEndpoint string) (
-err error,
-msg *GhApiMessage,
-items []GhItem,
+	err error,
+	msg *GhApiMessage,
+	items []GhItem,
 ) {
 	resp, err := http.Get(apiEndpoint)
 	if err != nil {
