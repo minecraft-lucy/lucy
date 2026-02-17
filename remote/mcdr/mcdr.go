@@ -36,7 +36,7 @@ func (s self) Search(
 	query string,
 	options types.SearchOptions,
 ) (res remote.RawSearchResults, err error) {
-	if options.Platform != types.Mcdr && options.Platform != types.AllPlatform {
+	if options.Platform != types.Mcdr && options.Platform != types.AnyPlatform {
 		return nil, fmt.Errorf(
 			"invalid search platform: expected %s, got %s",
 			types.Mcdr,

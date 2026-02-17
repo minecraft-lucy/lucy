@@ -44,8 +44,7 @@ var actionInfo cli.ActionFunc = func(
 	var out *tui.Data
 	var err error
 
-	switch id.Platform {
-	case types.AllPlatform:
+	if id.Platform == types.AnyPlatform {
 		for _, source := range source.All {
 			info, err := remote.Information(source, id.Name)
 			if err != nil {
@@ -61,8 +60,7 @@ var actionInfo cli.ActionFunc = func(
 			out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
 			break
 		}
-
-	case types.Fabric, types.Forge:
+	} else if id.Platform.IsModding() {
 		info, err := remote.Information(source.Modrinth, id.Name)
 		if err != nil {
 			logger.ReportError(err)
@@ -76,22 +74,22 @@ var actionInfo cli.ActionFunc = func(
 			return err
 		}
 		out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
-	case types.Mcdr:
+	} else if id.Platform == types.Mcdr {
 		info, err := remote.Information(
 			source.Mcdr,
 			id.Name,
 		)
 		if err != nil {
 			logger.ReportWarn(err)
-			break
+		} else {
+			remote, err := remote.Fetch(source.Mcdr, id)
+			if err != nil {
+				logger.ReportWarn(err)
+			} else {
+				p.Information, p.Remote = &info, &remote
+				out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
+			}
 		}
-		remote, err := remote.Fetch(source.Mcdr, id)
-		if err != nil {
-			logger.ReportWarn(err)
-			break
-		}
-		p.Information, p.Remote = &info, &remote
-		out = infoOutput(p, cmd.Bool(flagLongOutput.Name))
 	}
 
 	if err != nil {

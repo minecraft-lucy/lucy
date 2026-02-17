@@ -64,7 +64,7 @@ var actionAdd cli.ActionFunc = func(
 	}
 
 	// check if the specified platform matches the server platform
-	if id.Platform != types.AllPlatform {
+	if id.Platform != types.AnyPlatform {
 		if id.Platform == types.Mcdr {
 			// for mcdr, we only need to check if it's mcdr-managed
 			if serverInfo.Environments.Mcdr == nil {
@@ -81,7 +81,7 @@ var actionAdd cli.ActionFunc = func(
 	// installation methods.
 	var dir string
 	switch id.Platform {
-	case types.AllPlatform:
+	case types.AnyPlatform:
 		logger.ShowInfo("no platform specified, attempting to infer")
 	case types.Mcdr:
 		dir = serverInfo.Environments.Mcdr.PluginDirectories[0] // TODO: Change this
@@ -121,7 +121,7 @@ var actionAdd cli.ActionFunc = func(
 			}
 		}
 	case source.Mcdr.Name().String():
-		if id.Platform != types.Mcdr && id.Platform != types.AllPlatform {
+		if id.Platform != types.Mcdr && id.Platform != types.AnyPlatform {
 			return fmt.Errorf("source 'mcdr' only supports mcdr platform")
 		}
 		remoteData, err = source.Mcdr.Fetch(id)

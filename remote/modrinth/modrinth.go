@@ -47,7 +47,7 @@ func (s self) Search(
 		facets = append(facets, facetForge)
 	case types.Fabric:
 		facets = append(facets, facetFabric)
-	case types.AllPlatform:
+	case types.AnyPlatform:
 		fallthrough
 	default:
 		facets = append(facets, facetForge, facetAllLoaders)

@@ -80,8 +80,7 @@ var actionSearch cli.ActionFunc = func(
 	var err error
 
 	if src == types.AutoSource {
-		switch p.Platform {
-		case types.AllPlatform:
+		if p.Platform == types.AnyPlatform {
 			for _, sourceHandler := range source.All {
 				res, err = remote.Search(sourceHandler, p.Name, options)
 				if err != nil {
@@ -96,19 +95,19 @@ var actionSearch cli.ActionFunc = func(
 				}
 				appendToSearchOutput(out, cmd.Bool("long"), res)
 			}
-		case types.Forge, types.Fabric, types.Neoforge:
+		} else if p.Platform.IsModding() {
 			res, err = remote.Search(source.Modrinth, p.Name, options)
 			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
 				logger.Fatal(err)
 			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
-		case types.Mcdr:
+		} else if p.Platform == types.Mcdr {
 			res, err = remote.Search(source.Mcdr, p.Name, options)
 			if err != nil && !errors.Is(err, remote.ErrorNoResults) {
 				logger.Fatal(err)
 			}
 			appendToSearchOutput(out, cmd.Bool("long"), res)
-		case types.UnknownPlatform:
+		} else if !p.Platform.Valid() {
 			logger.Fatal(
 				fmt.Errorf(
 					"%w: %s",

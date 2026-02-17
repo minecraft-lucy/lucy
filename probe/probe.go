@@ -134,7 +134,7 @@ func buildServerInfo() types.ServerInfo {
 
 var modPaths = tools.Memoize(
 	func() (paths []string) {
-		if exec := getExecutableInfo(); exec != nil && (exec.ModLoader == types.Fabric || exec.ModLoader == types.Forge) {
+		if exec := getExecutableInfo(); exec != nil && (exec.ModLoader.IsModding()) {
 			paths = append(paths, path.Join(workPath(), "mods"))
 		}
 		return
