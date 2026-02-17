@@ -2,8 +2,8 @@ package mcdr
 
 import (
 	"fmt"
-	"lucy/logger"
 
+	"lucy/logger"
 	"lucy/probe"
 	"lucy/remote"
 	"lucy/syntax"
@@ -43,7 +43,7 @@ func (s self) Search(
 			options.Platform,
 		)
 	}
-	res, err = search(query, options.IndexBy)
+	res, err = search(query)
 	return
 }
 
