@@ -167,18 +167,12 @@ func appendToSearchOutput(
 	if len(out.Fields) != 0 {
 		out.Fields = append(
 			out.Fields, &tui.FieldSeparator{
-				Length: 0,
-				Dim:    false,
+				Length:       0,
+				Proportional: false,
+				Dim:          true,
 			},
 		)
 	}
-
-	out.Fields = append(
-		out.Fields,
-		&tui.FieldAnnotation{
-			Annotation: "Results from " + res.Source.Title(),
-		},
-	)
 
 	if res.Source == types.Modrinth && len(res.Results) == 100 {
 		out.Fields = append(
@@ -192,17 +186,20 @@ func appendToSearchOutput(
 	out.Fields = append(
 		out.Fields,
 		&tui.FieldShortText{
-			Title: "#  ",
-			Text:  strconv.Itoa(len(res.Results)),
+			Title: ">>>",
+			Text:  res.Source.Title() + tools.Dim(" "+strconv.Itoa(len(res.Results))+" results"),
 		},
 		&tui.FieldDynamicColumnLabels{
-			Title:  ">>>",
+			Title:  "",
 			Labels: results,
 			MaxLines: tools.Ternary(
 				showAll,
 				0,
 				tools.TermHeight()-6,
 			),
+			MaxColumns: 5,
+			ShowTotal:  false,
+			NoTitle:    true,
 		},
 	)
 }
